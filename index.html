@@ -60,6 +60,18 @@
           <div class="header-title" id="header-title">Dashboard</div>
           <div class="header-title-sub" id="header-sub">Controle rápido das suas zonas</div>
         </div>
+        <div class="header-install-wrap" id="header-install-wrap">
+          <button class="header-install-pill" type="button" id="install-pill" aria-label="Trocar instalação">
+            <span class="install-pill-icon">
+              <svg viewBox="0 0 24 24"><path d="M3 12 12 4l9 8"/><path d="M5 10v10h14V10"/></svg>
+            </span>
+            <span class="install-pill-name" id="install-pill-name">—</span>
+            <span class="install-pill-chev">
+              <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
+          </button>
+          <div class="install-dropdown hidden" id="install-dropdown" role="menu"></div>
+        </div>
         <div class="header-clock">
           <div class="clock" aria-live="polite" aria-label="Horário atual">--:--</div>
           <div class="date" aria-label="Data atual">---</div>
@@ -77,12 +89,13 @@
       </main>
 
       <footer class="app-footer">
-        <span class="app-version" id="app-version">v04121805</span>
+        <span class="app-version" id="app-version">v04122100</span>
       </footer>
     </div>
   </div>
 
   <div id="wiz" class="wizard-container hidden" aria-label="Assistente de configuração"></div>
+  <div id="manage-modal" class="modal-overlay hidden" aria-label="Gerenciar instalações"></div>
 
   <script src="js/version.js"></script>
   <script src="js/config-loader.js"></script>

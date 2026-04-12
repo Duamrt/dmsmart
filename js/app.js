@@ -2,7 +2,7 @@
 // Bootstrap principal do dmsmart
 // - Se não há instalação ativa, abre o Wizard
 // - Se há, inicializa zonas, clock, status e conecta no HA
-// - Controla sidebar (recolher/expandir + mobile overlay)
+// - Controla sidebar, seletor de instalação no header e modal de gerenciar
 
 const SIDEBAR_KEY = 'dmsmart_sidebar_collapsed';
 
@@ -10,6 +10,7 @@ async function initApp() {
   try {
     initSidebar();
     initClock();
+    initInstallationSelector();
 
     await ConfigLoader.load();
     const seedConfig = ConfigLoader.get();
@@ -23,11 +24,12 @@ async function initApp() {
     const active = ActiveInstallation.ensure();
     if (!active) {
       renderEmptyDashboard();
+      updateHeaderInstallation(null);
       Wizard.open();
       return;
     }
 
-    updateSidebarInstallation(active);
+    updateHeaderInstallation(active);
     ZoneRegistry.init({ zones: active.zones });
 
     const zonesGrid = document.querySelector('.zones-grid');
@@ -86,9 +88,334 @@ function initSidebar() {
   });
 }
 
-function updateSidebarInstallation(installation) {
-  const el = document.getElementById('sidebar-install-name');
-  if (el) el.textContent = installation && installation.name ? installation.name : '—';
+function updateHeaderInstallation(installation) {
+  const sidebarEl = document.getElementById('sidebar-install-name');
+  const pillName = document.getElementById('install-pill-name');
+  const pill = document.getElementById('install-pill');
+  const wrap = document.getElementById('header-install-wrap');
+
+  const label = installation && installation.name ? installation.name : '—';
+  if (sidebarEl) sidebarEl.textContent = label;
+  if (pillName) pillName.textContent = label;
+
+  if (wrap) {
+    wrap.classList.toggle('hidden', !installation);
+  }
+  if (pill) {
+    pill.setAttribute('title', installation && installation.haUrl ? installation.haUrl : label);
+  }
+}
+
+function initInstallationSelector() {
+  const pill = document.getElementById('install-pill');
+  const dropdown = document.getElementById('install-dropdown');
+  if (!pill || !dropdown) return;
+
+  const closeDropdown = () => {
+    dropdown.classList.add('hidden');
+    pill.classList.remove('open');
+  };
+
+  const openDropdown = () => {
+    renderInstallationDropdown(dropdown);
+    dropdown.classList.remove('hidden');
+    pill.classList.add('open');
+  };
+
+  pill.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (dropdown.classList.contains('hidden')) openDropdown();
+    else closeDropdown();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (dropdown.classList.contains('hidden')) return;
+    if (dropdown.contains(e.target) || pill.contains(e.target)) return;
+    closeDropdown();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDropdown();
+  });
+
+  dropdown.addEventListener('click', (e) => {
+    const target = e.target.closest('[data-install-action]');
+    if (!target) return;
+    e.stopPropagation();
+    const action = target.getAttribute('data-install-action');
+    if (action === 'switch') {
+      const id = target.getAttribute('data-id');
+      switchInstallation(id);
+    } else if (action === 'new') {
+      closeDropdown();
+      Wizard.open({ skipWelcome: true });
+    } else if (action === 'manage') {
+      closeDropdown();
+      openManageModal();
+    }
+  });
+}
+
+function renderInstallationDropdown(el) {
+  const installations = InstallationStore.all();
+  const activeId = ActiveInstallation.getId();
+
+  const itemsHtml = installations.map(inst => {
+    const isActive = inst.id === activeId;
+    const zoneCount = Array.isArray(inst.zones) ? inst.zones.length : 0;
+    const sub = inst.haUrl ? _shortUrl(inst.haUrl) : `${zoneCount} zona${zoneCount === 1 ? '' : 's'}`;
+    return `
+      <button type="button" class="install-item ${isActive ? 'active' : ''}" data-install-action="switch" data-id="${_esc(inst.id)}">
+        <span class="install-item-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 12 12 4l9 8"/><path d="M5 10v10h14V10"/></svg>
+        </span>
+        <span class="install-item-body">
+          <span class="install-item-name">${_esc(inst.name)}</span>
+          <span class="install-item-sub">${_esc(sub)}</span>
+        </span>
+        ${isActive ? '<span class="install-item-check"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>' : ''}
+      </button>
+    `;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="install-dropdown-section">Instalações</div>
+    ${itemsHtml || '<div class="modal-empty" style="padding: 16px;">Nenhuma instalação</div>'}
+    <div class="install-dropdown-divider"></div>
+    <button type="button" class="install-action" data-install-action="new">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+      Adicionar instalação
+    </button>
+    <button type="button" class="install-action" data-install-action="manage">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      Gerenciar instalações
+    </button>
+  `;
+}
+
+function switchInstallation(id) {
+  if (!id || id === ActiveInstallation.getId()) {
+    document.getElementById('install-dropdown').classList.add('hidden');
+    document.getElementById('install-pill').classList.remove('open');
+    return;
+  }
+  const target = InstallationStore.get(id);
+  if (!target) return;
+  ActiveInstallation.setId(id);
+  window.location.reload();
+}
+
+/* =========================================
+   Manage modal
+   ========================================= */
+
+const ManageModal = {
+  state: { editingId: null, confirmRemoveId: null },
+
+  open() {
+    this.state = { editingId: null, confirmRemoveId: null };
+    this.render();
+    const overlay = document.getElementById('manage-modal');
+    if (overlay) overlay.classList.remove('hidden');
+  },
+
+  close() {
+    const overlay = document.getElementById('manage-modal');
+    if (overlay) overlay.classList.add('hidden');
+    this.state = { editingId: null, confirmRemoveId: null };
+  },
+
+  render() {
+    const overlay = document.getElementById('manage-modal');
+    if (!overlay) return;
+    const installations = InstallationStore.all();
+    const activeId = ActiveInstallation.getId();
+
+    const rowsHtml = installations.length === 0
+      ? '<div class="modal-empty">Nenhuma instalação cadastrada ainda.</div>'
+      : installations.map(inst => this._renderRow(inst, inst.id === activeId)).join('');
+
+    overlay.innerHTML = `
+      <div class="modal-card" role="dialog" aria-modal="true">
+        <div class="modal-head">
+          <div class="modal-title">Gerenciar instalações</div>
+          <button type="button" class="modal-close" data-manage="close" aria-label="Fechar">×</button>
+        </div>
+        <div class="modal-body">
+          ${rowsHtml}
+        </div>
+      </div>
+    `;
+
+    this._bind();
+  },
+
+  _renderRow(inst, isActive) {
+    const isEditing = this.state.editingId === inst.id;
+    const showConfirm = this.state.confirmRemoveId === inst.id;
+    const zoneCount = Array.isArray(inst.zones) ? inst.zones.length : 0;
+
+    if (showConfirm) {
+      return `
+        <div class="manage-confirm" data-id="${_esc(inst.id)}">
+          <div class="manage-confirm-title">Remover "${_esc(inst.name)}"?</div>
+          <div>Isso apaga zonas, token HA e config local. Não dá pra desfazer.</div>
+          <div class="manage-confirm-actions">
+            <button type="button" class="btn-ghost" data-manage="cancel-remove">Cancelar</button>
+            <button type="button" class="btn-danger" data-manage="confirm-remove" data-id="${_esc(inst.id)}">Remover</button>
+          </div>
+        </div>
+      `;
+    }
+
+    if (isEditing) {
+      return `
+        <div class="manage-row ${isActive ? 'active' : ''}" data-id="${_esc(inst.id)}">
+          <div class="manage-edit-wrap">
+            <input type="text" class="manage-edit-input" id="manage-edit-input-${_esc(inst.id)}" value="${_esc(inst.name)}" maxlength="60" />
+          </div>
+          <div class="manage-row-actions">
+            <button type="button" class="manage-icon-btn" data-manage="save-name" data-id="${_esc(inst.id)}" title="Salvar">
+              <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>
+            </button>
+            <button type="button" class="manage-icon-btn" data-manage="cancel-edit" title="Cancelar">
+              <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    const sub = inst.haUrl ? _shortUrl(inst.haUrl) : 'Sem URL';
+    return `
+      <div class="manage-row ${isActive ? 'active' : ''}" data-id="${_esc(inst.id)}">
+        <div class="manage-row-body">
+          <div class="manage-row-name">${_esc(inst.name)}</div>
+          <div class="manage-row-sub">${_esc(sub)} · ${zoneCount} zona${zoneCount === 1 ? '' : 's'}</div>
+          ${isActive ? '<span class="manage-row-badge">Ativa</span>' : ''}
+        </div>
+        <div class="manage-row-actions">
+          <button type="button" class="manage-icon-btn" data-manage="edit" data-id="${_esc(inst.id)}" title="Renomear">
+            <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+          </button>
+          <button type="button" class="manage-icon-btn danger" data-manage="remove" data-id="${_esc(inst.id)}" title="Remover">
+            <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+          </button>
+        </div>
+      </div>
+    `;
+  },
+
+  _bind() {
+    const overlay = document.getElementById('manage-modal');
+    if (!overlay || overlay._bound) {
+      // re-bind per render OK; we dispatch via delegation but overlay is replaced on every open, so one listener per render is fine
+    }
+    overlay.onclick = (e) => {
+      if (e.target === overlay) { this.close(); return; }
+      const btn = e.target.closest('[data-manage]');
+      if (!btn) return;
+      const action = btn.getAttribute('data-manage');
+      const id = btn.getAttribute('data-id');
+      this._handle(action, id);
+    };
+
+    overlay.onkeydown = (e) => {
+      if (e.key === 'Escape') this.close();
+      if (e.key === 'Enter' && this.state.editingId) {
+        e.preventDefault();
+        this._handle('save-name', this.state.editingId);
+      }
+    };
+  },
+
+  _handle(action, id) {
+    switch (action) {
+      case 'close':
+        this.close();
+        break;
+      case 'edit':
+        this.state.editingId = id;
+        this.state.confirmRemoveId = null;
+        this.render();
+        setTimeout(() => {
+          const input = document.getElementById(`manage-edit-input-${id}`);
+          if (input) { input.focus(); input.select(); }
+        }, 0);
+        break;
+      case 'cancel-edit':
+        this.state.editingId = null;
+        this.render();
+        break;
+      case 'save-name': {
+        const input = document.getElementById(`manage-edit-input-${id}`);
+        if (!input) return;
+        const newName = input.value.trim();
+        if (!newName) return;
+        InstallationStore.update(id, { name: newName });
+        this.state.editingId = null;
+        this.render();
+        if (id === ActiveInstallation.getId()) {
+          updateHeaderInstallation(InstallationStore.get(id));
+        }
+        break;
+      }
+      case 'remove':
+        this.state.confirmRemoveId = id;
+        this.state.editingId = null;
+        this.render();
+        break;
+      case 'cancel-remove':
+        this.state.confirmRemoveId = null;
+        this.render();
+        break;
+      case 'confirm-remove':
+        this._remove(id);
+        break;
+    }
+  },
+
+  _remove(id) {
+    const wasActive = id === ActiveInstallation.getId();
+    InstallationStore.remove(id);
+
+    if (wasActive) {
+      const remaining = InstallationStore.all();
+      if (remaining.length > 0) {
+        ActiveInstallation.setId(remaining[0].id);
+      } else {
+        ActiveInstallation.clear();
+      }
+      this.close();
+      window.location.reload();
+      return;
+    }
+
+    this.state.confirmRemoveId = null;
+    this.render();
+  }
+};
+
+function openManageModal() {
+  ManageModal.open();
+}
+
+function _esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function _shortUrl(url) {
+  try {
+    const u = new URL(url);
+    return u.host + (u.pathname !== '/' ? u.pathname : '');
+  } catch {
+    return url.length > 42 ? url.slice(0, 40) + '…' : url;
+  }
 }
 
 function renderEmptyDashboard() {

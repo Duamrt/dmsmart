@@ -10,7 +10,7 @@ A Casa Jupi (cliente em obra) tem um milestone paralelo de infraestrutura físic
 
 - [x] **Phase 1: Shell do Dashboard** — frontend genérico que renderiza zonas via config, PWA instalável, mock data
 - [~] **Phase 2: Conexão Home Assistant (MVP)** — WebSocket real-time, toggle Optimistic UI, status/reconexão
-- [ ] **Phase 3: Setup Wizard e Descoberta de Entidades** — cliente conecta HA próprio e mapeia zonas/dispositivos pela UI, sem editar JSON
+- [~] **Phase 3: Setup Wizard e Descoberta de Entidades** — cliente conecta HA próprio e mapeia zonas/dispositivos pela UI, sem editar JSON
 - [ ] **Phase 4: Backend Multi-instalação (Supabase)** — auth por cliente, config sincronizada entre dispositivos, RLS
 - [ ] **Phase 5: Controles por Tipo de Entidade** — UIs dedicadas por tipo (light, climate, media_player, cover, fan, switch), confirmação para ações críticas
 - [ ] **Phase 6: Energia e Solar** — mapeamento genérico de sensores (consumo/geração), saldo, economia em R$, gráficos intraday
@@ -177,7 +177,7 @@ Phases são sequenciais a partir da 2. Phase 1 já está concluída. Phase 2 pre
 |-------|----------------|--------|-----------|
 | 1. Shell do Dashboard | 3/3 | Complete | 2026-04-12 |
 | 2. Conexão HA (MVP) | 2/3 | Em andamento | — |
-| 3. Setup Wizard | 0/4 | Not started | — |
+| 3. Setup Wizard | 4/4 | Em andamento (polish 03-05 pendente) | — |
 | 4. Backend Multi-instalação | 0/4 | Not started | — |
 | 5. Controles por Entidade | 0/3 | Not started | — |
 | 6. Energia e Solar | 0/3 | Not started | — |
