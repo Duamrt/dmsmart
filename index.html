@@ -83,13 +83,40 @@
       </header>
 
       <main class="app-main">
+        <section class="dashboard-hero" id="dashboard-hero" aria-label="Resumo da instalação">
+          <div class="hero-greeting">
+            <div class="hero-eyebrow" id="hero-eyebrow">Olá</div>
+            <div class="hero-title" id="hero-title">Instalação</div>
+            <div class="hero-sub" id="hero-sub">Carregando…</div>
+          </div>
+          <div class="hero-stats" id="hero-stats">
+            <div class="hero-stat">
+              <div class="hero-stat-icon">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+              </div>
+              <div class="hero-stat-body">
+                <div class="hero-stat-value" id="stat-devices-on">0</div>
+                <div class="hero-stat-label">dispositivos ligados</div>
+              </div>
+            </div>
+            <div class="hero-stat">
+              <div class="hero-stat-icon">
+                <svg viewBox="0 0 24 24"><path d="M3 12 12 4l9 8"/><path d="M5 10v10h14V10"/></svg>
+              </div>
+              <div class="hero-stat-body">
+                <div class="hero-stat-value" id="stat-zones-active">0 <span class="hero-stat-total">/ 0</span></div>
+                <div class="hero-stat-label">zonas ativas</div>
+              </div>
+            </div>
+          </div>
+        </section>
         <section class="zones-grid" aria-label="Zonas da instalação">
           <!-- Cards renderizados pelo ui-renderer.js -->
         </section>
       </main>
 
       <footer class="app-footer">
-        <span class="app-version" id="app-version">v04122100</span>
+        <span class="app-version" id="app-version">v04122200</span>
       </footer>
     </div>
   </div>

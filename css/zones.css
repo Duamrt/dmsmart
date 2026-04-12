@@ -5,7 +5,7 @@
 .zones-grid {
   display: grid;
   gap: 20px;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
 }
 
 @media (max-width: 767px) {
@@ -29,15 +29,15 @@
   background: var(--bg-elev);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  padding: 22px 20px;
-  min-height: 160px;
+  padding: 22px;
+  min-height: 180px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 14px;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.2s, border-color 0.2s, transform 0.1s;
+  transition: background 0.25s, border-color 0.25s, transform 0.1s, box-shadow 0.25s;
   position: relative;
   overflow: hidden;
 }
@@ -46,13 +46,11 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(
-    circle at top right,
-    var(--primary-soft),
-    transparent 60%
-  );
+  background:
+    radial-gradient(circle at 85% 0%, rgba(0, 87, 255, 0.28), transparent 55%),
+    linear-gradient(160deg, rgba(0, 87, 255, 0.1), transparent 60%);
   opacity: 0;
-  transition: opacity 0.25s;
+  transition: opacity 0.3s ease;
   pointer-events: none;
 }
 
@@ -65,9 +63,9 @@
   transform: scale(0.985);
 }
 
-/* Card com dispositivo ativo: borda e glow azul */
 .zone-card.has-active {
   border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary-glow), 0 16px 32px -20px var(--primary-glow);
 }
 
 .zone-card.has-active::before {
@@ -75,23 +73,29 @@
 }
 
 /* =========================================
-   Ícone da zona
+   Card header: icon + counter
    ========================================= */
 
+.zone-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+
 .zone-icon {
-  width: 44px;
-  height: 44px;
-  margin-bottom: 14px;
+  width: 48px;
+  height: 48px;
   color: var(--text-2);
-  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: var(--bg-elev-2);
   border-radius: 12px;
-  transition: background 0.2s, color 0.2s;
-  position: relative;
-  z-index: 1;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+  flex-shrink: 0;
 }
 
 .zone-card.has-active .zone-icon {
@@ -100,24 +104,80 @@
 }
 
 .zone-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
+}
+
+.zone-counter {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  padding: 6px 10px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.zone-counter-on {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.zone-card.has-active .zone-counter {
+  background: rgba(0, 87, 255, 0.22);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.zone-card.has-active .zone-counter-on {
+  color: var(--primary);
+}
+
+.zone-counter-sep {
+  color: var(--text-3);
+  font-weight: 500;
 }
 
 /* =========================================
    Textos do card
    ========================================= */
 
+.zone-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .zone-name {
   font-size: var(--fs-md);
   font-weight: 700;
-  margin-bottom: 6px;
   color: var(--text);
   line-height: 1.25;
   letter-spacing: -0.2px;
-  position: relative;
-  z-index: 1;
 }
+
+.zone-sub {
+  font-size: 12px;
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.zone-card.has-active .zone-sub {
+  color: var(--primary);
+  opacity: 0.85;
+}
+
+/* =========================================
+   Device badges
+   ========================================= */
 
 .zone-devices {
   font-size: var(--fs-sm);
@@ -126,23 +186,21 @@
   flex-wrap: wrap;
   gap: 6px;
   margin-top: auto;
-  padding-top: 10px;
+  padding-top: 6px;
   position: relative;
   z-index: 1;
 }
 
-/* =========================================
-   Badges de status
-   ========================================= */
-
 .device-status {
-  padding: 3px 10px;
+  padding: 4px 11px;
   border-radius: 99px;
   font-size: var(--fs-xs);
   font-weight: 600;
   white-space: nowrap;
   line-height: 1.6;
   letter-spacing: 0.2px;
+  border: 1px solid transparent;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
 .device-status.on {
@@ -154,10 +212,11 @@
 .device-status.off {
   background: var(--bg-elev-3);
   color: var(--text-2);
+  border-color: var(--border-soft);
 }
 
 .temp-badge {
-  padding: 3px 10px;
+  padding: 4px 11px;
   border-radius: 99px;
   font-size: var(--fs-xs);
   font-weight: 600;
@@ -179,18 +238,27 @@
 
   .zone-card {
     padding: 16px;
-    min-height: 130px;
+    min-height: 150px;
     border-radius: var(--r);
+    gap: 10px;
   }
 
   .zone-icon {
-    width: 36px;
-    height: 36px;
-    margin-bottom: 10px;
+    width: 40px;
+    height: 40px;
   }
 
   .zone-icon svg {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
+  }
+
+  .zone-counter {
+    padding: 5px 9px;
+    font-size: 11px;
+  }
+
+  .zone-counter-on {
+    font-size: 13px;
   }
 }

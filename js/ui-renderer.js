@@ -40,20 +40,38 @@ const UIRenderer = {
 
   _buildCardHTML(zone, devices) {
     const iconSVG = this._getIcon(zone.icon);
+    const total = devices.length;
+    const onCount = devices.filter(d => d.state && d.state.state === 'on').length;
+
     const deviceBadges = devices.map(({ device, state }) => {
       const isOn = state && state.state === 'on';
       return `<span class="device-status ${isOn ? 'on' : 'off'}" data-device-id="${device.id}">${device.name}</span>`;
     }).join('');
 
-    // Para zonas com clima: exibe temperatura atual se AC ligado
     const climateDevice = devices.find(d => d.device.type === 'climate');
     const tempBadge = climateDevice && climateDevice.state && climateDevice.state.state === 'on'
       ? `<span class="temp-badge">${climateDevice.state.attributes.temperature || '--'}°C</span>`
       : '';
 
+    const sub = total === 0
+      ? 'Sem dispositivos'
+      : onCount === 0
+        ? 'Tudo apagado'
+        : onCount === total
+          ? 'Tudo ligado'
+          : `${onCount} de ${total} ligado${onCount === 1 ? '' : 's'}`;
+
     return `
-      <div class="zone-icon">${iconSVG}</div>
-      <div class="zone-name">${zone.name}</div>
+      <div class="zone-card-head">
+        <div class="zone-icon">${iconSVG}</div>
+        <div class="zone-counter">
+          <span class="zone-counter-on">${onCount}</span><span class="zone-counter-sep">/${total}</span>
+        </div>
+      </div>
+      <div class="zone-body">
+        <div class="zone-name">${zone.name}</div>
+        <div class="zone-sub">${sub}</div>
+      </div>
       <div class="zone-devices">${deviceBadges}${tempBadge}</div>
     `;
   },

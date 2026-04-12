@@ -35,6 +35,7 @@ async function initApp() {
     const zonesGrid = document.querySelector('.zones-grid');
     UIRenderer.init(zonesGrid);
 
+    initHero(active);
     initConnectionIndicator();
 
     if ('serviceWorker' in navigator) {
@@ -460,6 +461,54 @@ async function connectToHA(installation) {
     console.error('[dmsmart] Falha ao conectar no HA:', err);
     StateStore.initMock();
   }
+}
+
+function initHero(installation) {
+  const eyebrow = document.getElementById('hero-eyebrow');
+  const title = document.getElementById('hero-title');
+  const sub = document.getElementById('hero-sub');
+  if (!eyebrow || !title || !sub) return;
+
+  const h = new Date().getHours();
+  let greet;
+  if (h < 5) greet = 'Boa madrugada';
+  else if (h < 12) greet = 'Bom dia';
+  else if (h < 18) greet = 'Boa tarde';
+  else greet = 'Boa noite';
+
+  eyebrow.textContent = greet;
+  title.textContent = installation.name || 'Instalação';
+
+  const zoneCount = Array.isArray(installation.zones) ? installation.zones.length : 0;
+  const deviceCount = (installation.zones || []).reduce((sum, z) => sum + (z.devices || []).length, 0);
+  sub.textContent = `${zoneCount} zona${zoneCount === 1 ? '' : 's'} · ${deviceCount} dispositivo${deviceCount === 1 ? '' : 's'}`;
+
+  const statDevicesOn = document.getElementById('stat-devices-on');
+  const statZonesActive = document.getElementById('stat-zones-active');
+
+  const recompute = () => {
+    const zones = ZoneRegistry.all();
+    let devicesOn = 0;
+    let zonesActive = 0;
+    for (const zone of zones) {
+      let zoneHasOn = false;
+      for (const device of zone.devices) {
+        const st = StateStore.get(device.entity);
+        if (st && st.state === 'on') {
+          devicesOn++;
+          zoneHasOn = true;
+        }
+      }
+      if (zoneHasOn) zonesActive++;
+    }
+    if (statDevicesOn) statDevicesOn.textContent = String(devicesOn);
+    if (statZonesActive) {
+      statZonesActive.innerHTML = `${zonesActive} <span class="hero-stat-total">/ ${zones.length}</span>`;
+    }
+  };
+
+  recompute();
+  StateStore.subscribeAll(recompute);
 }
 
 function initConnectionIndicator() {

@@ -120,4 +120,4 @@ Ao final da fase, o teste de aceitação é:
 - [x] 03-02 concluído — 2026-04-12
 - [x] 03-03 concluído — 2026-04-12
 - [x] 03-04 concluído — 2026-04-12 (seletor no header + modal gerenciar)
-- [ ] 03-05 polish visual do dashboard (reagrupado pós-feedback "tá simples demais")
+- [x] 03-05 concluído — 2026-04-12 (hero com saudação + stats reais, cards com contador X/Y e subtitle dinâmico)

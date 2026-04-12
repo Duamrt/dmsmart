@@ -6,6 +6,7 @@
 const StateStore = {
   _state: {},
   _listeners: new Map(),
+  _globalListeners: new Set(),
 
   // Fase 1: inicializa com mock data baseado nas entidades do ZoneRegistry
   initMock() {
@@ -67,15 +68,23 @@ const StateStore = {
     return () => unsubs.forEach(fn => fn());
   },
 
+  // Qualquer update dispara o callback — usado pelo hero/stats globais
+  subscribeAll(callback) {
+    this._globalListeners.add(callback);
+    return () => this._globalListeners.delete(callback);
+  },
+
   _notify(entityId) {
     const cbs = this._listeners.get(entityId);
     if (cbs) cbs.forEach(cb => cb(this._state[entityId]));
+    this._globalListeners.forEach(cb => cb());
   },
 
   _notifyAll() {
     for (const [entityId, cbs] of this._listeners) {
       cbs.forEach(cb => cb(this._state[entityId]));
     }
+    this._globalListeners.forEach(cb => cb());
   },
 
   _mockAttributes(entityId) {
