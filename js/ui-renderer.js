@@ -81,39 +81,38 @@ const UIRenderer = {
       const zoneData = ZoneRegistry.get(zone.id);
       if (!zoneData) return;
 
+      const badge = ev.target.closest('.device-status[data-device-id]');
+
+      // Clique em badge: abre modal de controle daquele dispositivo
+      if (badge) {
+        const deviceId = badge.getAttribute('data-device-id');
+        const device = zoneData.devices.find(d => d.id === deviceId);
+        if (!device) return;
+        if (typeof ControlModal !== 'undefined') ControlModal.open(device);
+        return;
+      }
+
+      // Clique no corpo do card: alterna o conjunto inteiro (bulk quick action)
       if (HAClient.getStatus() !== 'online') {
         card.classList.add('shake');
         setTimeout(() => card.classList.remove('shake'), 400);
         return;
       }
 
-      const badge = ev.target.closest('.device-status[data-device-id]');
-      let targets;
-      if (badge) {
-        const deviceId = badge.getAttribute('data-device-id');
-        const device = zoneData.devices.find(d => d.id === deviceId);
-        if (!device) return;
-        targets = [device];
-      } else {
-        // Clique fora das badges: alterna o conjunto inteiro
-        // Se algum estiver ligado, desliga todos; caso contrário liga todos
-        const anyOn = zoneData.devices.some(d => {
-          const st = StateStore.get(d.entity);
-          return st && st.state === 'on';
-        });
-        targets = zoneData.devices.map(d => ({ ...d, _forceState: anyOn ? 'off' : 'on' }));
-      }
+      const anyOn = zoneData.devices.some(d => {
+        const st = StateStore.get(d.entity);
+        return st && st.state === 'on';
+      });
+      const nextState = anyOn ? 'off' : 'on';
+      const service = anyOn ? 'turn_off' : 'turn_on';
 
-      for (const device of targets) {
+      for (const device of zoneData.devices) {
         const entityId = device.entity;
         const current = StateStore.get(entityId);
-        const forced = device._forceState;
-        const nextState = forced || (current && current.state === 'on' ? 'off' : 'on');
         const optimistic = { ...(current || { entity_id: entityId, attributes: {} }), state: nextState };
         StateStore.update(entityId, optimistic);
 
         const domain = entityId.split('.')[0];
-        const service = forced ? (forced === 'on' ? 'turn_on' : 'turn_off') : 'toggle';
         try {
           await HAClient.callService(domain, service, { entity_id: entityId });
         } catch (err) {

@@ -11,6 +11,7 @@ async function initApp() {
     initSidebar();
     initClock();
     initInstallationSelector();
+    if (typeof ControlModal !== 'undefined') ControlModal.init();
 
     await ConfigLoader.load();
     const seedConfig = ConfigLoader.get();
