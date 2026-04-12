@@ -26,6 +26,19 @@ Qualquer cliente com Home Assistant consegue, pela UI do próprio dmsmart, criar
 
 ## Plans
 
+- [x] **03-02: Wizard de conexão (URL, token, validação)** ✅ 2026-04-12
+  - Entregue em bd86212 — design system Smarta, sidebar recolhível, wizard plugado em `index.html` e `js/app.js`
+  - Abre automático quando `ActiveInstallation.ensure()` retorna null
+  - Reabre com `skipWelcome` pelo item "Nova instalação" no sidebar
+
+- [x] **03-03: Descoberta de entidades e criação de zonas** ✅ 2026-04-12
+  - `Wizard._usefulEntities()` filtra domínios light/switch/climate/cover/media_player/fan
+  - `_groupByDomain` agrupa ordenado por friendly_name em pt-BR
+  - Passo `discover` mostra zonas construídas + botão "+ Nova zona" + "Salvar instalação"
+  - Passo `zone-edit` tem nome + icon picker (9 ícones) + checkbox list por domínio + checkbox "crítico" por device
+  - Entidades já atribuídas a outras zonas são filtradas da lista
+  - `_finalize()` persiste no InstallationStore com zones completas
+
 - [x] **03-01: Modelo de dados de instalação + storage local** ✅ 2026-04-12
   - Schema JSON de uma instalação: `{ id, name, haUrl, zones[], createdAt, updatedAt }`
   - Schema de zona: `{ id, name, icon, devices[] }`
@@ -104,6 +117,7 @@ Ao final da fase, o teste de aceitação é:
 
 - [x] Plano criado — 2026-04-12
 - [x] 03-01 concluído — 2026-04-12
-- [ ] 03-02 pendente
-- [ ] 03-03 pendente
-- [ ] 03-04 pendente
+- [x] 03-02 concluído — 2026-04-12
+- [x] 03-03 concluído — 2026-04-12
+- [ ] 03-04 pendente (dropdown de instalação no header)
+- [ ] 03-05 polish visual do dashboard (reagrupado pós-feedback "tá simples demais")

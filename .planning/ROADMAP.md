@@ -135,6 +135,23 @@ A Casa Jupi (cliente em obra) tem um milestone paralelo de infraestrutura físic
 - [ ] 07-02: Gráficos históricos e ranking
 - [ ] 07-03: Queue offline
 
+### Phase 9: Planta Baixa Interativa
+**Goal:** Cada zona/instalação pode ter uma planta baixa (PNG/SVG) com marcadores clicáveis sobre cada luz, tomada, ar-condicionado — o marcador reflete o estado real do HA e acionar ele dispara o serviço correto.
+**Depends on:** Phases 1-5 (precisa dos controles funcionando)
+**Success Criteria:**
+1. Upload de imagem de planta baixa por instalação (salva em localStorage como data URL ou no Supabase depois)
+2. Editor visual: arrastar marcadores sobre a imagem, cada marcador vinculado a uma entity do HA
+3. Marcador mostra cor do estado (aceso = amarelo/glow, apagado = cinza, indisponível = vermelho)
+4. Click no marcador = toggle/call_service correspondente
+5. Suporte a múltiplas plantas por instalação (ex: térreo e primeiro andar)
+6. Funciona em mobile (pinch-zoom, pan)
+**UI hint:** yes — diferencial visual forte, pode virar case de marketing
+**Plans:**
+- [ ] 09-01: Upload + storage da imagem de planta baixa
+- [ ] 09-02: Editor de marcadores (arrastar, vincular entity, salvar posições)
+- [ ] 09-03: Runtime clicável (estado real + call_service)
+- [ ] 09-04: Multi-planta por instalação + navegação
+
 ### Phase 8: Polish e Modo Kiosk
 **Goal:** Experiência final para tablet fixo de parede — screensaver, proteção burn-in, atalhos e alertas inteligentes.
 **Depends on:** Phases 1-7
@@ -166,6 +183,7 @@ Phases são sequenciais a partir da 2. Phase 1 já está concluída. Phase 2 pre
 | 6. Energia e Solar | 0/3 | Not started | — |
 | 7. Histórico e Analytics | 0/3 | Not started | — |
 | 8. Polish e Kiosk | 0/3 | Not started | — |
+| 9. Planta Baixa Interativa | 0/4 | Not started | — |
 
 ## Customer Milestones (fora do core do produto)
 
