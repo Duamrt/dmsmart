@@ -4,35 +4,91 @@
 
 async function initApp() {
   try {
-    // 1. Carregar configuração da instalação
     await ConfigLoader.load();
     const config = ConfigLoader.get();
 
-    // 2. Inicializar Zone Registry com a config
     ZoneRegistry.init(config);
 
-    // 3. Inicializar State Store com dados mock (Fase 1)
-    // Fase 2: remover initMock(), chamar HAConnection.connect() + StateStore.init(states)
-    StateStore.initMock();
-
-    // 4. Inicializar UI Renderer no container de zonas
     const zonesGrid = document.querySelector('.zones-grid');
     UIRenderer.init(zonesGrid);
 
-    // 5. Inicializar relógio
     initClock();
+    initConnectionIndicator();
 
-    // 6. Registrar Service Worker (PWA)
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js')
         .then(reg => console.log('[dmsmart] SW registrado:', reg.scope))
         .catch(err => console.warn('[dmsmart] SW falhou:', err));
     }
 
+    await connectToHA(config);
+
     console.log(`[dmsmart] ${config.installation.name} iniciado`);
   } catch (err) {
     console.error('[dmsmart] Falha na inicialização:', err);
   }
+}
+
+async function connectToHA(config) {
+  const haCfg = config.homeAssistant;
+  if (!haCfg) {
+    console.warn('[dmsmart] homeAssistant ausente no config.json — modo mock');
+    StateStore.initMock();
+    return;
+  }
+
+  const tokenKey = haCfg.tokenKey || 'dmsmart_ha_token';
+
+  const watched = new Set(ZoneRegistry.allEntityIds());
+  HAClient.onStateChanged((entityId, newState) => {
+    if (!watched.has(entityId)) return;
+    StateStore.update(entityId, newState);
+  });
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    let token = (localStorage.getItem(tokenKey) || '').trim();
+    if (!token) {
+      const input = prompt('Cole o token de longa duração do Home Assistant:');
+      if (!input) {
+        console.warn('[dmsmart] Sem token — modo mock');
+        StateStore.initMock();
+        return;
+      }
+      token = input.trim();
+      localStorage.setItem(tokenKey, token);
+    }
+
+    HAClient.setConfig({ url: haCfg.url, token });
+
+    try {
+      await HAClient.connect();
+      console.log('[dmsmart] Conectado ao HA');
+      return;
+    } catch (err) {
+      console.error('[dmsmart] Falha ao conectar no HA:', err);
+      if (String(err.message).includes('auth_invalid')) {
+        localStorage.removeItem(tokenKey);
+        alert('Token inválido. Cole um novo token.');
+        continue;
+      }
+      return;
+    }
+  }
+}
+
+function initConnectionIndicator() {
+  const dot = document.querySelector('.connection-dot');
+  if (!dot) return;
+  HAClient.onStatusChange((status) => {
+    dot.setAttribute('data-status', status);
+    dot.title = {
+      connecting: 'Conectando...',
+      online: 'Conectado ao HA',
+      reconnecting: 'Reconectando...',
+      offline: 'Desconectado',
+      auth_invalid: 'Token inválido'
+    }[status] || status;
+  });
 }
 
 function initClock() {

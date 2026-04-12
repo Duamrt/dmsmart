@@ -3,6 +3,10 @@
     "name": "Escritório EDR",
     "version": "1.0.0"
   },
+  "homeAssistant": {
+    "url": "http://localhost:8123",
+    "tokenKey": "dmsmart_ha_token"
+  },
   "zones": [
     {
       "id": "sala_reuniao",
@@ -10,56 +14,35 @@
       "icon": "sofa",
       "order": 1,
       "devices": [
-        { "id": "luz_sala", "name": "Luz", "type": "light", "entity": "light.sala_reuniao" },
-        { "id": "ac_sala", "name": "AC", "type": "climate", "entity": "climate.sala_reuniao" },
-        { "id": "tv_sala", "name": "TV", "type": "media", "entity": "media_player.tv_sala" }
+        { "id": "luz_sala", "name": "Luz", "type": "light", "entity": "input_boolean.dmsmart_luz_sala" }
       ]
     },
     {
-      "id": "escritorio",
-      "name": "Escritório",
-      "icon": "monitor",
+      "id": "suite",
+      "name": "Suíte",
+      "icon": "bed",
       "order": 2,
       "devices": [
-        { "id": "luz_esc", "name": "Luz", "type": "light", "entity": "light.escritorio" },
-        { "id": "ac_esc", "name": "AC", "type": "climate", "entity": "climate.escritorio" }
-      ]
-    },
-    {
-      "id": "recepcao",
-      "name": "Recepção",
-      "icon": "sofa",
-      "order": 3,
-      "devices": [
-        { "id": "luz_rec", "name": "Luz", "type": "light", "entity": "light.recepcao" }
-      ]
-    },
-    {
-      "id": "banheiro",
-      "name": "Banheiro",
-      "icon": "shower",
-      "order": 4,
-      "devices": [
-        { "id": "luz_bwc", "name": "Luz", "type": "light", "entity": "light.banheiro" }
+        { "id": "luz_suite", "name": "Luz", "type": "light", "entity": "input_boolean.dmsmart_luz_suite" },
+        { "id": "ac_suite", "name": "AC", "type": "climate", "entity": "input_boolean.dmsmart_ar_suite" }
       ]
     },
     {
       "id": "cozinha",
       "name": "Cozinha",
       "icon": "kitchen",
-      "order": 5,
+      "order": 3,
       "devices": [
-        { "id": "luz_coz", "name": "Luz", "type": "light", "entity": "light.cozinha" }
+        { "id": "luz_coz", "name": "Luz", "type": "light", "entity": "input_boolean.dmsmart_luz_cozinha" }
       ]
     },
     {
       "id": "garagem",
       "name": "Garagem",
       "icon": "car",
-      "order": 6,
+      "order": 4,
       "devices": [
-        { "id": "luz_gar", "name": "Luz", "type": "light", "entity": "light.garagem" },
-        { "id": "portao", "name": "Portão", "type": "cover", "entity": "cover.portao" }
+        { "id": "portao", "name": "Portão", "type": "cover", "entity": "input_boolean.dmsmart_portao" }
       ]
     }
   ]
