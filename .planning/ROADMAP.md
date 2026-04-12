@@ -2,153 +2,175 @@
 
 ## Overview
 
-dmsmart vai da infraestrutura fisica da casa (em obra) ate um dashboard completo de automacao residencial. A Fase 0 (checklist eletrico) e a Fase 1 (frontend puro) rodam em paralelo -- a obra nao bloqueia o desenvolvimento do software. A partir da Fase 2, o dashboard conecta ao Home Assistant real e evolui: controles por dispositivo, energia solar, historico em nuvem, e polish final para tablet de parede.
+dmsmart é construído como **produto**, não como painel de uma casa específica. O roadmap entrega primeiro o shell genérico, depois a conexão HA, depois o setup in-app (wizard), depois multi-tenancy com backend, e só então entra em features de profundidade (controles avançados, energia, histórico, polish).
+
+A Casa Jupi (cliente em obra) tem um milestone paralelo de infraestrutura física documentado em `customers/casa-jupi.md` — é fora do core do produto mas urgente por conta da janela de obra.
 
 ## Phases
 
-**Phase Numbering:**
-- Integer phases (0, 1, 2...): Planned milestone work
-- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
-
-- [ ] **Phase 0: Infraestrutura Fisica** - Checklist eletrico para o eletricista antes de fechar paredes
-- [x] **Phase 1: Shell do Dashboard** - Frontend completo com dados mock, PWA instalavel, sem hardware
-- [ ] **Phase 2: Conexao Home Assistant** - WebSocket real-time, status e toggle de dispositivos reais
-- [ ] **Phase 3: Controles Avancados** - UI dedicada por tipo de dispositivo (AC, TV, som, bomba, portao)
-- [ ] **Phase 4: Energia e Solar** - Monitoramento de consumo e geracao solar em tempo real com economia em R$
-- [ ] **Phase 5: Historico e Supabase** - Persistencia de longo prazo, graficos comparativos, sync offline
-- [ ] **Phase 6: Polish e Kiosk** - Screensaver, burn-in protection, alertas e modo Boa Noite
+- [x] **Phase 1: Shell do Dashboard** — frontend genérico que renderiza zonas via config, PWA instalável, mock data
+- [~] **Phase 2: Conexão Home Assistant (MVP)** — WebSocket real-time, toggle Optimistic UI, status/reconexão
+- [ ] **Phase 3: Setup Wizard e Descoberta de Entidades** — cliente conecta HA próprio e mapeia zonas/dispositivos pela UI, sem editar JSON
+- [ ] **Phase 4: Backend Multi-instalação (Supabase)** — auth por cliente, config sincronizada entre dispositivos, RLS
+- [ ] **Phase 5: Controles por Tipo de Entidade** — UIs dedicadas por tipo (light, climate, media_player, cover, fan, switch), confirmação para ações críticas
+- [ ] **Phase 6: Energia e Solar** — mapeamento genérico de sensores (consumo/geração), saldo, economia em R$, gráficos intraday
+- [ ] **Phase 7: Histórico e Analytics** — snapshots no Supabase, comparativos mensais, ranking de zonas, sync offline
+- [ ] **Phase 8: Polish e Modo Kiosk** — screensaver, burn-in protection, cenas (Boa Noite), alertas
 
 ## Phase Details
 
-### Phase 0: Infraestrutura Fisica
-**Goal**: Garantir que toda a infraestrutura eletrica e de dados da casa esteja preparada para automacao antes de fechar as paredes
-**Depends on**: Nothing (urgente -- casa em obra)
-**Requirements**: INFRA-01, INFRA-02, INFRA-03, INFRA-04, INFRA-05, INFRA-06, INFRA-07
-**Success Criteria** (what must be TRUE):
-  1. Projeto eletrico revisado tem neutro em todos os pontos de interruptor
-  2. Eletrodutos dimensionados (25mm+ simples, 32mm+ longos) com forca e dados separados
-  3. Posicao do rack de automacao definida em local central e ventilado com circuito exclusivo
-  4. Pelo menos 1 eletroduto de reserva vazio entre rack e cada comodo
-  5. Caixa embutida para tablet marcada na parede da sala
-**Plans**: TBD
-
-Plans:
-- [ ] 00-01: Revisao do projeto eletrico com eletricista
-- [ ] 00-02: Posicionamento do rack e infraestrutura de rede
-
-### Phase 1: Shell do Dashboard
-**Goal**: Dashboard visual completo das zonas configuradas (N zonas via config.json) funcionando como PWA, com dados mock, pronto para receber dados reais
-**Depends on**: Nothing (roda em paralelo com Fase 0)
-**Requirements**: DASH-01, DASH-02, DASH-03, DASH-04, DASH-05, DASH-06, DASH-07, DASH-08
-**Success Criteria** (what must be TRUE):
-  1. Painel exibe cards das zonas configuradas (N zonas via config.json) agrupados por ambiente com icones e status mock
-  2. Layout funciona em tablet 10" (landscape) e celular (portrait) sem scroll horizontal
-  3. Modo escuro ativo por padrao com fonte minima 18px no tablet
-  4. PWA instalavel no celular e tablet (manifest + Service Worker + cache offline)
-  5. Nenhum logo, nome ou branding de terceiros visivel na interface
-**Plans**: TBD
-**UI hint**: yes
-
-Plans:
-- [x] 01-01: Estrutura HTML e layout responsivo das 12 zonas
+### Phase 1: Shell do Dashboard ✅
+**Goal:** Dashboard visual genérico que renderiza N zonas via config, funcional como PWA, sem depender de hardware nenhum.
+**Status:** Completa em 2026-04-12
+**Depends on:** —
+**Delivered:**
+1. Cards das zonas renderizados via `config.json` (qualquer instalação é suportada)
+2. Layout responsivo para tablet 10" e mobile
+3. Dark mode, tipografia ≥ 18px no tablet
+4. PWA instalável (manifest + SW + cache offline)
+5. Zero branding de terceiros
+**Plans:**
+- [x] 01-01: Estrutura HTML e layout responsivo
 - [x] 01-02: Config, Zone Registry, State Store, UI Renderer
 - [x] 01-03: PWA manifest, Service Worker e cache offline
 
-### Phase 2: Conexao Home Assistant
-**Goal**: Dashboard conecta ao Home Assistant via WebSocket e controla dispositivos reais com feedback instantaneo
-**Depends on**: Phase 1 (shell precisa existir), Home Assistant rodando no Pi com pelo menos 1 dispositivo
-**Requirements**: HA-01, HA-02, HA-03, HA-04, HA-05, HA-06
-**Success Criteria** (what must be TRUE):
-  1. Dashboard conecta ao HA via WebSocket e exibe status real de todos os dispositivos
-  2. Toggle liga/desliga de qualquer dispositivo reflete no HA em menos de 300ms (Optimistic UI)
-  3. Indicador visual mostra se conexao com HA esta online, offline ou reconectando
-  4. Reconexao automatica funciona apos queda de rede (backoff exponencial)
-  5. Estado do dashboard nunca dessincroniza do estado real do HA
-**Plans**: TBD
+### Phase 2: Conexão Home Assistant (MVP)
+**Goal:** Uma instalação consegue conectar ao Home Assistant via WebSocket e controlar dispositivos reais com feedback instantâneo.
+**Status:** Em andamento — escritório EDR é a primeira instalação conectada
+**Depends on:** Phase 1
+**Success Criteria:**
+1. Cliente fornece URL do HA e token, app conecta via WebSocket ✅
+2. Toggle de qualquer dispositivo reflete no HA em < 300ms (Optimistic UI) ✅
+3. Indicador visual de estado (online/offline/reconectando/auth_invalid) ✅
+4. Reconexão automática com backoff exponencial ✅
+5. Dashboard nunca dessincroniza do estado real do HA ✅
+6. Cliques individuais por dispositivo E clique no conjunto da zona ✅
+**Plans:**
+- [x] 02-01: Conexão WebSocket e state store reativo
+- [x] 02-02: Toggle com Optimistic UI e indicador de conexão
+- [ ] 02-03: Fechar Fase 2 — commit final, branch merged, tag `phase-2-done`
+**Notas:**
+- Durante Phase 2 o `config.json` ainda é hardcoded. Isso é **aceitável** como MVP — o setup wizard da Phase 3 remove essa limitação.
+- Bugs resolvidos: listener accumulation (v04121420), clique individual por badge (v04121510)
 
-Plans:
-- [ ] 02-01: Conexao WebSocket e state store reativo
-- [ ] 02-02: Toggle de dispositivos com Optimistic UI e indicador de conexao
+### Phase 3: Setup Wizard e Descoberta de Entidades
+**Goal:** Qualquer cliente com HA consegue criar uma instalação nova, conectar, e mapear zonas/dispositivos pela UI do próprio dmsmart — sem tocar em arquivo nenhum.
+**Depends on:** Phase 2
+**Success Criteria:**
+1. Primeira abertura do app mostra tela de boas-vindas e botão "Adicionar instalação"
+2. Wizard pede URL do HA e token (com link de documentação de como gerar)
+3. App valida conexão, lista automaticamente todas as entidades do HA (`get_states`)
+4. UI permite criar zonas (nome, ícone) e arrastar entidades dentro das zonas
+5. Cliente pode ter múltiplas instalações no mesmo dispositivo e alternar entre elas
+6. Config de zonas é persistido em localStorage (ainda sem cloud — isso vem na Phase 4)
+7. Remover instalação limpa token e config local
+**UI hint:** yes (tela nova, flow com múltiplos passos)
+**Plans:**
+- [ ] 03-01: Modelo de dados de instalação + storage local
+- [ ] 03-02: Wizard de conexão (URL, token, validação)
+- [ ] 03-03: Tela de descoberta de entidades e criação de zonas
+- [ ] 03-04: Seletor de instalação no header + gerenciamento
 
-### Phase 3: Controles Avancados
-**Goal**: Cada tipo de dispositivo tem interface de controle dedicada alem do simples liga/desliga
-**Depends on**: Phase 2 (conexao HA funcionando)
-**Requirements**: CTRL-01, CTRL-02, CTRL-03, CTRL-04, CTRL-05, CTRL-06, CTRL-07
-**Success Criteria** (what must be TRUE):
-  1. AC pode ser ligado/desligado com ajuste de temperatura e modo (frio/calor/auto)
-  2. TV e som podem ser controlados (volume, entrada/fonte) sem sair do dashboard
-  3. Bomba d'agua e portao exigem confirmacao antes de acionar (acoes criticas)
-  4. Portao exibe indicador visual do estado atual (aberto/fechado)
-  5. Iluminacao das 12 zonas funciona com toggle individual por zona
-**Plans**: TBD
-**UI hint**: yes
+### Phase 4: Backend Multi-instalação (Supabase)
+**Goal:** Cliente cria uma conta dmsmart e as instalações dele sincronizam entre todos os dispositivos (tablet da parede, celular, notebook).
+**Depends on:** Phase 3
+**Success Criteria:**
+1. Signup/login via Supabase Auth (email + senha)
+2. Schema: `users → installations → zones → devices`, com RLS por `user_id`
+3. Criação/edição de instalação no wizard salva no Supabase
+4. Abrir o dmsmart em outro dispositivo (logado na mesma conta) mostra as mesmas instalações
+5. Token HA continua **local por dispositivo** (nunca sobe pro Supabase) — cada device pareia uma vez
+6. Logout limpa state local
+7. RLS auditada: um cliente jamais vê instalação de outro
+**Plans:**
+- [ ] 04-01: Schema Supabase + policies RLS
+- [ ] 04-02: Signup/login UI + integração auth
+- [ ] 04-03: Sync de zonas e devices (cloud ← → local)
+- [ ] 04-04: Pareamento de dispositivo com token HA (fluxo por device)
 
-Plans:
-- [ ] 03-01: ControlFactory por tipo de dispositivo (light, climate, media)
-- [ ] 03-02: Controles criticos (bomba, portao) com confirmacao e estado
+### Phase 5: Controles por Tipo de Entidade
+**Goal:** Cada tipo de entidade nativa do HA tem uma interface dedicada no card/detalhe — não só toggle binário.
+**Depends on:** Phase 3 (entidades vêm do wizard, não mais do JSON)
+**Success Criteria:**
+1. `light` com dimmer e (quando suportado) cor/temperatura
+2. `climate` com ajuste de temperatura e modo (frio/calor/auto)
+3. `media_player` com play/pause, volume, fonte
+4. `cover` com aberto/fechado e indicador visual de estado
+5. `fan` com velocidades
+6. `switch` com toggle simples
+7. Ações marcadas como críticas pelo cliente (bomba, portão) pedem confirmação
+**UI hint:** yes
+**Plans:**
+- [ ] 05-01: ControlFactory por domínio de entidade
+- [ ] 05-02: Modal de detalhe por card com controles específicos
+- [ ] 05-03: Marcação de ação crítica no wizard + UI de confirmação
 
-### Phase 4: Energia e Solar
-**Goal**: Monitorar consumo e geracao solar em tempo real com saldo visual e economia em reais
-**Depends on**: Phase 2 (conexao HA), inversor solar e sensores de energia instalados e configurados no HA
-**Requirements**: ENRG-01, ENRG-02, ENRG-03, ENRG-04, ENRG-05, ENRG-06, ENRG-07
-**Success Criteria** (what must be TRUE):
-  1. Consumo instantaneo da rede (W) e geracao solar (W) visiveis no dashboard
-  2. Gauge visual indica se a casa esta exportando ou importando energia da rede
-  3. Acumulados do dia (kWh consumido e kWh gerado) e economia em R$ visiveis
-  4. Bandeira tarifaria ANEEL atual exibida no painel
-  5. Grafico intraday mostra consumo vs geracao das ultimas 24h
-**Plans**: TBD
-**UI hint**: yes
+### Phase 6: Energia e Solar
+**Goal:** Cliente que tem sensores de energia vê consumo e geração solar em tempo real com saldo e economia em reais.
+**Depends on:** Phase 5
+**Success Criteria:**
+1. Cliente marca no wizard quais entidades são "consumo rede", "geração solar", "bateria" (opcional)
+2. Consumo instantâneo (W) e geração solar (W) visíveis no dashboard
+3. Gauge indica exportando vs importando
+4. Acumulados do dia (kWh) + economia em R$ (tarifa configurável por cliente)
+5. Bandeira tarifária ANEEL visível (para clientes BR)
+6. Gráfico intraday (última 24h) consumo vs geração
+**UI hint:** yes
+**Plans:**
+- [ ] 06-01: Mapeamento de sensores de energia no wizard
+- [ ] 06-02: Dashboard de energia real-time (gauge, totais, economia)
+- [ ] 06-03: Gráfico intraday
 
-Plans:
-- [ ] 04-01: Sensores de energia e saldo solar em tempo real
-- [ ] 04-02: Graficos intraday e calculo de economia em R$
+### Phase 7: Histórico e Analytics
+**Goal:** Dados de energia e uso são persistidos no Supabase para análise de longo prazo.
+**Depends on:** Phase 6
+**Success Criteria:**
+1. Snapshots periódicos de sensores salvos no Supabase (por instalação)
+2. Gráfico de consumo mensal comparando com mês anterior
+3. Ranking de zonas por consumo
+4. Economia acumulada mensal em R$
+5. Queue offline com IndexedDB — sincroniza quando a internet volta
+**Plans:**
+- [ ] 07-01: Schema de telemetria + ingestion
+- [ ] 07-02: Gráficos históricos e ranking
+- [ ] 07-03: Queue offline
 
-### Phase 5: Historico e Supabase
-**Goal**: Persistir dados de energia no Supabase para analise de longo prazo com sync offline
-**Depends on**: Phase 4 (dados de energia existem para persistir)
-**Requirements**: HIST-01, HIST-02, HIST-03, HIST-04, HIST-05
-**Success Criteria** (what must be TRUE):
-  1. Consumo por zona e salvo no Supabase e pode ser consultado por periodo
-  2. Grafico mensal compara consumo do mes atual com mes anterior
-  3. Ranking de zonas por consumo mostra qual comodo gasta mais
-  4. Economia acumulada mensal em R$ com exportacao solar e visivel
-  5. Dados escritos offline (sem internet) sincronizam automaticamente quando conexao volta
-**Plans**: TBD
-
-Plans:
-- [ ] 05-01: Schema Supabase e sync de consumo por zona
-- [ ] 05-02: Graficos historicos e ranking por zona
-- [ ] 05-03: Queue offline com IndexedDB e sync automatico
-
-### Phase 6: Polish e Kiosk
-**Goal**: Experiencia final de tablet de parede com screensaver inteligente, protecao burn-in e atalhos do dia a dia
-**Depends on**: Phases 1-5 (core precisa funcionar no dia a dia antes de polir)
-**Requirements**: KIOSK-01, KIOSK-02, KIOSK-03, KIOSK-04, KIOSK-05, KIOSK-06
-**Success Criteria** (what must be TRUE):
-  1. Screensaver ativa apos 5 min idle exibindo relogio, clima e saldo solar
-  2. Tela nao sofre burn-in (micro-deslocamento ativo no screensaver)
-  3. Brilho da tela reduz automaticamente a noite
-  4. Qualquer toque acorda o tablet e mostra o dashboard
-  5. Modo "Boa Noite" apaga luzes e desliga AC com 1 toque
-**Plans**: TBD
-**UI hint**: yes
-
-Plans:
-- [ ] 06-01: Screensaver com burn-in protection e brilho automatico
-- [ ] 06-02: Alertas de consumo anormal e modo Boa Noite
+### Phase 8: Polish e Modo Kiosk
+**Goal:** Experiência final para tablet fixo de parede — screensaver, proteção burn-in, atalhos e alertas inteligentes.
+**Depends on:** Phases 1-7
+**Success Criteria:**
+1. Screensaver após 5 min idle (relógio + clima + saldo solar, se configurado)
+2. Proteção burn-in (micro-deslocamento)
+3. Brilho automático por horário
+4. Wake on touch
+5. Cenas configuráveis (Boa Noite, Cinema, etc.)
+6. Alertas de consumo anormal ou dispositivo ligado há muito tempo
+**UI hint:** yes
+**Plans:**
+- [ ] 08-01: Screensaver + burn-in protection + brilho
+- [ ] 08-02: Cenas e atalhos
+- [ ] 08-03: Alertas de consumo anormal
 
 ## Progress
 
 **Execution Order:**
-Phases 0 and 1 run in parallel. After that: 2 -> 3 -> 4 -> 5 -> 6.
+Phases são sequenciais a partir da 2. Phase 1 já está concluída. Phase 2 precisa ser fechada antes de começar 3.
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 0. Infraestrutura Fisica | 0/2 | Not started | - |
 | 1. Shell do Dashboard | 3/3 | Complete | 2026-04-12 |
-| 2. Conexao Home Assistant | 0/2 | Not started | - |
-| 3. Controles Avancados | 0/2 | Not started | - |
-| 4. Energia e Solar | 0/2 | Not started | - |
-| 5. Historico e Supabase | 0/3 | Not started | - |
-| 6. Polish e Kiosk | 0/2 | Not started | - |
+| 2. Conexão HA (MVP) | 2/3 | Em andamento | — |
+| 3. Setup Wizard | 0/4 | Not started | — |
+| 4. Backend Multi-instalação | 0/4 | Not started | — |
+| 5. Controles por Entidade | 0/3 | Not started | — |
+| 6. Energia e Solar | 0/3 | Not started | — |
+| 7. Histórico e Analytics | 0/3 | Not started | — |
+| 8. Polish e Kiosk | 0/3 | Not started | — |
+
+## Customer Milestones (fora do core do produto)
+
+| Cliente | Milestone | Urgência |
+|---------|-----------|----------|
+| Casa Jupi-PE | Infraestrutura física elétrica/dados (antes de fechar paredes) | Alta — casa em fundação |
+
+Ver `.planning/customers/casa-jupi.md` para detalhes (ex-Fase 0).
