@@ -1,0 +1,159 @@
+/* =========================================
+   dmsmart — Grid de Zonas e Cards
+   ========================================= */
+
+/* =========================================
+   Grid responsivo
+   ========================================= */
+
+.zones-grid {
+  display: grid;
+  padding: 24px;
+  gap: 16px;
+  /* Tablet landscape: 4 colunas */
+  grid-template-columns: repeat(4, 1fr);
+}
+
+/* Tablet portrait */
+@media (max-width: 1023px) and (min-width: 768px) {
+  .zones-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 767px) {
+  .zones-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 12px;
+  }
+}
+
+/* =========================================
+   Zone Card
+   ========================================= */
+
+.zone-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 20px;
+  border: 1px solid var(--border);
+  transition: background 0.2s, border-color 0.2s;
+  min-height: 140px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.zone-card:hover {
+  background: var(--bg-card-hover);
+}
+
+.zone-card:active {
+  transform: scale(0.98);
+}
+
+/* Card com dispositivo ativo: borda verde */
+.zone-card.has-active {
+  border-color: var(--accent-on);
+}
+
+/* =========================================
+   Elementos internos do card
+   ========================================= */
+
+.zone-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.zone-card.has-active .zone-icon {
+  color: var(--accent-on);
+}
+
+.zone-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.zone-name {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.zone-devices {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: auto;
+}
+
+/* =========================================
+   Badges de status
+   ========================================= */
+
+.device-status {
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1.6;
+}
+
+.device-status.on {
+  background: var(--accent-on);
+  color: #fff;
+}
+
+.device-status.off {
+  background: var(--accent-off);
+  color: var(--text-secondary);
+}
+
+/* Badge de temperatura */
+.temp-badge {
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--accent-on);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  line-height: 1.6;
+}
+
+/* =========================================
+   Responsive font adjustments
+   ========================================= */
+
+@media (max-width: 767px) {
+  .zone-name {
+    font-size: var(--font-size-base);
+  }
+
+  .zone-card {
+    padding: 14px;
+    min-height: 120px;
+  }
+
+  .zone-icon {
+    width: 36px;
+    height: 36px;
+    margin-bottom: 8px;
+  }
+}

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="Dashboard de automação residencial">
+  <title>dmsmart</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/dmsmart.css">
+  <link rel="stylesheet" href="css/zones.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-brand">
+      <span class="brand-name">dmsmart</span>
+    </div>
+    <div class="header-clock">
+      <div class="clock" aria-live="polite" aria-label="Horário atual">--:--</div>
+      <div class="date" aria-label="Data atual">---</div>
+    </div>
+    <div class="header-status">
+      <span class="connection-dot" title="Status de conexão"></span>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section class="zones-grid" aria-label="Zonas da instalação">
+      <!-- Cards renderizados pelo ui-renderer.js -->
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <span class="app-version">v2026.04.12</span>
+  </footer>
+
+  <script src="js/config-loader.js"></script>
+  <script src="js/zone-registry.js"></script>
+  <script src="js/state-store.js"></script>
+  <script src="js/ui-renderer.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
