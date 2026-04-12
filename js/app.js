@@ -1,28 +1,38 @@
 // app.js
 // Bootstrap principal do dmsmart
-// Inicializa todos os módulos na ordem correta
+// - Se não há instalação ativa, abre o Wizard
+// - Se há, inicializa zonas, clock, status e conecta no HA
+// - Controla sidebar (recolher/expandir + mobile overlay)
+
+const SIDEBAR_KEY = 'dmsmart_sidebar_collapsed';
 
 async function initApp() {
   try {
+    initSidebar();
+    initClock();
+
     await ConfigLoader.load();
     const seedConfig = ConfigLoader.get();
 
-    if (InstallationStore.isEmpty()) {
+    if (InstallationStore.isEmpty() && seedConfig && seedConfig.zones) {
       InstallationStore.seedFromConfig(seedConfig);
     }
 
+    Wizard.init(document.getElementById('wiz'));
+
     const active = ActiveInstallation.ensure();
     if (!active) {
-      console.warn('[dmsmart] Nenhuma instalação — wizard ainda não implementado (Phase 03-02)');
+      renderEmptyDashboard();
+      Wizard.open();
       return;
     }
 
+    updateSidebarInstallation(active);
     ZoneRegistry.init({ zones: active.zones });
 
     const zonesGrid = document.querySelector('.zones-grid');
     UIRenderer.init(zonesGrid);
 
-    initClock();
     initConnectionIndicator();
 
     if ('serviceWorker' in navigator) {
@@ -39,6 +49,61 @@ async function initApp() {
   }
 }
 
+function initSidebar() {
+  const shell = document.getElementById('app-shell');
+  const toggle = document.getElementById('sidebar-toggle');
+  const menuBtn = document.getElementById('header-menu');
+  if (!shell) return;
+
+  if (localStorage.getItem(SIDEBAR_KEY) === '1') {
+    shell.classList.add('sidebar-collapsed');
+  }
+
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      const isMobile = window.matchMedia('(max-width: 900px)').matches;
+      if (isMobile) {
+        shell.classList.toggle('sidebar-open');
+        return;
+      }
+      const collapsed = shell.classList.toggle('sidebar-collapsed');
+      localStorage.setItem(SIDEBAR_KEY, collapsed ? '1' : '0');
+    });
+  }
+
+  if (menuBtn) {
+    menuBtn.addEventListener('click', () => {
+      shell.classList.toggle('sidebar-open');
+    });
+  }
+
+  document.querySelectorAll('[data-action="new-installation"]').forEach(el => {
+    el.addEventListener('click', () => {
+      shell.classList.remove('sidebar-open');
+      Wizard.init(document.getElementById('wiz'));
+      Wizard.open({ skipWelcome: true });
+    });
+  });
+}
+
+function updateSidebarInstallation(installation) {
+  const el = document.getElementById('sidebar-install-name');
+  if (el) el.textContent = installation && installation.name ? installation.name : '—';
+}
+
+function renderEmptyDashboard() {
+  const grid = document.querySelector('.zones-grid');
+  if (!grid) return;
+  grid.innerHTML = `
+    <div class="zones-empty" style="grid-column: 1 / -1;">
+      <div class="zones-empty-title">Nenhuma instalação ainda</div>
+      <div class="zones-empty-sub">
+        Conecte seu Home Assistant pelo wizard pra começar a controlar suas zonas.
+      </div>
+    </div>
+  `;
+}
+
 async function connectToHA(installation) {
   if (!installation || !installation.haUrl) {
     console.warn('[dmsmart] Instalação sem haUrl — modo mock');
@@ -52,49 +117,39 @@ async function connectToHA(installation) {
     StateStore.update(entityId, newState);
   });
 
-  for (let attempt = 0; attempt < 3; attempt++) {
-    let token = InstallationStore.getToken(installation.id);
-    if (!token) {
-      const input = prompt('Cole o token de longa duração do Home Assistant:');
-      if (!input) {
-        console.warn('[dmsmart] Sem token — modo mock');
-        StateStore.initMock();
-        return;
-      }
-      token = input.trim();
-      InstallationStore.setToken(installation.id, token);
-    }
+  const token = InstallationStore.getToken(installation.id);
+  if (!token) {
+    console.warn('[dmsmart] Sem token — modo mock');
+    StateStore.initMock();
+    return;
+  }
 
-    HAClient.setConfig({ url: installation.haUrl, token });
+  HAClient.setConfig({ url: installation.haUrl, token });
 
-    try {
-      await HAClient.connect();
-      console.log('[dmsmart] Conectado ao HA');
-      return;
-    } catch (err) {
-      console.error('[dmsmart] Falha ao conectar no HA:', err);
-      if (String(err.message).includes('auth_invalid')) {
-        InstallationStore.setToken(installation.id, '');
-        alert('Token inválido. Cole um novo token.');
-        continue;
-      }
-      return;
-    }
+  try {
+    await HAClient.connect();
+    console.log('[dmsmart] Conectado ao HA');
+  } catch (err) {
+    console.error('[dmsmart] Falha ao conectar no HA:', err);
+    StateStore.initMock();
   }
 }
 
 function initConnectionIndicator() {
   const dot = document.querySelector('.connection-dot');
+  const label = document.querySelector('.connection-label');
   if (!dot) return;
   HAClient.onStatusChange((status) => {
     dot.setAttribute('data-status', status);
-    dot.title = {
-      connecting: 'Conectando...',
-      online: 'Conectado ao HA',
-      reconnecting: 'Reconectando...',
-      offline: 'Desconectado',
+    const txt = {
+      connecting: 'Conectando',
+      online: 'Conectado',
+      reconnecting: 'Reconectando',
+      offline: 'Offline',
       auth_invalid: 'Token inválido'
     }[status] || status;
+    dot.title = txt;
+    if (label) label.textContent = txt;
   });
 }
 

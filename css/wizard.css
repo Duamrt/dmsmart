@@ -1,0 +1,290 @@
+/* =========================================
+   Wizard — setup / nova instalação
+   Design system Smarta (dark + azul vibrante)
+   ========================================= */
+
+.wizard-container {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--bg);
+  overflow-y: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.wizard-container.hidden {
+  display: none;
+}
+
+body.wizard-open .app-shell {
+  display: none;
+}
+
+.wiz-card {
+  width: 100%;
+  max-width: 540px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 44px 36px;
+  text-align: center;
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.02);
+  position: relative;
+  overflow: hidden;
+}
+
+.wiz-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 0%,
+    var(--primary-soft),
+    transparent 60%
+  );
+  pointer-events: none;
+}
+
+.wiz-card > * { position: relative; }
+
+.wiz-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  margin-bottom: 28px;
+  line-height: 1;
+}
+
+.wiz-logo .logo-dm { color: var(--text); }
+.wiz-logo .logo-smart { color: var(--primary); }
+.wiz-logo .logo-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--primary);
+  margin-left: 6px;
+  box-shadow: 0 0 12px var(--primary-glow);
+}
+
+.wiz-title {
+  font-size: var(--fs-xxl);
+  font-weight: 800;
+  color: var(--text);
+  margin-bottom: 10px;
+  letter-spacing: -1px;
+  line-height: 1.1;
+}
+
+.wiz-subtitle {
+  font-size: var(--fs);
+  color: var(--text-2);
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+.wiz-subtitle-error {
+  color: var(--danger);
+}
+
+.wiz-note {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  margin-bottom: 24px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.wiz-form {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 8px;
+}
+
+.wiz-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wiz-label {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.wiz-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  color: var(--text);
+  font-size: var(--fs);
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.wiz-input::placeholder {
+  color: var(--text-3);
+}
+
+.wiz-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-soft);
+  background: var(--bg-elev-2);
+}
+
+.wiz-textarea {
+  resize: vertical;
+  min-height: 110px;
+  font-family: 'Menlo', 'Consolas', monospace;
+  font-size: 13px;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.wiz-hint {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  line-height: 1.5;
+}
+
+.wiz-hint strong {
+  color: var(--text-2);
+}
+
+.wiz-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.wiz-actions-stack {
+  flex-direction: column;
+}
+
+.wiz-btn {
+  padding: 15px 26px;
+  border-radius: var(--r);
+  border: none;
+  font-size: var(--fs);
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  letter-spacing: -0.1px;
+}
+
+.wiz-btn:active {
+  transform: translateY(1px);
+}
+
+.wiz-btn-primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 8px 24px -8px var(--primary-glow);
+}
+
+.wiz-btn-primary:hover {
+  background: var(--primary-hover);
+  box-shadow: 0 12px 28px -8px var(--primary-glow);
+}
+
+.wiz-btn-ghost {
+  background: transparent;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+}
+
+.wiz-btn-ghost:hover {
+  background: var(--bg-elev-2);
+  color: var(--text);
+  border-color: var(--bg-elev-3);
+}
+
+/* =========================================
+   Status: loading / success / error
+   ========================================= */
+
+.wiz-spinner {
+  width: 56px;
+  height: 56px;
+  border: 4px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  margin: 0 auto 24px;
+  animation: wiz-spin 1s linear infinite;
+}
+
+@keyframes wiz-spin {
+  to { transform: rotate(360deg); }
+}
+
+.wiz-check {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 24px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38px;
+  font-weight: 700;
+  box-shadow: 0 0 0 8px var(--primary-soft);
+}
+
+.wiz-error-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 24px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38px;
+  font-weight: 700;
+  box-shadow: 0 0 0 8px var(--danger-soft);
+}
+
+/* =========================================
+   Mobile
+   ========================================= */
+
+@media (max-width: 540px) {
+  .wiz-card {
+    padding: 32px 22px;
+    border-radius: var(--r);
+  }
+
+  .wiz-title {
+    font-size: 28px;
+  }
+
+  .wiz-actions {
+    flex-direction: column;
+  }
+
+  .wiz-actions .wiz-btn {
+    width: 100%;
+  }
+}

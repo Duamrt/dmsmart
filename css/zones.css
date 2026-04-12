@@ -1,33 +1,23 @@
 /* =========================================
-   dmsmart — Grid de Zonas e Cards
-   ========================================= */
-
-/* =========================================
-   Grid responsivo
+   dmsmart — Zonas: grid e cards
    ========================================= */
 
 .zones-grid {
   display: grid;
-  padding: 24px;
-  gap: 16px;
-  /* Tablet landscape: 4 colunas */
-  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
 }
 
-/* Tablet portrait */
-@media (max-width: 1023px) and (min-width: 768px) {
+@media (max-width: 767px) {
   .zones-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
 }
 
-/* Mobile */
-@media (max-width: 767px) {
+@media (max-width: 420px) {
   .zones-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    padding: 12px;
+    grid-template-columns: 1fr;
   }
 }
 
@@ -36,69 +26,109 @@
    ========================================= */
 
 .zone-card {
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: 20px;
+  background: var(--bg-elev);
   border: 1px solid var(--border);
-  transition: background 0.2s, border-color 0.2s;
-  min-height: 140px;
+  border-radius: var(--r-lg);
+  padding: 22px 20px;
+  min-height: 160px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 0;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s, border-color 0.2s, transform 0.1s;
+  position: relative;
+  overflow: hidden;
+}
+
+.zone-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at top right,
+    var(--primary-soft),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
 }
 
 .zone-card:hover {
-  background: var(--bg-card-hover);
+  background: var(--bg-elev-2);
+  border-color: var(--bg-elev-3);
 }
 
 .zone-card:active {
-  transform: scale(0.98);
+  transform: scale(0.985);
 }
 
-/* Card com dispositivo ativo: borda verde */
+/* Card com dispositivo ativo: borda e glow azul */
 .zone-card.has-active {
-  border-color: var(--accent-on);
+  border-color: var(--primary);
+}
+
+.zone-card.has-active::before {
+  opacity: 1;
 }
 
 /* =========================================
-   Elementos internos do card
+   Ícone da zona
    ========================================= */
 
 .zone-icon {
-  width: 48px;
-  height: 48px;
-  margin-bottom: 12px;
-  color: var(--text-secondary);
+  width: 44px;
+  height: 44px;
+  margin-bottom: 14px;
+  color: var(--text-2);
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elev-2);
+  border-radius: 12px;
+  transition: background 0.2s, color 0.2s;
+  position: relative;
+  z-index: 1;
 }
 
 .zone-card.has-active .zone-icon {
-  color: var(--accent-on);
+  color: var(--primary);
+  background: var(--primary-soft);
 }
 
 .zone-icon svg {
-  width: 100%;
-  height: 100%;
+  width: 24px;
+  height: 24px;
 }
 
+/* =========================================
+   Textos do card
+   ========================================= */
+
 .zone-name {
-  font-size: var(--font-size-lg);
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--text-primary);
-  line-height: 1.2;
+  font-size: var(--fs-md);
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text);
+  line-height: 1.25;
+  letter-spacing: -0.2px;
+  position: relative;
+  z-index: 1;
 }
 
 .zone-devices {
-  font-size: var(--font-size-base);
-  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  color: var(--text-2);
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-top: auto;
+  padding-top: 10px;
+  position: relative;
+  z-index: 1;
 }
 
 /* =========================================
@@ -106,54 +136,61 @@
    ========================================= */
 
 .device-status {
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 99px;
-  font-size: var(--font-size-sm);
-  font-weight: 500;
+  font-size: var(--fs-xs);
+  font-weight: 600;
   white-space: nowrap;
   line-height: 1.6;
+  letter-spacing: 0.2px;
 }
 
 .device-status.on {
-  background: var(--accent-on);
+  background: var(--primary);
   color: #fff;
+  box-shadow: 0 0 0 3px var(--primary-soft);
 }
 
 .device-status.off {
-  background: var(--accent-off);
-  color: var(--text-secondary);
+  background: var(--bg-elev-3);
+  color: var(--text-2);
 }
 
-/* Badge de temperatura */
 .temp-badge {
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 99px;
-  font-size: var(--font-size-sm);
+  font-size: var(--fs-xs);
   font-weight: 600;
   white-space: nowrap;
-  background: rgba(34, 197, 94, 0.15);
-  color: var(--accent-on);
-  border: 1px solid rgba(34, 197, 94, 0.3);
+  background: var(--primary-soft);
+  color: var(--primary);
+  border: 1px solid rgba(0, 87, 255, 0.3);
   line-height: 1.6;
 }
 
 /* =========================================
-   Responsive font adjustments
+   Responsive
    ========================================= */
 
 @media (max-width: 767px) {
   .zone-name {
-    font-size: var(--font-size-base);
+    font-size: var(--fs);
   }
 
   .zone-card {
-    padding: 14px;
-    min-height: 120px;
+    padding: 16px;
+    min-height: 130px;
+    border-radius: var(--r);
   }
 
   .zone-icon {
     width: 36px;
     height: 36px;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+  }
+
+  .zone-icon svg {
+    width: 20px;
+    height: 20px;
   }
 }
