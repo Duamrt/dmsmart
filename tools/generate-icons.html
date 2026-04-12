@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>dmsmart — Gerador de Ícones PWA</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0d1117;
+      color: #f0f6fc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      padding: 40px;
+      min-height: 100vh;
+    }
+    h1 { color: #22c55e; font-size: 24px; }
+    p { color: #8b949e; font-size: 14px; }
+    .icons-row {
+      display: flex;
+      gap: 32px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .icon-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+    canvas {
+      border-radius: 20px;
+      border: 1px solid #30363d;
+    }
+    button {
+      background: #22c55e;
+      color: #0d1117;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:hover { background: #16a34a; }
+    .instructions {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px 28px;
+      max-width: 480px;
+      font-size: 14px;
+      color: #8b949e;
+      line-height: 1.6;
+    }
+    .instructions code {
+      background: #0d1117;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #22c55e;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <h1>dmsmart — Gerador de Ícones PWA</h1>
+  <p>Gera icon-192.png e icon-512.png para o manifest.json</p>
+
+  <div class="icons-row">
+    <div class="icon-block">
+      <canvas id="canvas192" width="192" height="192"></canvas>
+      <span style="color:#8b949e; font-size:13px">192 × 192</span>
+      <button onclick="download(192)">Baixar icon-192.png</button>
+    </div>
+    <div class="icon-block">
+      <canvas id="canvas512" width="512" height="512"></canvas>
+      <span style="color:#8b949e; font-size:13px">512 × 512</span>
+      <button onclick="download(512)">Baixar icon-512.png</button>
+    </div>
+  </div>
+
+  <div class="instructions">
+    <strong style="color:#f0f6fc">Como usar:</strong><br>
+    1. Clique nos botões acima para baixar os ícones<br>
+    2. Mova os arquivos para <code>dmsmart/icons/</code><br>
+    3. Verifique no Chrome: DevTools → Application → Manifest
+  </div>
+
+  <script>
+    function drawIcon(size) {
+      const canvasId = `canvas${size}`;
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      const cx = size / 2;
+      const cy = size / 2;
+      const radius = size * 0.38;
+
+      // Fundo escuro
+      ctx.fillStyle = '#0d1117';
+      ctx.fillRect(0, 0, size, size);
+
+      // Círculo verde
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fillStyle = '#22c55e';
+      ctx.fill();
+
+      // Letra "D" branca e bold
+      const fontSize = Math.round(size * 0.42);
+      ctx.font = `900 ${fontSize}px system-ui, -apple-system, sans-serif`;
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('D', cx + size * 0.015, cy + size * 0.02);
+    }
+
+    function download(size) {
+      const canvas = document.getElementById(`canvas${size}`);
+      const link = document.createElement('a');
+      link.download = `icon-${size}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    // Renderiza os dois ícones ao carregar
+    drawIcon(192);
+    drawIcon(512);
+  </script>
+</body>
+</html>
