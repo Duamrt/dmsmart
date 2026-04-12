@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>dmsmart — Checklist Eletricista</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #e8e8e8; min-height: 100vh; padding: 32px 24px; }
+  .header { text-align: center; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid #222; }
+  .header h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.5px; }
+  .header h1 span { color: #fff; }
+  .header h1 .dot { color: #666; }
+  .header p { color: #666; margin-top: 6px; font-size: 14px; }
+  .badge { display: inline-block; background: #ff4444; color: #fff; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; margin-top: 10px; text-transform: uppercase; }
+  .section { background: #111; border: 1px solid #1e1e1e; border-radius: 12px; margin-bottom: 20px; overflow: hidden; }
+  .section-header { padding: 16px 20px; border-bottom: 1px solid #1e1e1e; display: flex; align-items: center; gap: 12px; }
+  .section-num { background: #fff; color: #000; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; }
+  .section-title { font-size: 15px; font-weight: 700; }
+  .section-sub { font-size: 12px; color: #555; margin-top: 2px; }
+  .item { padding: 14px 20px; border-bottom: 1px solid #161616; display: flex; align-items: flex-start; gap: 14px; cursor: pointer; transition: background 0.15s; }
+  .item:last-child { border-bottom: none; }
+  .item:hover { background: #161616; }
+  .item.done { opacity: 0.45; }
+  .item.done .item-text { text-decoration: line-through; }
+  .checkbox { width: 20px; height: 20px; border: 2px solid #333; border-radius: 5px; flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .item.done .checkbox { background: #2a7a2a; border-color: #2a7a2a; }
+  .checkbox-check { color: #fff; font-size: 13px; display: none; }
+  .item.done .checkbox-check { display: block; }
+  .item-text { font-size: 14px; line-height: 1.5; }
+  .item-detail { font-size: 12px; color: #555; margin-top: 4px; }
+  .item-alert { font-size: 12px; color: #ff6b35; margin-top: 4px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 8px 0; }
+  th { background: #1a1a1a; padding: 8px 12px; text-align: left; font-weight: 600; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 7px 12px; border-bottom: 1px solid #161616; color: #ccc; }
+  td strong { color: #fff; }
+  .warn { background: #1a0f00; border: 1px solid #3a1f00; border-radius: 8px; padding: 12px 16px; margin: 12px 20px; }
+  .warn-title { font-size: 12px; font-weight: 700; color: #ff6b35; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .warn-item { font-size: 13px; color: #cc8844; margin-bottom: 4px; padding-left: 12px; position: relative; }
+  .warn-item::before { content: '→'; position: absolute; left: 0; color: #ff6b35; }
+  .compras { background: #0d0d0d; border: 1px solid #1e1e1e; border-radius: 12px; margin-bottom: 20px; overflow: hidden; }
+  .compras-header { padding: 16px 20px; border-bottom: 1px solid #1e1e1e; font-size: 15px; font-weight: 700; }
+  .compras table td:last-child { color: #4caf50; font-weight: 600; text-align: right; }
+  .compras table tr:last-child td { color: #fff; font-weight: 800; font-size: 14px; }
+  .progress-bar { background: #1a1a1a; border-radius: 20px; height: 6px; margin: 16px 24px 4px; overflow: hidden; }
+  .progress-fill { background: #fff; height: 100%; border-radius: 20px; width: 0%; transition: width 0.4s; }
+  .progress-text { text-align: right; font-size: 11px; color: #555; padding: 0 24px 12px; }
+  .footer { text-align: center; padding: 24px; color: #333; font-size: 12px; margin-top: 20px; }
+  @media print { body { background: #fff; color: #000; } .section { background: #f9f9f9; border-color: #ddd; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1><span>dm</span><span class="dot">·</span><span>smart</span></h1>
+  <p>Fase 0 — Infraestrutura Física</p>
+  <div class="badge">Levar para o eletricista</div>
+</div>
+
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+<div class="progress-text" id="progressText">0 de 19 itens concluídos</div>
+
+<!-- BLOCO DE ALERTAS -->
+<div class="warn">
+  <div class="warn-title">Armadilhas — Fique de olho</div>
+  <div class="warn-item">"Não precisa de neutro no interruptor" — PRECISA. Em todos. Sem exceção.</div>
+  <div class="warn-item">"Vou passar tudo no mesmo tubo" — NUNCA. Força e dados em tubos separados.</div>
+  <div class="warn-item">"A gente testa depois do reboco" — NUNCA. Testar ANTES de fechar parede.</div>
+  <div class="warn-item">Caixa de passagem abaixo de 2m pode ficar atrás de armário — verificar layout.</div>
+</div>
+
+<!-- SEÇÃO 1 -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <div>
+      <div class="section-title">Neutro e Circuitos</div>
+      <div class="section-sub">Revisar antes de puxar fiação — obra no baldrame</div>
+    </div>
+  </div>
+
+  <div class="item" onclick="toggle(this)">
+    <div class="checkbox"><span class="checkbox-check">✓</span></div>
+    <div>
+      <div class="item-text">Neutro em TODOS os pontos de interruptor — 3 fios: fase + retorno + neutro</div>
+      <div class="item-detail">Custa ~R$3/ponto agora. Custa R$200-500/ponto de reforma depois.</div>
+    </div>
+  </div>
+
+  <div class="item" onclick="toggle(this)">
+    <div class="checkbox"><span class="checkbox-check">✓</span></div>
+    <div>
+      <div class="item-text">Circuitos exclusivos com disjuntores individuais</div>
+      <div class="item-detail">
+        <table>
+          <tr><th>Circuito</th><th>Seção</th><th>Disjuntor</th></tr>
+          <tr><td>Iluminação geral</td><td>1,5mm²</td><td>10A</td></tr>
+          <tr><td>Tomadas gerais</td><td>2,5mm²</td><td>16A</td></tr>
+          <tr><td>AC Sala</td><td>2,5-4,0mm²</td><td><strong>16-20A exclusivo</strong></td></tr>
+          <tr><td>AC Suíte</td><td>2,5-4,0mm²</td><td><strong>16-20A exclusivo</strong></td></tr>
+          <tr><td>AC Quarto 1</td><td>2,5-4,0mm²</td><td><strong>16-20A exclusivo</strong></td></tr>
+          <tr><td>AC Quarto 2</td><td>2,5-4,0mm²</td><td><strong>16-20A exclusivo</strong></td></tr>
+          <tr><td>Chuveiro BWC Suíte</td><td>6,0-10mm²</td><td><strong>40-50A exclusivo</strong></td></tr>
+          <tr><td>Bomba d'água</td><td>2,5mm²</td><td><strong>16A exclusivo</strong></td></tr>
+          <tr><td>Rack automação</td><td>2,5mm²</td><td><strong>16A exclusivo</strong></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="item" onclick="toggle(this)">
+    <div class="checkbox"><span class="checkbox-check">✓</span></div>
+    <div>
+      <div class="item-text">Disjuntor DR geral no QDG (obrigatório NBR 5410)</div>
+    </div>
+  </div>
+</div>
+
+<!-- SEÇÃO 2 -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <div>
+      <div class="section-title">Eletrodutos por Zona</div>
+      <div class="section-sub">Força e dados NUNCA no mesmo tubo — mínimo 30cm de distância</div>
+    </div>
+  </div>
+
+  <div class="item" onclick="toggle(this)">
+    <div class="checkbox"><span class="checkbox-check">✓</span></div>
+    <div>
+      <div class="item-text">Eletrodutos de força dimensionados por zona</div>
+      <div class="item-detail">
+        <table>
+          <tr><th>Zona</th><th>Tubo Força</th></tr>
+          <tr><td>Sala</td><td><strong>32mm</strong></td></tr>
+          <tr><td>Suíte, Quarto 1, Quarto 2</td><td>25mm</td></tr>
+          <tr><td>Cozinha, Área de Serviço, Garagem</td><td>25mm</td></tr>
+          <tr><td>BWC Suíte, BWC 2, BWC Social</td><td>25mm</td></tr>
+          <tr><td>Closet, Quintal</td><td>20mm</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="item" onclick="toggle(this)">
+    <div class="checkbox"><span class="checkbox-check">✓</span></div>
+    <div>
+      <div class="item-text">Eletrodutos de dados separados (Cat6a)</div>
+      <div class="item-detail">
+        <table>
+          <tr><th>Zona</th><th>Tubo Dados</th><th>Drops</th></tr>
+          <tr><td>Sala</td><td><strong>32mm</strong></td><td>3 (TV + AP + reserva)</td></tr>
+          <tr><td>Suíte, Quarto 1, Quarto 2</td><td>25mm</td><td>2 cada</td></tr>
+          <tr><td>Garagem, Quintal</td><td>25mm</td><td>1 cada</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="item" onclick="toggle(this)">
+    <div class="checkbox"><span class="checkbox-check">✓</span></div>
+    <div>
+      <div class="item-text">Eletroduto de RESERVA vazio — 1 por cômodo, saindo do rack</div>
+      <div class="item-detail">Sala: 32mm | Suíte/Quartos: 25mm | BWCs/Closet/Quintal: 20mm</div>
+      <div class="item-alert">Custo: centavos. Impossível de adicionar depois sem quebrar parede.</div>
+    </div>
+  </div>
+
+  <div class="item" onclick="toggle(this)">
+    <div class="checkbox"><span class="checkbox-check">✓</span></div>
+    <div>
+      <div class="item-text">Eletroduto 25mm dedicado do rack até o QDG</div>
+      <div class="item-detail">Para sensor de energia (Shelly EM) e futuro inversor solar. Não misturar com força.</div>
+    </div>
+  </div>
+
+  <div class="item" onclick="toggle(this)">
+    <div class="checkbox"><span class="checkbox-check">✓</span></div>
+    <div>
+      <div class="item-text">Regras gerais de instalação conferidas</div>
+      <div class="item-detail">Ocupação máx. 40% da seção. Máx. 15m sem caixa de passagem. Máx. 3 curvas de 90° entre caixas. Caixas de passagem acima de 2m e em locais acessíveis.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SEÇÃO 3 -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <div>
+      <div class="section-title">Rack de Automação</div>
+      <div class="section-sub">Definir posição antes de levantar paredes internas</div>
+    </div>
+  </div>
+
+  <div class="item" onclick="toggle(this)">
+    <div class="checkbox"><span class="checkbox-check">✓</span></div>
+    <div>
+      <div class="item-text">Posição do rack definida na planta</div>
+      <div class="item-detail">Local central (equidistante de todos os cômodos) · Altura 1,2-1,5m · Ventilado (não dentro de armário) · Não atrás de móvel planejado. Candidatos: corredor central ou parede da cozinha voltada pro corredor.</div>
+    </div>
+  </div>
+
+  <div class="item" onclick="toggle(this)">
+    <div class="checkbox"><span class="checkbox-check">✓</span></div>
+    <div>
+      <div class="item-text">Infraestrutura elétrica do rack instalada</div>
+      <div class="item-detail">Circuito exclusivo 16A · Tomada dupla embutida · Espaço mín. 40x40x15cm · 2 pontos Cat6a chegando da entrada de internet</div>
+    </div>
+  </div>
+
+  <div class="item" onclick="toggle(this)">
+    <div class="checkbox"><span class="checkbox-check">✓</span></div>
+    <div>
+      <div class="item-text">Todos os eletrodutos de todos os cômodos convergem para o rack (topologia estrela)</div>
+      <div class="item-detail">Nenhum eletroduto "passante" — tudo sai do rack e vai até cada cômodo individualmente.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SEÇÃO 4 -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">4</div>
+    <div>
+      <div class="section-title">Rede Cat6a — 16 Drops</div>
+      <div class="section-sub">Testar ANTES de rebocar — sem exceção</div>
+    </div>
+  </div>
+
+  <div class="item" onclick="toggle(this)">
+    <div class="checkbox"><span class="checkbox-check">✓</span></div>
+    <div>
+      <div class="item-text">16 drops Cat6a instalados conforme tabela</div>
+      <div class="item-detail">Sala: 3 · Suíte: 2 · Quarto 1: 2 · Quarto 2: 2 · Cozinha: 1 · Garagem: 1 · Quintal: 1 · Tablet Sala: 1 · Tablet Suíte: 1 · Rack entrada: 2</div>
+    </div>
+  </div>
+
+  <div class="item" onclick="toggle(this)">
+    <div class="checkbox"><span class="checkbox-check">✓</span></div>
+    <div>
+      <div class="item-text">Cabo Cat6a U/FTP — todos etiquetados nas DUAS pontas</div>
+      <div class="item-detail">Ex: "SALA-01", "SALA-02", "SUITE-01". Raio mínimo de curvatura: 4x o diâmetro externo.</div>
+    </div>
+  </div>
+
+  <div class="item" onclick="toggle(this)">
+    <div class="checkbox"><span class="checkbox-check">✓</span></div>
+    <div>
+      <div class="item-text">Continuidade de todos os 16 cabos testada e aprovada ANTES do reboco</div>
+      <div class="item-alert">Custo de refazer depois do reboco: R$300+/cabo. Testar agora.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SEÇÃO 5 -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num">5</div>
+    <div>
+      <div class="section-title">Tablet de Parede</div>
+      <div class="section-sub">Sala obrigatório · Suíte opcional (decidir agora)</div>
+    </div>
+  </div>
+
+  <div class="item" onclick="toggle(this)">
+    <div class="checkbox"><span class="checkbox-check">✓</span></div>
+    <div>
+      <div class="item-text">Nicho da Sala embutido e preparado</div>
+      <div class="item-detail">Abertura 28x20cm · Profundidade 5cm · Altura 1,35m do chão · Caixa 4x4 atrás com tomada 127V + Cat6a · Eletroduto dados 25mm até rack · Eletroduto força 20mm até circuito</div>
+    </div>
+  </div>
+
+  <div class="item" onclick="toggle(this)">
+    <div class="checkbox"><span class="checkbox-check">✓</span></div>
+    <div>
+      <div class="item-text">Nicho da Suíte embutido e preparado (mesmas specs)</div>
+      <div class="item-detail">Mesmo que não instale tablet agora — deixar nicho + eletrodutos + tomada + Cat6a prontos. Custo agora: ~R$50. Reforma depois: R$400-600.</div>
+    </div>
+  </div>
+
+  <div class="item" onclick="toggle(this)">
+    <div class="checkbox"><span class="checkbox-check">✓</span></div>
+    <div>
+      <div class="item-text">Posição dos painéis definida (sem sol direto, sem reflexo, sem móvel na frente)</div>
+      <div class="item-detail">Sala: parede mais visível ao entrar, longe de janela · Suíte: próximo da porta ou cabeceira</div>
+    </div>
+  </div>
+</div>
+
+<!-- LISTA DE COMPRAS -->
+<div class="compras">
+  <div class="compras-header">Lista de Compras — Só o que vai pra dentro da parede</div>
+  <table>
+    <tr><th>Item</th><th>Qtd</th><th>Estimativa</th></tr>
+    <tr><td>Eletroduto corrugado 20mm</td><td>~50m</td><td>R$80-120</td></tr>
+    <tr><td>Eletroduto corrugado 25mm</td><td>~150m</td><td>R$300-450</td></tr>
+    <tr><td>Eletroduto corrugado 32mm</td><td>~30m</td><td>R$80-120</td></tr>
+    <tr><td>Cabo Cat6a U/FTP</td><td>~250m</td><td>R$600-900</td></tr>
+    <tr><td>Caixas de passagem 4x4</td><td>~20 un</td><td>R$100-150</td></tr>
+    <tr><td>Caixa embutida tablet (x2)</td><td>2 un</td><td>R$60-100</td></tr>
+    <tr><td>Testador de cabo de rede</td><td>1 un</td><td>R$50-100</td></tr>
+    <tr><td>Etiquetas para cabos</td><td>1 rolo</td><td>R$15-20</td></tr>
+    <tr><td><strong>Total estimado</strong></td><td></td><td><strong>R$1.300-1.900</strong></td></tr>
+  </table>
+</div>
+
+<div class="footer">
+  dmsmart · Fase 0 · 2026-04-12<br>
+  Hardware (Pi, Zigbee, tablets, interruptores) compra depois — são itens que plugam na tomada.
+</div>
+
+<script>
+function toggle(el) {
+  el.classList.toggle('done');
+  updateProgress();
+  saveState();
+}
+
+function updateProgress() {
+  const items = document.querySelectorAll('.item');
+  const done = document.querySelectorAll('.item.done').length;
+  const pct = Math.round((done / items.length) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = done + ' de ' + items.length + ' itens concluídos (' + pct + '%)';
+}
+
+function saveState() {
+  const states = [...document.querySelectorAll('.item')].map(el => el.classList.contains('done'));
+  localStorage.setItem('dmsmart-fase0', JSON.stringify(states));
+}
+
+function loadState() {
+  const saved = localStorage.getItem('dmsmart-fase0');
+  if (!saved) return;
+  const states = JSON.parse(saved);
+  document.querySelectorAll('.item').forEach((el, i) => {
+    if (states[i]) el.classList.add('done');
+  });
+  updateProgress();
+}
+
+loadState();
+updateProgress();
+</script>
+</body>
+</html>

@@ -2,107 +2,65 @@
 
 ## What This Is
 
-dmsmart é o sistema de automação residencial da casa do Duam — um dashboard 100% personalizado que controla e monitora todos os dispositivos da casa (iluminação, AC, TV, som, bomba d'água, portão) e exibe consumo de energia em tempo real incluindo geração solar. O painel fica fixo na parede e é acessível por celular ou tablet de qualquer ambiente. Nenhuma tela de terceiros é visível ao usuário — tudo é interface própria.
+dmsmart é um **produto de automação residencial** — um dashboard white-label que roda sobre Home Assistant. Qualquer cliente com HA cria uma conta, conecta a instância dele, mapeia zonas/dispositivos por uma interface própria e passa a usar o dmsmart como a única UI da casa. Home Assistant fica invisível ao usuário final: é infraestrutura, não tela.
+
+O valor é entregue como software: um cliente não precisa editar JSON, tocar em código, ou entender HA pra usar. Abre, loga, conecta, mapeia, usa.
 
 ## Core Value
 
-Controlar qualquer dispositivo da casa e ver o consumo de energia em tempo real, de qualquer lugar, sem depender de app de terceiro.
+**Produto:** qualquer pessoa com Home Assistant transforma a casa dela num dashboard próprio e controlável sem depender da UI do HA nem de app de terceiro.
 
-## Requirements
+**Para cada cliente:** controlar qualquer dispositivo da casa e ver consumo de energia em tempo real, de qualquer lugar, em uma interface que não expõe nada do Home Assistant.
 
-### Validated
+## Clientes e Instalações
 
-(None yet — ship to validate)
+dmsmart é multi-instalação desde o dia um do redesign. Uma **instalação** é um par (cliente, Home Assistant) com zonas e dispositivos próprios.
 
-### Active
+**Instalações de referência (usadas para teste real do produto):**
 
-**Dashboard & Monitoramento**
-- [ ] Painel principal com status em tempo real de todos os dispositivos
-- [ ] Consumo de energia em tempo real (rede elétrica + geração solar)
-- [ ] Gráficos de consumo por zona e por período
-- [ ] Indicador de saldo solar (gerando mais ou consumindo mais que gera)
+| Cliente | Instalação | Estado |
+|---------|-----------|--------|
+| EDR Engenharia | Escritório EDR | Primeiro ambiente real — HA em Docker local, AC físico, zonas mock via `input_boolean` |
+| Duam | Casa Jupi-PE | Em obra (fundação) — Pi 5 + Zigbee previstos para 2026 |
 
-**Controle de Dispositivos**
-- [ ] Ligar/desligar iluminação por zona (12 zonas mapeadas)
-- [ ] Controlar ar-condicionado (ligar, desligar, temperatura)
-- [ ] Controlar TV (ligar, desligar, volume, entrada)
-- [ ] Controlar sistema de som
-- [ ] Acionar/desligar bomba d'água
-- [ ] Controlar portão da garagem
+A Casa Jupi tem uma fase específica de infraestrutura física (obra elétrica). Ela pertence ao cliente, não ao produto — está documentada em `.planning/customers/casa-jupi.md`.
 
-**Acesso & Interface**
-- [ ] Painel fixo na parede (tablet em modo kiosk)
-- [ ] Acesso pelo celular via rede local (PWA)
-- [ ] Interface 100% própria — zero branding de terceiros visível
-- [ ] Responsivo para tablet e celular
+## Constraints (produto)
 
-**Infraestrutura**
-- [ ] Integração com Home Assistant via API REST
-- [ ] Supabase para histórico de consumo e logs
-- [ ] Funciona offline na rede local (sem depender de internet)
-
-### Out of Scope
-
-- Integração com Alexa/Google Home como interface principal — o dmsmart é a interface, assistentes de voz são periféricos opcionais
-- App nativo (iOS/Android) — PWA resolve com menos custo
-- Automações complexas (cenas, horários) na fase inicial — Home Assistant já oferece isso nativamente
-- Câmeras/segurança — escopo separado futuro
-
-## Context
-
-**Casa:** Residência do Duam em Jupi-PE, em construção. Fase atual: concretagem das sapatas e arranques. Próxima semana: baldrame. Timing ideal para embutir toda a infraestrutura (conduits, cabeamento estruturado, tomadas estratégicas) antes de fechar as paredes.
-
-**Planta baixa mapeada — 12 zonas:**
-| Zona | Dispositivos planejados |
-|------|------------------------|
-| Sala | Luz, AC, TV, som |
-| Suíte | Luz, AC, som |
-| Closet | Luz |
-| BWC Suíte | Luz, chuveiro inteligente |
-| Quarto 1 | Luz, AC |
-| Quarto 2 | Luz, AC |
-| BWC 2 | Luz |
-| BWC Social | Luz |
-| Cozinha | Luz |
-| Área de Serviço | Luz, bomba d'água |
-| Garagem | Luz, portão |
-| Quintal/Externo | Luz externa |
-
-**Arquitetura híbrida decidida:**
-- **Home Assistant** (Raspberry Pi): cérebro dos dispositivos físicos. Fala com sensores, relés, AC via IR, painéis solares. Nunca exposto ao usuário.
-- **dmsmart** (HTML + JS + Supabase): painel visual 100% customizado. Consome Home Assistant via API REST. É o que o Duam vê e usa.
-
-**Energia solar:** planejada para instalação junto com a obra. Objetivo: monitorar geração vs consumo em tempo real e identificar onde está o maior custo.
-
-**Ecossistema DM:** dmsmart é parte da família DM.Stack mas roda como projeto independente (`~/dmsmart/`, repo próprio). Pode futuramente se integrar ao DM.Stack como mais um produto monitorado.
-
-## Constraints
-
-- **Stack:** HTML + CSS + JS vanilla + Supabase — consistência com todos os outros projetos do Duam
-- **Plataforma IoT:** Home Assistant como middleware obrigatório — evita reinventar protocolos de dispositivos
-- **Operação offline:** dashboard deve funcionar na rede local mesmo sem internet — casa é a infraestrutura crítica
-- **Hardware:** Raspberry Pi 4 ou 5 como servidor local — custo acessível, roda Home Assistant e serve o frontend
-- **Protocolo dispositivos:** Zigbee preferencial (mais estável que WiFi para IoT) + WiFi para dispositivos que não têm Zigbee
+- **Stack:** HTML + CSS + JS vanilla + Supabase — consistência com os outros produtos do Duam
+- **Dependência obrigatória:** o cliente precisa ter Home Assistant rodando (qualquer lugar — Pi, Docker, HAOS, nuvem desde que exposto com token)
+- **Operação offline:** uma vez carregado e configurado, o dashboard precisa operar na rede local do cliente mesmo sem internet
+- **Multi-instalação desde o core:** nada de hardcode de entity_id, nome de zona, ou layout de cliente específico no código-fonte
+- **Token HA nunca em plaintext no servidor:** cada cliente guarda seu token localmente (localStorage criptografado ou equivalente)
 
 ## Key Decisions
 
 | Decisão | Racional | Resultado |
 |---------|----------|-----------|
-| Arquitetura híbrida (HA + dashboard custom) | Home Assistant já resolve protocolos IoT; dmsmart foca na experiência visual | — Pendente |
-| Supabase para histórico | Consistência com stack existente; histórico de consumo não precisa de tempo real puro | — Pendente |
-| PWA em vez de app nativo | Zero custo de loja, funciona em qualquer dispositivo na rede local | — Pendente |
-| Zigbee como protocolo principal | Mais estável que WiFi para dezenas de dispositivos; sem dependência de nuvem do fabricante | — Pendente |
-| Repo independente (`~/dmsmart/`) | Evita conflito com .planning do dmstack; projeto tem ciclo de vida próprio | — Pendente |
+| dmsmart é produto, não painel da casa do Duam | Casa Jupi e Escritório EDR viraram clientes de referência — o produto serve qualquer usuário com HA | Definido 2026-04-12 |
+| Arquitetura híbrida (HA + dashboard custom) | HA resolve protocolos IoT; dmsmart foca UX e experiência multi-instalação | Validando |
+| Supabase como backend multi-tenant | Mesma stack do resto dos produtos; suporta auth, RLS, sync entre dispositivos do cliente | Pendente (Fase 4) |
+| Setup wizard in-app em vez de `config.json` editável | Produto não pode exigir editor de texto do cliente final | Definido 2026-04-12 |
+| Zigbee como protocolo recomendado para clientes | Mais estável que WiFi para dezenas de dispositivos; sem dependência de nuvem do fabricante | Recomendação |
+| PWA em vez de app nativo | Zero custo de loja, funciona em qualquer dispositivo | Validando |
+| Repo independente (`~/dmsmart/`) | Ciclo de vida próprio, fora do dmstack | Definido |
+
+## Out of Scope (v1)
+
+- **Integração Alexa/Google como UI principal** — assistentes de voz são periféricos opcionais
+- **App nativo iOS/Android** — PWA resolve
+- **Câmeras/segurança** — escopo separado, alta complexidade
+- **Automações complexas (cenas, horários)** — HA já oferece; dmsmart pode expor como feature v2
+- **Matter como protocolo principal** — imaturo em 2025/2026
+- **Billing/monetização no core** — entra em v2 quando houver base validada
 
 ## Evolution
 
-Este documento evolui a cada transição de fase e milestone.
-
 **Após cada fase:**
-1. Requirements invalidados? → Mover para Out of Scope com motivo
-2. Requirements validados? → Mover para Validated com referência da fase
-3. Novos requirements? → Adicionar em Active
-4. Decisões a registrar? → Adicionar em Key Decisions
+1. Requisitos invalidados → mover para Out of Scope com motivo
+2. Requisitos validados → marcar com referência da fase
+3. Novos requisitos → adicionar em REQUIREMENTS.md
+4. Decisões relevantes → adicionar em Key Decisions
 
 ---
-*Last updated: 2026-04-12 após inicialização do projeto*
+*Last updated: 2026-04-12 — redesign para produto SaaS após Fase 01 concluída*

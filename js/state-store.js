@@ -30,7 +30,11 @@ const StateStore = {
   },
 
   update(entityId, newState) {
-    this._state[entityId] = newState;
+    if (!newState) {
+      delete this._state[entityId];
+    } else {
+      this._state[entityId] = newState;
+    }
     this._notify(entityId);
   },
 

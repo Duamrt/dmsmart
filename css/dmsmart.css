@@ -110,13 +110,37 @@ body {
   transition: background 0.3s;
 }
 
-.connection-dot.online {
-  background: var(--accent-on);
-  box-shadow: 0 0 6px var(--accent-on);
+.connection-dot[data-status="online"] {
+  background: #22c55e;
+  box-shadow: 0 0 6px #22c55e;
 }
 
-.connection-dot.offline {
-  background: var(--accent-alert);
+.connection-dot[data-status="connecting"],
+.connection-dot[data-status="reconnecting"] {
+  background: #facc15;
+  box-shadow: 0 0 6px #facc15;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.connection-dot[data-status="offline"],
+.connection-dot[data-status="auth_invalid"] {
+  background: #ef4444;
+  box-shadow: 0 0 6px #ef4444;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.zone-card.shake {
+  animation: shake 0.4s;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
 }
 
 /* =========================================

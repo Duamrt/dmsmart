@@ -22,6 +22,7 @@ const UIRenderer = {
     card.className = 'zone-card';
     card.id = `zone-${zone.id}`;
     this.container.appendChild(card);
+    this._bindCardControls(card, zone);
 
     const update = () => {
       const devices = zone.devices.map(d => ({
@@ -31,7 +32,6 @@ const UIRenderer = {
       const hasActive = devices.some(d => d.state && d.state.state === 'on');
       card.className = `zone-card${hasActive ? ' has-active' : ''}`;
       card.innerHTML = this._buildCardHTML(zone, devices);
-      this._bindCardControls(card, zone);
     };
 
     StateStore.subscribeZone(zone.id, update);
@@ -42,7 +42,7 @@ const UIRenderer = {
     const iconSVG = this._getIcon(zone.icon);
     const deviceBadges = devices.map(({ device, state }) => {
       const isOn = state && state.state === 'on';
-      return `<span class="device-status ${isOn ? 'on' : 'off'}">${device.name}</span>`;
+      return `<span class="device-status ${isOn ? 'on' : 'off'}" data-device-id="${device.id}">${device.name}</span>`;
     }).join('');
 
     // Para zonas com clima: exibe temperatura atual se AC ligado
@@ -59,17 +59,50 @@ const UIRenderer = {
   },
 
   _bindCardControls(card, zone) {
-    // Fase 1: toque no card faz toggle do primeiro dispositivo de luz (mock)
-    // Fase 2: será substituído por HAConnection.callService
-    card.addEventListener('click', () => {
+    card.addEventListener('click', async (ev) => {
       const zoneData = ZoneRegistry.get(zone.id);
       if (!zoneData) return;
-      const lightDevice = zoneData.devices.find(d => d.type === 'light');
-      if (!lightDevice) return;
-      const current = StateStore.get(lightDevice.entity);
-      if (!current) return;
-      const newState = { ...current, state: current.state === 'on' ? 'off' : 'on' };
-      StateStore.update(lightDevice.entity, newState);
+
+      if (HAClient.getStatus() !== 'online') {
+        card.classList.add('shake');
+        setTimeout(() => card.classList.remove('shake'), 400);
+        return;
+      }
+
+      const badge = ev.target.closest('.device-status[data-device-id]');
+      let targets;
+      if (badge) {
+        const deviceId = badge.getAttribute('data-device-id');
+        const device = zoneData.devices.find(d => d.id === deviceId);
+        if (!device) return;
+        targets = [device];
+      } else {
+        // Clique fora das badges: alterna o conjunto inteiro
+        // Se algum estiver ligado, desliga todos; caso contrário liga todos
+        const anyOn = zoneData.devices.some(d => {
+          const st = StateStore.get(d.entity);
+          return st && st.state === 'on';
+        });
+        targets = zoneData.devices.map(d => ({ ...d, _forceState: anyOn ? 'off' : 'on' }));
+      }
+
+      for (const device of targets) {
+        const entityId = device.entity;
+        const current = StateStore.get(entityId);
+        const forced = device._forceState;
+        const nextState = forced || (current && current.state === 'on' ? 'off' : 'on');
+        const optimistic = { ...(current || { entity_id: entityId, attributes: {} }), state: nextState };
+        StateStore.update(entityId, optimistic);
+
+        const domain = entityId.split('.')[0];
+        const service = forced ? (forced === 'on' ? 'turn_on' : 'turn_off') : 'toggle';
+        try {
+          await HAClient.callService(domain, service, { entity_id: entityId });
+        } catch (err) {
+          console.error('[dmsmart] toggle falhou:', err);
+          StateStore.update(entityId, current);
+        }
+      }
     });
   },
 
