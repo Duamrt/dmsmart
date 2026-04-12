@@ -1734,3 +1734,293 @@ body.modal-open { overflow: hidden; }
   .big-toggle-ring { width: 104px; height: 104px; }
   .big-toggle-ring svg { width: 40px; height: 40px; }
 }
+
+/* =========================================
+   Zone Modal (o "ambiente" — Fase 5)
+   ========================================= */
+
+.zone-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 8, 12, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: ctrlFadeIn 0.18s ease-out;
+}
+.zone-modal-overlay.hidden { display: none; }
+
+.zone-modal-card {
+  width: 100%;
+  max-width: 520px;
+  max-height: calc(100vh - 48px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #1a1e27 0%, #14171e 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 24px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 87, 255, 0.08);
+  animation: ctrlCardIn 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.zone-modal-card.shake { animation: zoneShake 0.4s; }
+
+@keyframes zoneShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.zone-modal-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 24px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.zone-head-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #6a7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+.zone-head-icon.on {
+  background: rgba(0, 87, 255, 0.18);
+  border-color: rgba(0, 87, 255, 0.5);
+  color: #6a9eff;
+  box-shadow: 0 0 40px rgba(0, 87, 255, 0.2);
+}
+.zone-head-icon svg {
+  width: 30px;
+  height: 30px;
+}
+
+.zone-head-text {
+  flex: 1;
+  min-width: 0;
+}
+.zone-head-name {
+  font-size: 22px;
+  font-weight: 600;
+  color: #f2f4f8;
+  line-height: 1.1;
+}
+.zone-head-sub {
+  font-size: 13px;
+  color: #a8afbb;
+  margin-top: 6px;
+}
+
+.zone-modal-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: #a8afbb;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.zone-modal-close:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f2f4f8;
+}
+.zone-modal-close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.zone-modal-actions {
+  padding: 16px 24px 4px;
+  flex-shrink: 0;
+}
+.zone-bulk-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  color: #c0c7d4;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.zone-bulk-btn .zone-bulk-icon {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+}
+.zone-bulk-btn .zone-bulk-icon svg {
+  width: 100%;
+  height: 100%;
+}
+.zone-bulk-btn.primary {
+  background: rgba(0, 87, 255, 0.18);
+  border-color: rgba(0, 87, 255, 0.5);
+  color: #6a9eff;
+}
+.zone-bulk-btn.primary:hover {
+  background: rgba(0, 87, 255, 0.28);
+}
+.zone-bulk-btn.danger {
+  background: rgba(255, 77, 109, 0.12);
+  border-color: rgba(255, 77, 109, 0.4);
+  color: #ff6b85;
+}
+.zone-bulk-btn.danger:hover {
+  background: rgba(255, 77, 109, 0.2);
+}
+.zone-bulk-btn:active { transform: scale(0.98); }
+
+.zone-modal-body {
+  padding: 14px 24px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.zone-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: #6a7280;
+  font-size: 14px;
+}
+
+.zone-device-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.zone-device-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.zone-device-row.on {
+  background: rgba(0, 87, 255, 0.08);
+  border-color: rgba(0, 87, 255, 0.25);
+}
+.zone-device-row.on:hover {
+  background: rgba(0, 87, 255, 0.14);
+}
+
+.zone-device-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #6a7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.zone-device-row.on .zone-device-icon {
+  background: rgba(0, 87, 255, 0.22);
+  color: #6a9eff;
+}
+.zone-device-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.zone-device-text {
+  flex: 1;
+  min-width: 0;
+}
+.zone-device-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f2f4f8;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.zone-device-status {
+  font-size: 12px;
+  color: #6a7280;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.zone-device-row.on .zone-device-status {
+  color: #8aa5d8;
+}
+
+.zone-device-toggle {
+  width: 48px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  padding: 0;
+  transition: all 0.2s;
+}
+.zone-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #6a7280;
+  transition: all 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.zone-device-toggle.on {
+  background: rgba(0, 87, 255, 0.8);
+  border-color: rgba(0, 87, 255, 1);
+  box-shadow: 0 0 14px rgba(0, 87, 255, 0.4);
+}
+.zone-device-toggle.on .zone-toggle-knob {
+  left: 22px;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+.zone-device-toggle:active .zone-toggle-knob { transform: scale(0.92); }
+
+@media (max-width: 520px) {
+  .zone-modal-overlay { padding: 0; align-items: flex-end; }
+  .zone-modal-card {
+    max-width: 100%;
+    max-height: 92vh;
+    border-radius: 22px 22px 0 0;
+  }
+  .zone-head-name { font-size: 19px; }
+  .zone-device-row { padding: 12px 14px; }
+}

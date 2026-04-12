@@ -77,48 +77,14 @@ const UIRenderer = {
   },
 
   _bindCardControls(card, zone) {
-    card.addEventListener('click', async (ev) => {
+    // Qualquer clique no card abre o modal da zona (o "ambiente")
+    // Dentro do modal o usuário faz toggle individual, desliga tudo, ou abre
+    // o ControlModal de cada device.
+    card.addEventListener('click', () => {
       const zoneData = ZoneRegistry.get(zone.id);
       if (!zoneData) return;
-
-      const badge = ev.target.closest('.device-status[data-device-id]');
-
-      // Clique em badge: abre modal de controle daquele dispositivo
-      if (badge) {
-        const deviceId = badge.getAttribute('data-device-id');
-        const device = zoneData.devices.find(d => d.id === deviceId);
-        if (!device) return;
-        if (typeof ControlModal !== 'undefined') ControlModal.open(device);
-        return;
-      }
-
-      // Clique no corpo do card: alterna o conjunto inteiro (bulk quick action)
-      if (HAClient.getStatus() !== 'online') {
-        card.classList.add('shake');
-        setTimeout(() => card.classList.remove('shake'), 400);
-        return;
-      }
-
-      const anyOn = zoneData.devices.some(d => {
-        const st = StateStore.get(d.entity);
-        return st && st.state === 'on';
-      });
-      const nextState = anyOn ? 'off' : 'on';
-      const service = anyOn ? 'turn_off' : 'turn_on';
-
-      for (const device of zoneData.devices) {
-        const entityId = device.entity;
-        const current = StateStore.get(entityId);
-        const optimistic = { ...(current || { entity_id: entityId, attributes: {} }), state: nextState };
-        StateStore.update(entityId, optimistic);
-
-        const domain = entityId.split('.')[0];
-        try {
-          await HAClient.callService(domain, service, { entity_id: entityId });
-        } catch (err) {
-          console.error('[dmsmart] toggle falhou:', err);
-          StateStore.update(entityId, current);
-        }
+      if (typeof ZoneModal !== 'undefined') {
+        ZoneModal.open(zoneData);
       }
     });
   },
