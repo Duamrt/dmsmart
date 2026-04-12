@@ -1,0 +1,90 @@
+// ui-renderer.js
+// Renderiza cards de zona no .zones-grid
+// Cada card se inscreve no StateStore para atualizar automaticamente
+
+const UIRenderer = {
+  container: null,
+
+  init(container) {
+    this.container = container;
+    this.renderAll();
+  },
+
+  renderAll() {
+    this.container.innerHTML = '';
+    for (const zone of ZoneRegistry.all()) {
+      this.renderZoneCard(zone);
+    }
+  },
+
+  renderZoneCard(zone) {
+    const card = document.createElement('div');
+    card.className = 'zone-card';
+    card.id = `zone-${zone.id}`;
+    this.container.appendChild(card);
+
+    const update = () => {
+      const devices = zone.devices.map(d => ({
+        device: d,
+        state: StateStore.get(d.entity)
+      }));
+      const hasActive = devices.some(d => d.state && d.state.state === 'on');
+      card.className = `zone-card${hasActive ? ' has-active' : ''}`;
+      card.innerHTML = this._buildCardHTML(zone, devices);
+      this._bindCardControls(card, zone);
+    };
+
+    StateStore.subscribeZone(zone.id, update);
+    update();
+  },
+
+  _buildCardHTML(zone, devices) {
+    const iconSVG = this._getIcon(zone.icon);
+    const deviceBadges = devices.map(({ device, state }) => {
+      const isOn = state && state.state === 'on';
+      return `<span class="device-status ${isOn ? 'on' : 'off'}">${device.name}</span>`;
+    }).join('');
+
+    // Para zonas com clima: exibe temperatura atual se AC ligado
+    const climateDevice = devices.find(d => d.device.type === 'climate');
+    const tempBadge = climateDevice && climateDevice.state && climateDevice.state.state === 'on'
+      ? `<span class="temp-badge">${climateDevice.state.attributes.temperature || '--'}°C</span>`
+      : '';
+
+    return `
+      <div class="zone-icon">${iconSVG}</div>
+      <div class="zone-name">${zone.name}</div>
+      <div class="zone-devices">${deviceBadges}${tempBadge}</div>
+    `;
+  },
+
+  _bindCardControls(card, zone) {
+    // Fase 1: toque no card faz toggle do primeiro dispositivo de luz (mock)
+    // Fase 2: será substituído por HAConnection.callService
+    card.addEventListener('click', () => {
+      const zoneData = ZoneRegistry.get(zone.id);
+      if (!zoneData) return;
+      const lightDevice = zoneData.devices.find(d => d.type === 'light');
+      if (!lightDevice) return;
+      const current = StateStore.get(lightDevice.entity);
+      if (!current) return;
+      const newState = { ...current, state: current.state === 'on' ? 'off' : 'on' };
+      StateStore.update(lightDevice.entity, newState);
+    });
+  },
+
+  _getIcon(iconName) {
+    const icons = {
+      sofa: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 9V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2"/><path d="M2 11a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4H2v-4z"/><path d="M4 15v2"/><path d="M20 15v2"/></svg>`,
+      bed: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9V4h20v5"/><path d="M2 9a2 2 0 0 0-2 2v4h24v-4a2 2 0 0 0-2-2H2z"/><path d="M2 15v4"/><path d="M22 15v4"/></svg>`,
+      kitchen: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M12 3v18"/><path d="M2 9h20"/><circle cx="6" cy="6" r="1"/><circle cx="9" cy="6" r="1"/></svg>`,
+      shower: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 16 0"/><path d="M20 12v8"/><path d="M12 12v8"/><circle cx="16" cy="16" r="1"/><circle cx="16" cy="19" r="1"/><circle cx="19" cy="17" r="1"/></svg>`,
+      car: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-5l2-5h14l2 5v5h-2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 12h14"/></svg>`,
+      tree: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L7 9h3L5 16h5l-2 6h8l-2-6h5L14 9h3z"/></svg>`,
+      hanger: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4a2 2 0 0 1 2 2c0 1-1 2-2 3L2 15h20L12 9"/><path d="M12 4a2 2 0 0 0-2 2"/></svg>`,
+      washing: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M7 7h.01M10 7h.01M13 7h.01"/></svg>`,
+      monitor: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>`
+    };
+    return icons[iconName] || icons['sofa'];
+  }
+};
