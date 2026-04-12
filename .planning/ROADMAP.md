@@ -37,11 +37,11 @@ Plans:
 - [ ] 00-02: Posicionamento do rack e infraestrutura de rede
 
 ### Phase 1: Shell do Dashboard
-**Goal**: Dashboard visual completo das 12 zonas funcionando como PWA, com dados mock, pronto para receber dados reais
+**Goal**: Dashboard visual completo das zonas configuradas (N zonas via config.json) funcionando como PWA, com dados mock, pronto para receber dados reais
 **Depends on**: Nothing (roda em paralelo com Fase 0)
 **Requirements**: DASH-01, DASH-02, DASH-03, DASH-04, DASH-05, DASH-06, DASH-07, DASH-08
 **Success Criteria** (what must be TRUE):
-  1. Painel exibe cards das 12 zonas agrupados por ambiente com icones e status mock
+  1. Painel exibe cards das zonas configuradas (N zonas via config.json) agrupados por ambiente com icones e status mock
   2. Layout funciona em tablet 10" (landscape) e celular (portrait) sem scroll horizontal
   3. Modo escuro ativo por padrao com fonte minima 18px no tablet
   4. PWA instalavel no celular e tablet (manifest + Service Worker + cache offline)

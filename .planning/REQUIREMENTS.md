@@ -17,7 +17,7 @@
 
 ### Dashboard Shell (Fase 1 — frontend puro)
 
-- [ ] **DASH-01**: Painel principal exibe cards das 12 zonas agrupados por ambiente
+- [ ] **DASH-01**: Painel principal exibe cards das zonas configuradas agrupados por ambiente (N zonas via config.json — instalação inicial: 6 zonas do escritório)
 - [ ] **DASH-02**: Cada card mostra nome do cômodo, ícone e status de todos os dispositivos da zona
 - [ ] **DASH-03**: Layout responsivo para tablet 10" (parede) e mobile (celular)
 - [ ] **DASH-04**: Modo escuro como padrão, tipografia mínima 18px no tablet
