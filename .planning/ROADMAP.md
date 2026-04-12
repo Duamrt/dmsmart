@@ -11,7 +11,7 @@ dmsmart vai da infraestrutura fisica da casa (em obra) ate um dashboard completo
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [ ] **Phase 0: Infraestrutura Fisica** - Checklist eletrico para o eletricista antes de fechar paredes
-- [ ] **Phase 1: Shell do Dashboard** - Frontend completo com dados mock, PWA instalavel, sem hardware
+- [x] **Phase 1: Shell do Dashboard** - Frontend completo com dados mock, PWA instalavel, sem hardware
 - [ ] **Phase 2: Conexao Home Assistant** - WebSocket real-time, status e toggle de dispositivos reais
 - [ ] **Phase 3: Controles Avancados** - UI dedicada por tipo de dispositivo (AC, TV, som, bomba, portao)
 - [ ] **Phase 4: Energia e Solar** - Monitoramento de consumo e geracao solar em tempo real com economia em R$
@@ -50,8 +50,9 @@ Plans:
 **UI hint**: yes
 
 Plans:
-- [ ] 01-01: Estrutura HTML e layout responsivo das 12 zonas
-- [ ] 01-02: PWA manifest, Service Worker e cache offline
+- [x] 01-01: Estrutura HTML e layout responsivo das 12 zonas
+- [x] 01-02: Config, Zone Registry, State Store, UI Renderer
+- [x] 01-03: PWA manifest, Service Worker e cache offline
 
 ### Phase 2: Conexao Home Assistant
 **Goal**: Dashboard conecta ao Home Assistant via WebSocket e controla dispositivos reais com feedback instantaneo
@@ -145,7 +146,7 @@ Phases 0 and 1 run in parallel. After that: 2 -> 3 -> 4 -> 5 -> 6.
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 0. Infraestrutura Fisica | 0/2 | Not started | - |
-| 1. Shell do Dashboard | 0/2 | Not started | - |
+| 1. Shell do Dashboard | 3/3 | Complete | 2026-04-12 |
 | 2. Conexao Home Assistant | 0/2 | Not started | - |
 | 3. Controles Avancados | 0/2 | Not started | - |
 | 4. Energia e Solar | 0/2 | Not started | - |
