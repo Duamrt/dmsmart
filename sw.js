@@ -2,7 +2,7 @@
 // Cache-first para o shell da aplicação
 // Ao fazer deploy: incrementar CACHE_NAME para invalidar cache antigo
 
-const CACHE_NAME = 'dmsmart-v04121510';
+const CACHE_NAME = 'dmsmart-v04121610';
 
 const SHELL_ASSETS = [
   '/',
@@ -13,6 +13,8 @@ const SHELL_ASSETS = [
   '/css/zones.css',
   '/js/version.js',
   '/js/config-loader.js',
+  '/js/installation-store.js',
+  '/js/active-installation.js',
   '/js/zone-registry.js',
   '/js/state-store.js',
   '/js/ha-client.js',

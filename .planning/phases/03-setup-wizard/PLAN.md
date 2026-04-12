@@ -26,7 +26,7 @@ Qualquer cliente com Home Assistant consegue, pela UI do próprio dmsmart, criar
 
 ## Plans
 
-- [ ] **03-01: Modelo de dados de instalação + storage local**
+- [x] **03-01: Modelo de dados de instalação + storage local** ✅ 2026-04-12
   - Schema JSON de uma instalação: `{ id, name, haUrl, zones[], createdAt, updatedAt }`
   - Schema de zona: `{ id, name, icon, devices[] }`
   - Schema de device: `{ id, entity, name, type, isCritical? }`
@@ -102,8 +102,8 @@ Ao final da fase, o teste de aceitação é:
 
 ## Status
 
-- [ ] Plano criado — 2026-04-12
-- [ ] 03-01 pendente
+- [x] Plano criado — 2026-04-12
+- [x] 03-01 concluído — 2026-04-12
 - [ ] 03-02 pendente
 - [ ] 03-03 pendente
 - [ ] 03-04 pendente

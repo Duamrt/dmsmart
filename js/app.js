@@ -5,9 +5,19 @@
 async function initApp() {
   try {
     await ConfigLoader.load();
-    const config = ConfigLoader.get();
+    const seedConfig = ConfigLoader.get();
 
-    ZoneRegistry.init(config);
+    if (InstallationStore.isEmpty()) {
+      InstallationStore.seedFromConfig(seedConfig);
+    }
+
+    const active = ActiveInstallation.ensure();
+    if (!active) {
+      console.warn('[dmsmart] Nenhuma instalação — wizard ainda não implementado (Phase 03-02)');
+      return;
+    }
+
+    ZoneRegistry.init({ zones: active.zones });
 
     const zonesGrid = document.querySelector('.zones-grid');
     UIRenderer.init(zonesGrid);
@@ -21,23 +31,20 @@ async function initApp() {
         .catch(err => console.warn('[dmsmart] SW falhou:', err));
     }
 
-    await connectToHA(config);
+    await connectToHA(active);
 
-    console.log(`[dmsmart] ${config.installation.name} iniciado`);
+    console.log(`[dmsmart] ${active.name} iniciado`);
   } catch (err) {
     console.error('[dmsmart] Falha na inicialização:', err);
   }
 }
 
-async function connectToHA(config) {
-  const haCfg = config.homeAssistant;
-  if (!haCfg) {
-    console.warn('[dmsmart] homeAssistant ausente no config.json — modo mock');
+async function connectToHA(installation) {
+  if (!installation || !installation.haUrl) {
+    console.warn('[dmsmart] Instalação sem haUrl — modo mock');
     StateStore.initMock();
     return;
   }
-
-  const tokenKey = haCfg.tokenKey || 'dmsmart_ha_token';
 
   const watched = new Set(ZoneRegistry.allEntityIds());
   HAClient.onStateChanged((entityId, newState) => {
@@ -46,7 +53,7 @@ async function connectToHA(config) {
   });
 
   for (let attempt = 0; attempt < 3; attempt++) {
-    let token = (localStorage.getItem(tokenKey) || '').trim();
+    let token = InstallationStore.getToken(installation.id);
     if (!token) {
       const input = prompt('Cole o token de longa duração do Home Assistant:');
       if (!input) {
@@ -55,10 +62,10 @@ async function connectToHA(config) {
         return;
       }
       token = input.trim();
-      localStorage.setItem(tokenKey, token);
+      InstallationStore.setToken(installation.id, token);
     }
 
-    HAClient.setConfig({ url: haCfg.url, token });
+    HAClient.setConfig({ url: installation.haUrl, token });
 
     try {
       await HAClient.connect();
@@ -67,7 +74,7 @@ async function connectToHA(config) {
     } catch (err) {
       console.error('[dmsmart] Falha ao conectar no HA:', err);
       if (String(err.message).includes('auth_invalid')) {
-        localStorage.removeItem(tokenKey);
+        InstallationStore.setToken(installation.id, '');
         alert('Token inválido. Cole um novo token.');
         continue;
       }
