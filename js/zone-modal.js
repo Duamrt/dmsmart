@@ -305,7 +305,7 @@ function _zoneIconFor(iconName) {
 }
 
 function _zoneIsReadOnly(type) {
-  return type === 'sensor' || type === 'camera' || type === 'binary_sensor';
+  return type === 'sensor' || type === 'camera' || type === 'binary_sensor' || type === 'alarm_control_panel';
 }
 
 function _zoneDeviceIsActive(type, state) {
@@ -313,6 +313,7 @@ function _zoneDeviceIsActive(type, state) {
   if (type === 'binary_sensor') return state.state === 'on';
   if (type === 'camera') return state.state !== 'unavailable' && state.state !== 'idle' && state.state !== 'off';
   if (type === 'sensor') return false;
+  if (type === 'alarm_control_panel') return state.state !== 'disarmed' && state.state !== 'unavailable';
   return state.state === 'on';
 }
 
@@ -326,7 +327,8 @@ function _zoneDeviceIcon(type) {
     media_player: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>',
     camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>',
     sensor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6"/><circle cx="12" cy="13" r="3"/><path d="M5 21a7 7 0 0 1 14 0"/></svg>',
-    binary_sensor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>'
+    binary_sensor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>',
+    alarm_control_panel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l7 4v6c0 4.4-3 8.5-7 10C8 20.5 5 16.4 5 12V6l7-4z"/></svg>'
   };
   return icons[type] || icons.switch;
 }
@@ -349,6 +351,10 @@ function _zoneDeviceValue(device, state) {
   if (type === 'camera') {
     if (state.state === 'unavailable') return 'Off';
     return 'Ao vivo';
+  }
+  if (type === 'alarm_control_panel') {
+    const alarmLabels = { disarmed: 'Desarmado', armed_home: 'Casa', armed_away: 'Fora', armed_night: 'Noite', armed_vacation: 'Férias', triggered: 'ALERTA!', arming: 'Armando…', pending: 'Pendente', unavailable: 'Off' };
+    return alarmLabels[state.state] || state.state;
   }
   return '';
 }
@@ -397,6 +403,9 @@ function _zoneDeviceStatus(device, state) {
   }
   if (type === 'camera') {
     return state.state === 'unavailable' ? 'Indisponível' : 'Câmera';
+  }
+  if (type === 'alarm_control_panel') {
+    return 'Alarme';
   }
 
   if (type === 'light') {
