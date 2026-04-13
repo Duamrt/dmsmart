@@ -360,10 +360,10 @@ function switchInstallation(id) {
    ========================================= */
 
 const ManageModal = {
-  state: { editingId: null, confirmRemoveId: null },
+  state: { editingId: null, confirmRemoveId: null, editingConnectionId: null },
 
   open() {
-    this.state = { editingId: null, confirmRemoveId: null };
+    this.state = { editingId: null, confirmRemoveId: null, editingConnectionId: null };
     this.render();
     const overlay = document.getElementById('manage-modal');
     if (overlay) overlay.classList.remove('hidden');
@@ -372,7 +372,7 @@ const ManageModal = {
   close() {
     const overlay = document.getElementById('manage-modal');
     if (overlay) overlay.classList.add('hidden');
-    this.state = { editingId: null, confirmRemoveId: null };
+    this.state = { editingId: null, confirmRemoveId: null, editingConnectionId: null };
   },
 
   render() {
@@ -403,6 +403,7 @@ const ManageModal = {
   _renderRow(inst, isActive) {
     const isEditing = this.state.editingId === inst.id;
     const showConfirm = this.state.confirmRemoveId === inst.id;
+    const isEditingConn = this.state.editingConnectionId === inst.id;
     const zoneCount = Array.isArray(inst.zones) ? inst.zones.length : 0;
 
     if (showConfirm) {
@@ -436,6 +437,29 @@ const ManageModal = {
       `;
     }
 
+    if (isEditingConn) {
+      const currentToken = InstallationStore.getToken(inst.id) || '';
+      return `
+        <div class="manage-row ${isActive ? 'active' : ''}" data-id="${_esc(inst.id)}">
+          <div class="manage-edit-wrap" style="flex:1;display:flex;flex-direction:column;gap:8px;">
+            <input type="url" class="manage-edit-input" id="manage-conn-url-${_esc(inst.id)}"
+              value="${_esc(inst.haUrl || '')}" placeholder="http://192.168.x.x:8123" />
+            <textarea class="manage-edit-input" id="manage-conn-token-${_esc(inst.id)}"
+              rows="3" placeholder="Token longo prazo (opcional — deixe em branco para manter o atual)"
+              style="resize:vertical;font-size:11px;">${_esc(currentToken)}</textarea>
+          </div>
+          <div class="manage-row-actions" style="align-self:flex-start;">
+            <button type="button" class="manage-icon-btn" data-manage="save-connection" data-id="${_esc(inst.id)}" title="Salvar">
+              <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>
+            </button>
+            <button type="button" class="manage-icon-btn" data-manage="cancel-connection" title="Cancelar">
+              <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
     const sub = inst.haUrl ? _shortUrl(inst.haUrl) : 'Sem URL';
     return `
       <div class="manage-row ${isActive ? 'active' : ''}" data-id="${_esc(inst.id)}">
@@ -445,6 +469,9 @@ const ManageModal = {
           ${isActive ? '<span class="manage-row-badge">Ativa</span>' : ''}
         </div>
         <div class="manage-row-actions">
+          <button type="button" class="manage-icon-btn" data-manage="edit-connection" data-id="${_esc(inst.id)}" title="Editar conexão HA">
+            <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </button>
           <button type="button" class="manage-icon-btn" data-manage="edit" data-id="${_esc(inst.id)}" title="Renomear">
             <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
           </button>
@@ -522,6 +549,40 @@ const ManageModal = {
       case 'confirm-remove':
         this._remove(id);
         break;
+      case 'edit-connection':
+        this.state.editingConnectionId = id;
+        this.state.editingId = null;
+        this.state.confirmRemoveId = null;
+        this.render();
+        setTimeout(() => {
+          const urlInput = document.getElementById(`manage-conn-url-${id}`);
+          if (urlInput) { urlInput.focus(); urlInput.select(); }
+        }, 0);
+        break;
+      case 'cancel-connection':
+        this.state.editingConnectionId = null;
+        this.render();
+        break;
+      case 'save-connection': {
+        const urlInput = document.getElementById(`manage-conn-url-${id}`);
+        const tokenInput = document.getElementById(`manage-conn-token-${id}`);
+        if (!urlInput) return;
+        const newUrl = urlInput.value.trim();
+        if (!newUrl || !/^https?:\/\//i.test(newUrl)) {
+          alert('URL inválida. Use http:// ou https://');
+          return;
+        }
+        InstallationStore.update(id, { haUrl: newUrl });
+        const newToken = tokenInput ? tokenInput.value.trim() : '';
+        if (newToken) InstallationStore.setToken(id, newToken);
+        this.state.editingConnectionId = null;
+        this.render();
+        if (id === ActiveInstallation.getId()) {
+          updateHeaderInstallation(InstallationStore.get(id));
+          window.location.reload();
+        }
+        break;
+      }
     }
   },
 
