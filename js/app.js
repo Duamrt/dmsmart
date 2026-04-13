@@ -43,6 +43,10 @@ async function initApp() {
     const zonesGrid = document.querySelector('.zones-grid');
     UIRenderer.init(zonesGrid);
 
+    if (typeof FloorPlan !== 'undefined') {
+      FloorPlan.init(document.getElementById('floorplan-section'), active.id);
+    }
+
     initHero(active);
     initConnectionIndicator();
     if (typeof ScenesPanel !== 'undefined') ScenesPanel.init(document.getElementById('scenes-section'));
@@ -132,9 +136,10 @@ function switchView(view) {
 
   // Atualiza título do header
   const titles = {
-    dashboard: ['Dashboard',  'Controle rápido das suas zonas'],
-    ambientes: ['Ambientes',  'Filtre e controle seus cômodos'],
-    cenas:     ['Cenas',      'Automações e atalhos']
+    dashboard: ['Dashboard',    'Controle rápido das suas zonas'],
+    ambientes: ['Ambientes',    'Filtre e controle seus cômodos'],
+    cenas:     ['Cenas',        'Automações e atalhos'],
+    planta:    ['Planta baixa', 'Mapa interativo dos dispositivos']
   };
   const [title, sub] = titles[view] || titles.dashboard;
   const titleEl = document.getElementById('header-title');
@@ -157,6 +162,11 @@ function switchView(view) {
   if (view === 'cenas') {
     const scenesSection = document.getElementById('scenes-section');
     if (scenesSection) scenesSection.classList.remove('hidden');
+  }
+
+  // Refresh planta se já inicializada
+  if (view === 'planta' && typeof FloorPlan !== 'undefined') {
+    FloorPlan.refresh();
   }
 }
 
