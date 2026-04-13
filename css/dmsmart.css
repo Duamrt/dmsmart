@@ -130,11 +130,43 @@ body.wizard-open {
   flex-shrink: 0;
 }
 
+.sidebar-nav-wrap {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 8px;
+}
+
+.sidebar-group + .sidebar-group {
+  border-top: 1px solid var(--border-soft);
+  margin-top: 4px;
+}
+
+.sidebar-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 4px 14px 2px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
 .sidebar-nav {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .sidebar-nav-item {
@@ -289,6 +321,7 @@ body.wizard-open {
 .app-shell.sidebar-collapsed .sidebar-brand .logo-smart,
 .app-shell.sidebar-collapsed .sidebar-brand .logo-dot,
 .app-shell.sidebar-collapsed .sidebar-nav-item span,
+.app-shell.sidebar-collapsed .sidebar-group-label,
 .app-shell.sidebar-collapsed .sidebar-install,
 .app-shell.sidebar-collapsed .sidebar-new-install span,
 .app-shell.sidebar-collapsed .sidebar-toggle span {
@@ -1000,6 +1033,16 @@ body.wizard-open {
   background: var(--border);
   margin: 6px 0;
   pointer-events: none;
+}
+
+.sidebar-nav-item--soon {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.sidebar-foot-config {
+  margin-bottom: 4px;
 }
 
 /* =========================================
