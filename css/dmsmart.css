@@ -1197,7 +1197,8 @@ body.wizard-open {
   }
 
   .app-main {
-    padding: 20px;
+    padding: 16px;
+    gap: 18px;
   }
 
   .clock {

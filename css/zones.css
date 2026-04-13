@@ -10,14 +10,8 @@
 
 @media (max-width: 767px) {
   .zones-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-}
-
-@media (max-width: 420px) {
-  .zones-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 }
 
