@@ -34,6 +34,10 @@ async function initApp() {
     if (typeof IntegratorPanel !== 'undefined') {
       IntegratorPanel.init(document.getElementById('integrator-section'));
     }
+    // Painel de energia
+    if (typeof EnergyDashboard !== 'undefined') {
+      EnergyDashboard.init(document.getElementById('energy-section'));
+    }
 
     await ConfigLoader.load();
     const seedConfig = ConfigLoader.get();
@@ -156,7 +160,8 @@ function switchView(view) {
     ambientes:   ['Ambientes',    'Filtre e controle seus cômodos'],
     cenas:       ['Cenas',        'Automações e atalhos'],
     planta:      ['Planta baixa', 'Mapa interativo dos dispositivos'],
-    integrador:  ['Painel',       'Todas as instalações gerenciadas']
+    integrador:  ['Painel',       'Todas as instalações gerenciadas'],
+    energia:     ['Energia',      'Consumo, geração solar e custos']
   };
   const [title, sub] = titles[view] || titles.dashboard;
   const titleEl = document.getElementById('header-title');
@@ -197,6 +202,10 @@ function switchView(view) {
   // Carrega painel integrador quando a view for selecionada
   if (view === 'integrador' && typeof IntegratorPanel !== 'undefined') {
     IntegratorPanel.load();
+  }
+  // Carrega painel de energia quando a view for selecionada
+  if (view === 'energia' && typeof EnergyDashboard !== 'undefined') {
+    EnergyDashboard.load();
   }
 }
 

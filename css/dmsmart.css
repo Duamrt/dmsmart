@@ -1084,6 +1084,16 @@ body.wizard-open {
 .app-main[data-view="integrador"] #scenes-section    { display: none !important; }
 .app-main[data-view="integrador"] .floorplan-section { display: none !important; }
 
+/* Painel de energia */
+.energy-section { display: none; }
+.app-main[data-view="energia"] .energy-section       { display: block; }
+.app-main[data-view="energia"] #dashboard-hero       { display: none; }
+.app-main[data-view="energia"] .zones-grid            { display: none; }
+.app-main[data-view="energia"] #zones-filter-bar      { display: none; }
+.app-main[data-view="energia"] #scenes-section        { display: none !important; }
+.app-main[data-view="energia"] .floorplan-section     { display: none !important; }
+.app-main[data-view="energia"] .integrator-section    { display: none; }
+
 /* =========================================
    Filter pills
    ========================================= */
