@@ -1325,13 +1325,6 @@ body.wizard-open {
   }
 }
 
-.app-footer {
-  text-align: center;
-  padding: 14px;
-  color: var(--text-3);
-  font-size: 12px;
-  border-top: 1px solid var(--border);
-}
 
 /* =========================================
    Placeholder / empty states
