@@ -8,6 +8,7 @@ const FloorPlan = (() => {
   let _installId = null;
   let _data = null;      // { imageData, markers: [{id, x, y, entityId, label}] }
   let _editMode = false;
+  let _compact  = false; // true = modo dashboard (sem edição, altura reduzida)
   let _pendingPos = null;
   let _unsubAll = null;
 
@@ -55,6 +56,34 @@ const FloorPlan = (() => {
     _render();
   }
 
+  // Alterna entre modo compacto (dashboard) e modo completo (planta)
+  function setCompact(compact) {
+    _compact = compact;
+    if (!_container) return;
+
+    if (compact) {
+      // No dashboard: mostra só se tem imagem, com classe fp-compact
+      if (!_data || !_data.imageData) {
+        _container.style.display = 'none';
+        return;
+      }
+      _container.style.display = '';
+      _container.classList.add('fp-compact');
+      _editMode = false;
+      _renderMap();
+    } else {
+      // Modo planta completo
+      _container.style.display = '';
+      _container.classList.remove('fp-compact');
+      _render();
+    }
+  }
+
+  // Retorna true se há imagem cadastrada
+  function hasPlan() {
+    return !!((_data || {}).imageData);
+  }
+
   function updateMarkers() {
     const wrap = document.getElementById('fp-img-wrap');
     if (!wrap) return;
@@ -64,12 +93,17 @@ const FloorPlan = (() => {
       if (!m) return;
       el.setAttribute('data-state', _stateAttr(m.entityId));
     });
+    _updateLegend();
   }
 
   /* ── Render ───────────────────────────────────────────────── */
 
   function _render() {
     if (!_container) return;
+    if (_compact && (!_data || !_data.imageData)) {
+      _container.style.display = 'none';
+      return;
+    }
     if (!_data || !_data.imageData) _renderEmpty();
     else _renderMap();
   }
@@ -98,9 +132,26 @@ const FloorPlan = (() => {
     const editActive = _editMode ? ' active' : '';
     const editMode   = _editMode ? ' edit-mode' : '';
 
+    // Conta estados para legenda
+    const { on: cntOn, off: cntOff } = _countStates();
+
     _container.innerHTML = `
       <div class="floorplan-toolbar">
         <div class="floorplan-title">Planta baixa</div>
+        <div class="fp-legend">
+          <span class="fp-legend-item fp-legend-item--on">
+            <span class="fp-legend-dot"></span>
+            <span class="fp-legend-val" id="fp-legend-on">${cntOn}</span>&nbsp;ligados
+          </span>
+          <span class="fp-legend-item fp-legend-item--off">
+            <span class="fp-legend-dot"></span>
+            <span class="fp-legend-val" id="fp-legend-off">${cntOff}</span>&nbsp;desligados
+          </span>
+        </div>
+        <button type="button" class="btn-fp btn-fp-expand" id="fp-expand-btn">
+          <svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+          Expandir
+        </button>
         <button type="button" class="btn-fp${editActive}" id="fp-edit-btn">
           <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z"/></svg>
           ${_editMode ? 'Sair do editor' : 'Editar'}
@@ -120,7 +171,17 @@ const FloorPlan = (() => {
       </div>
     `;
 
-    document.getElementById('fp-edit-btn').addEventListener('click', _toggleEdit);
+    document.getElementById('fp-edit-btn')?.addEventListener('click', _toggleEdit);
+
+    const expandBtn = document.getElementById('fp-expand-btn');
+    if (expandBtn) {
+      expandBtn.addEventListener('click', () => {
+        // Navega para a view planta
+        const btn = document.querySelector('[data-nav="planta"]');
+        if (btn) btn.click();
+      });
+    }
+
     const inp = document.getElementById('fp-upload-input');
     if (inp) inp.addEventListener('change', _handleUpload);
 
@@ -128,13 +189,35 @@ const FloorPlan = (() => {
     _bindMarkers();
   }
 
+  /* ── Legend ───────────────────────────────────────────────── */
+
+  function _countStates() {
+    let on = 0, off = 0;
+    for (const m of (_data.markers || [])) {
+      const s = _stateAttr(m.entityId);
+      if (s === 'on') on++;
+      else off++;
+    }
+    return { on, off };
+  }
+
+  function _updateLegend() {
+    const { on, off } = _countStates();
+    const elOn  = document.getElementById('fp-legend-on');
+    const elOff = document.getElementById('fp-legend-off');
+    if (elOn)  elOn.textContent  = on;
+    if (elOff) elOff.textContent = off;
+  }
+
   /* ── Markers ──────────────────────────────────────────────── */
 
   function _markerHtml(m) {
+    const shortLabel = _esc(m.label || m.entityId).slice(0, 20);
     return `
       <div class="fp-marker" data-state="${_stateAttr(m.entityId)}" data-marker-id="${m.id}"
            style="left:${(m.x * 100).toFixed(3)}%;top:${(m.y * 100).toFixed(3)}%">
         ${_domainIcon(m.entityId)}
+        <div class="fp-marker-label">${shortLabel}</div>
         <div class="fp-marker-tip">${_esc(m.label || m.entityId)}</div>
         <div class="fp-marker-del" data-del="${m.id}">×</div>
       </div>
@@ -251,6 +334,7 @@ const FloorPlan = (() => {
     _saveData();
     const el = document.querySelector(`[data-marker-id="${id}"]`);
     if (el) el.remove();
+    _updateLegend();
   }
 
   function _placeMarker(entityId, label) {
@@ -267,6 +351,7 @@ const FloorPlan = (() => {
       tmp.innerHTML = _markerHtml(m);
       wrap.appendChild(tmp.firstElementChild);
       _bindMarkers();
+      _updateLegend();
     }
   }
 
@@ -423,6 +508,8 @@ const FloorPlan = (() => {
       _data.imageData = ev.target.result;
       _saveData();
       _editMode = false;
+      // Mostra a section se estava oculta (caso dashboard)
+      _container.style.display = '';
       _render();
     };
     reader.readAsDataURL(file);
@@ -436,5 +523,5 @@ const FloorPlan = (() => {
       .replace(/"/g, '&quot;');
   }
 
-  return { init, refresh, updateMarkers };
+  return { init, refresh, updateMarkers, setCompact, hasPlan };
 })();

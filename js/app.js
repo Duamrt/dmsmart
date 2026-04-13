@@ -45,6 +45,7 @@ async function initApp() {
 
     if (typeof FloorPlan !== 'undefined') {
       FloorPlan.init(document.getElementById('floorplan-section'), active.id);
+      FloorPlan.setCompact(true); // começa no dashboard (modo compacto)
     }
 
     initHero(active);
@@ -164,9 +165,10 @@ function switchView(view) {
     if (scenesSection) scenesSection.classList.remove('hidden');
   }
 
-  // Refresh planta se já inicializada
-  if (view === 'planta' && typeof FloorPlan !== 'undefined') {
-    FloorPlan.refresh();
+  // Atualiza modo compacto/completo da planta
+  if (typeof FloorPlan !== 'undefined') {
+    FloorPlan.setCompact(view === 'dashboard');
+    if (view === 'planta') FloorPlan.refresh();
   }
 }
 

@@ -75,6 +75,31 @@
   margin-bottom: 8px;
 }
 
+/* Legend */
+.fp-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.fp-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 500;
+}
+.fp-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.fp-legend-item--on .fp-legend-dot  { background: var(--success); box-shadow: 0 0 5px rgba(34,197,94,.5); }
+.fp-legend-item--off .fp-legend-dot { background: var(--bg-elev-3); border: 1px solid var(--border); }
+.fp-legend-item--on  .fp-legend-val { color: var(--success); font-weight: 600; }
+.fp-legend-item--off .fp-legend-val { color: var(--text-2); }
+
 /* Viewport */
 .floorplan-viewport {
   position: relative;
@@ -111,25 +136,26 @@
 .fp-marker {
   position: absolute;
   transform: translate(-50%, -50%);
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.25);
+  border: 2px solid rgba(255,255,255,0.2);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform .15s, box-shadow .15s;
-  box-shadow: 0 2px 8px rgba(0,0,0,.45);
+  transition: transform .15s, box-shadow .15s, background .3s, border-color .3s;
+  box-shadow: 0 2px 8px rgba(0,0,0,.5);
   z-index: 10;
+  overflow: visible;
 }
 .fp-marker:hover {
-  transform: translate(-50%, -50%) scale(1.2);
+  transform: translate(-50%, -50%) scale(1.18);
   z-index: 20;
 }
 .fp-marker svg {
-  width: 13px;
-  height: 13px;
+  width: 14px;
+  height: 14px;
   stroke: #fff;
   fill: none;
   stroke-width: 2;
@@ -139,11 +165,36 @@
   flex-shrink: 0;
 }
 
+/* Label always visible below marker */
+.fp-marker-label {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: rgba(10, 12, 18, 0.82);
+  color: rgba(255,255,255,0.88);
+  padding: 2px 7px;
+  border-radius: 5px;
+  pointer-events: none;
+  max-width: 88px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.09);
+  z-index: 5;
+  letter-spacing: .01em;
+}
+
 /* Marker states */
 .fp-marker[data-state="on"] {
   background: var(--success);
-  border-color: rgba(255,255,255,0.4);
-  box-shadow: 0 0 0 4px rgba(34,197,94,.22), 0 2px 8px rgba(0,0,0,.4);
+  border-color: rgba(255,255,255,0.35);
+  box-shadow: 0 0 0 4px rgba(34,197,94,.2), 0 2px 10px rgba(0,0,0,.45);
+  animation: fp-glow 2.4s ease-in-out infinite;
 }
 .fp-marker[data-state="off"] {
   background: var(--bg-elev-3);
@@ -154,7 +205,12 @@
   border-color: rgba(255,255,255,0.3);
 }
 
-/* Tooltip */
+@keyframes fp-glow {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(34,197,94,.2), 0 2px 10px rgba(0,0,0,.45); }
+  50%       { box-shadow: 0 0 0 7px rgba(34,197,94,.1), 0 2px 14px rgba(0,0,0,.4); }
+}
+
+/* Tooltip on hover (complementary to always-visible label) */
 .fp-marker-tip {
   position: absolute;
   bottom: calc(100% + 7px);
@@ -164,7 +220,7 @@
   color: var(--text);
   font-size: 11px;
   font-weight: 500;
-  padding: 3px 8px;
+  padding: 4px 9px;
   border-radius: 6px;
   white-space: nowrap;
   pointer-events: none;
@@ -179,7 +235,7 @@
 .floorplan-viewport.edit-mode .fp-marker { cursor: grab; }
 .floorplan-viewport.edit-mode .fp-marker.fp-dragging { cursor: grabbing; z-index: 100; transform: translate(-50%, -50%) scale(1.25); box-shadow: 0 6px 20px rgba(0,0,0,.5); }
 /* Desabilita transição durante drag para resposta imediata */
-.fp-marker.fp-dragging { transition: transform .08s, box-shadow .08s; }
+.fp-marker.fp-dragging { transition: transform .08s, box-shadow .08s; animation: none; }
 
 /* Delete button (edit mode only) */
 .fp-marker-del {
@@ -327,10 +383,42 @@
   border-color: var(--primary);
 }
 
+/* Expand button — só visível no modo compacto (dashboard) */
+.btn-fp-expand { display: none; }
+
+/* ── Compact mode (dashboard) ──────────────────────────────── */
+.floorplan-section.fp-compact {
+  flex: none;
+  margin-bottom: 20px;
+}
+.floorplan-section.fp-compact .floorplan-viewport {
+  max-height: 270px;
+}
+.floorplan-section.fp-compact #fp-edit-btn,
+.floorplan-section.fp-compact label.btn-fp {
+  display: none;
+}
+.floorplan-section.fp-compact .btn-fp-expand {
+  display: inline-flex;
+}
+.floorplan-section.fp-compact .fp-marker-label {
+  font-size: 8px;
+  padding: 1px 5px;
+}
+.floorplan-section.fp-compact .fp-marker {
+  width: 28px;
+  height: 28px;
+}
+.floorplan-section.fp-compact .fp-marker svg {
+  width: 12px;
+  height: 12px;
+}
+
 /* Mobile */
 @media (max-width: 600px) {
   .floorplan-viewport { max-height: none; }
+  .floorplan-section.fp-compact .floorplan-viewport { max-height: 220px; }
   .floorplan-img { max-height: none; width: 100%; }
   .fp-marker { width: 32px; height: 32px; }
-  .fp-marker svg { width: 15px; height: 15px; }
+  .fp-marker svg { width: 14px; height: 14px; }
 }

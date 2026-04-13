@@ -959,6 +959,9 @@ body.wizard-open {
 .app-main[data-view="planta"] #scenes-section    { display: none !important; }
 .app-main[data-view="planta"] .floorplan-section { display: flex; }
 
+/* Dashboard: planta aparece acima das zonas (JS controla display:none se sem imagem) */
+.app-main[data-view="dashboard"] .floorplan-section { display: flex; }
+
 /* Filter bar: oculta por default, visível só em ambientes */
 #zones-filter-bar:empty { display: none; }
 .app-main:not([data-view="ambientes"]) #zones-filter-bar { display: none; }
