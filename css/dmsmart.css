@@ -1587,6 +1587,57 @@ body.modal-open { overflow: hidden; }
   color: #c0c7d4;
   font-weight: 500;
 }
+.control-foot {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+.control-foot-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.control-foot-meta {
+  font-size: 11px;
+  color: #6a7280;
+}
+
+/* Auto-off timer */
+.ctrl-timer-presets {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.ctrl-timer-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--bg-elev-2);
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.ctrl-timer-btn:hover { background: var(--bg-elev-3); color: var(--text); }
+.ctrl-timer-btn.active { background: var(--primary-soft); color: var(--primary); border-color: var(--primary); }
+.ctrl-timer-countdown {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+  text-align: center;
+  padding: 4px 0;
+}
+.ctrl-timer-cancel {
+  background: none;
+  border: none;
+  color: var(--danger);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+.ctrl-timer-cancel:hover { text-decoration: underline; }
 
 /* Big toggle — usado em switch, light, fan */
 .big-toggle {

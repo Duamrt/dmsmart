@@ -11,6 +11,8 @@ const ControlModal = {
   _unsub: null,
   _pressTimer: null,
   _lastState: null,
+  _autoOffInterval: null,
+  _autoOffTimeout: null,
 
   init() {
     this._overlay = document.getElementById('control-modal');
@@ -67,6 +69,8 @@ const ControlModal = {
     if (this._unsub) { this._unsub(); this._unsub = null; }
     if (this._valveInterval) { clearInterval(this._valveInterval); this._valveInterval = null; }
     if (this._valveTimeout)  { clearTimeout(this._valveTimeout);  this._valveTimeout  = null; }
+    if (this._autoOffInterval) { clearInterval(this._autoOffInterval); this._autoOffInterval = null; }
+    if (this._autoOffTimeout)  { clearTimeout(this._autoOffTimeout);  this._autoOffTimeout  = null; }
     this._device = null;
     this._lastState = null;
   },
@@ -79,6 +83,7 @@ const ControlModal = {
     const bodyHtml = renderer.body(device, state);
     const statusTxt = renderer.status ? renderer.status(device, state) : _ctrlStateLabel(state);
     const icon = _ctrlDomainIcon(type);
+    const lastChanged = (state && state.last_changed) ? _ctrlRelTime(state.last_changed) : '';
 
     this._overlay.innerHTML = `
       <div class="control-card" role="dialog" aria-modal="true">
@@ -94,8 +99,11 @@ const ControlModal = {
         </div>
         <div class="control-body" data-ctrl-body>${bodyHtml}</div>
         <div class="control-foot">
-          <div class="control-foot-label">Status</div>
-          <div class="control-foot-value" data-ctrl-status>${_ctrlEsc(statusTxt)}</div>
+          <div class="control-foot-row">
+            <div class="control-foot-label">Status</div>
+            <div class="control-foot-value" data-ctrl-status>${_ctrlEsc(statusTxt)}</div>
+          </div>
+          ${lastChanged ? `<div class="control-foot-meta" data-ctrl-reltime>Atualizado ${_ctrlEsc(lastChanged)}</div>` : ''}
         </div>
       </div>
     `;
@@ -117,6 +125,10 @@ const ControlModal = {
     if (statusEl) {
       const txt = renderer.status ? renderer.status(this._device, this._lastState) : _ctrlStateLabel(this._lastState);
       statusEl.textContent = txt;
+    }
+    const relTimeEl = this._overlay.querySelector('[data-ctrl-reltime]');
+    if (relTimeEl && this._lastState && this._lastState.last_changed) {
+      relTimeEl.textContent = `Atualizado ${_ctrlRelTime(this._lastState.last_changed)}`;
     }
   },
 
@@ -179,6 +191,7 @@ const ControlRenderers = {
       const isOn = state && state.state === 'on';
       return `
         ${_ctrlBigToggle(isOn)}
+        ${_ctrlAutoOffSection()}
       `;
     },
     sync(body, device, state) {
@@ -191,12 +204,15 @@ const ControlRenderers = {
       }
     },
     handle(action, btn, device, state, modal) {
-      if (action !== 'toggle') return;
-      const isOn = state && state.state === 'on';
-      const nextState = isOn ? 'off' : 'on';
-      modal._optimistic({ state: nextState });
-      const domain = device.entity.split('.')[0];
-      modal._call(domain, 'toggle', { entity_id: device.entity });
+      if (action === 'toggle') {
+        const isOn = state && state.state === 'on';
+        const nextState = isOn ? 'off' : 'on';
+        modal._optimistic({ state: nextState });
+        const domain = device.entity.split('.')[0];
+        modal._call(domain, 'toggle', { entity_id: device.entity });
+        return;
+      }
+      _ctrlHandleAutoOff(action, btn, device, modal);
     }
   },
 
@@ -232,6 +248,7 @@ const ControlRenderers = {
             </div>
           </div>
         ` : ''}
+        ${_ctrlAutoOffSection()}
       `;
     },
     status(device, state) {
@@ -270,6 +287,7 @@ const ControlRenderers = {
         modal._call('light', 'turn_on', { entity_id: device.entity, rgb_color: rgb });
         return;
       }
+      _ctrlHandleAutoOff(action, btn, device, modal);
     },
     range(name, input, device, state, modal) {
       if (name !== 'brightness') return;
@@ -1056,6 +1074,80 @@ function _ctrlColorPalette() {
     '#ff4d6d', '#c9429d', '#7a4dff', '#3d6cff',
     '#1fb1ff', '#26d0a3', '#7ae06a', '#fff24d'
   ];
+}
+
+/* ==================================================================
+   Auto-off timer — reutilizável por switch, light, fan
+   ================================================================== */
+
+function _ctrlAutoOffSection() {
+  return `
+    <div class="control-section">
+      <div class="control-section-head"><span>Desligar automaticamente</span></div>
+      <div class="ctrl-timer-presets">
+        <button type="button" class="ctrl-timer-btn" data-ctrl="auto-off" data-mins="30">30 min</button>
+        <button type="button" class="ctrl-timer-btn" data-ctrl="auto-off" data-mins="60">1h</button>
+        <button type="button" class="ctrl-timer-btn" data-ctrl="auto-off" data-mins="120">2h</button>
+        <button type="button" class="ctrl-timer-btn" data-ctrl="auto-off" data-mins="240">4h</button>
+      </div>
+      <div class="ctrl-timer-countdown hidden" data-ctrl-countdown></div>
+      <button type="button" class="ctrl-timer-cancel hidden" data-ctrl="auto-off-cancel">Cancelar</button>
+    </div>
+  `;
+}
+
+function _ctrlHandleAutoOff(action, btn, device, modal) {
+  if (action === 'auto-off') {
+    const mins = Number(btn.getAttribute('data-mins'));
+    if (!mins) return;
+    const domain = device.entity.split('.')[0];
+    _ctrlStartAutoOff(modal, device, domain, mins * 60);
+    return;
+  }
+  if (action === 'auto-off-cancel') {
+    _ctrlClearAutoOff(modal);
+    return;
+  }
+}
+
+function _ctrlStartAutoOff(modal, device, domain, totalSecs) {
+  _ctrlClearAutoOff(modal);
+  const endTime = Date.now() + totalSecs * 1000;
+
+  const updateUI = () => {
+    const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+    const el = modal._overlay && modal._overlay.querySelector('[data-ctrl-countdown]');
+    const cancelBtn = modal._overlay && modal._overlay.querySelector('[data-ctrl="auto-off-cancel"]');
+    if (!el) return;
+    const min = Math.floor(remaining / 60);
+    const sec = remaining % 60;
+    el.textContent = `Desligando em ${min}:${String(sec).padStart(2, '0')}`;
+    el.classList.remove('hidden');
+    if (cancelBtn) cancelBtn.classList.remove('hidden');
+  };
+
+  updateUI();
+  modal._autoOffInterval = setInterval(updateUI, 1000);
+
+  modal._autoOffTimeout = setTimeout(() => {
+    clearInterval(modal._autoOffInterval);
+    modal._autoOffInterval = null;
+    modal._autoOffTimeout = null;
+    modal._optimistic({ state: 'off' });
+    modal._call(domain, 'turn_off', { entity_id: device.entity });
+    const el = modal._overlay && modal._overlay.querySelector('[data-ctrl-countdown]');
+    if (el) el.textContent = 'Dispositivo desligado';
+    setTimeout(() => _ctrlClearAutoOff(modal), 2000);
+  }, totalSecs * 1000);
+}
+
+function _ctrlClearAutoOff(modal) {
+  if (modal._autoOffInterval) { clearInterval(modal._autoOffInterval); modal._autoOffInterval = null; }
+  if (modal._autoOffTimeout)  { clearTimeout(modal._autoOffTimeout);   modal._autoOffTimeout  = null; }
+  const el = modal._overlay && modal._overlay.querySelector('[data-ctrl-countdown]');
+  const cancelBtn = modal._overlay && modal._overlay.querySelector('[data-ctrl="auto-off-cancel"]');
+  if (el) { el.textContent = ''; el.classList.add('hidden'); }
+  if (cancelBtn) cancelBtn.classList.add('hidden');
 }
 
 function _ctrlDomainIcon(type) {
