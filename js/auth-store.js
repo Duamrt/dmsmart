@@ -1,24 +1,54 @@
-// auth-store.js — sessão Supabase + UI de login/logout
+// auth-store.js — sessão Supabase + UI de login/logout + perfis de acesso
 // Depende de: SUPA (supabase-client.js), InstallationStore, _showToast (app.js)
 
 const AuthStore = {
-  _user: null,
-  _listeners: [],
+  _user:    null,
+  _profile: null,   // { id, role, display_name }
 
   async init() {
     const { data: { session } } = await SUPA.auth.getSession();
     this._user = session?.user || null;
+    if (this._user) await this._loadProfile();
 
-    SUPA.auth.onAuthStateChange((_event, session) => {
+    SUPA.auth.onAuthStateChange(async (_event, session) => {
       this._user = session?.user || null;
+      if (this._user) await this._loadProfile();
+      else this._profile = null;
       this._renderSidebarAuth();
+      if (typeof _onRoleChange === 'function') _onRoleChange();
     });
 
     this._renderSidebarAuth();
   },
 
-  getUser()    { return this._user; },
-  isLoggedIn() { return !!this._user; },
+  getUser()       { return this._user; },
+  isLoggedIn()    { return !!this._user; },
+  getProfile()    { return this._profile; },
+  getRole()       { return this._profile?.role || 'admin'; },
+  isIntegrador()  { return this.getRole() === 'integrador'; },
+
+  async _loadProfile() {
+    if (!this._user) return;
+    const { data } = await SUPA.from('user_profiles').select('*').eq('id', this._user.id).single();
+    if (data) {
+      this._profile = data;
+    } else {
+      // Cria perfil se não existir (usuário criado antes da migração)
+      const { data: inserted } = await SUPA.from('user_profiles')
+        .upsert({ id: this._user.id, role: 'admin' }, { onConflict: 'id' })
+        .select().single();
+      this._profile = inserted || { id: this._user.id, role: 'admin' };
+    }
+  },
+
+  async updateRole(role) {
+    if (!this._user) return;
+    const { error } = await SUPA.from('user_profiles')
+      .update({ role, updated_at: new Date().toISOString() })
+      .eq('id', this._user.id);
+    if (!error) this._profile = { ...this._profile, role };
+    return !error;
+  },
 
   async login(email, password) {
     const { data, error } = await SUPA.auth.signInWithPassword({ email, password });
@@ -29,11 +59,7 @@ const AuthStore = {
   async logout() {
     const { error } = await SUPA.auth.signOut();
     if (error) throw error;
-  },
-
-  onChange(cb) {
-    this._listeners.push(cb);
-    return () => { this._listeners = this._listeners.filter(l => l !== cb); };
+    this._profile = null;
   },
 
   _renderSidebarAuth() {
@@ -41,13 +67,16 @@ const AuthStore = {
     if (!el) return;
 
     if (this._user) {
-      const email = this._user.email || '';
+      const email    = this._user.email || '';
       const initials = email.slice(0, 2).toUpperCase();
+      const roleLabel = this._profile?.role === 'integrador'
+        ? '<span class="sidebar-auth-role">Integrador</span>'
+        : '';
       el.innerHTML = `
         <button class="sidebar-auth-btn sidebar-auth-btn--user" type="button" id="sidebar-auth-trigger"
           title="${_authEsc(email)}">
           <span class="sidebar-auth-avatar">${_authEsc(initials)}</span>
-          <span class="sidebar-auth-email">${_authEsc(email)}</span>
+          <span class="sidebar-auth-email">${_authEsc(email)}${roleLabel}</span>
           <svg class="sidebar-auth-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2" stroke-linecap="round"><path d="M18 15l-6-6-6 6"/></svg>
         </button>
@@ -129,12 +158,10 @@ const AuthStore = {
       await this.login(email, pass);
       this.closeLoginModal();
 
-      // Puxa instalações do cloud — se vier algo novo, recarrega
       const count = await InstallationStore.pullFromCloud();
       if (count > 0) {
         window.location.reload();
       } else {
-        // Empurra o que está local pro cloud
         await InstallationStore.pushAllToCloud();
         if (typeof _showToast === 'function') _showToast('Conta conectada', 'success');
       }
@@ -146,18 +173,21 @@ const AuthStore = {
 
   _openProfileMenu() {
     const email = this._user?.email || '';
-    if (confirm(`Sair da conta ${email}?`)) {
+    const role  = this._profile?.role || 'admin';
+    const labels = { admin: 'Admin', viewer: 'Visualizador', integrador: 'Integrador' };
+    if (confirm(`Conta: ${email}\nPerfil: ${labels[role] || role}\n\nSair?`)) {
       this.logout()
         .then(() => {
           if (typeof _showToast === 'function') _showToast('Sessão encerrada');
           this._renderSidebarAuth();
+          if (typeof _onRoleChange === 'function') _onRoleChange();
         })
         .catch(err => console.warn('[dmsmart] logout error:', err.message));
     }
   }
 };
 
-// Utilitário local de escape HTML (não depende do app.js)
+// Utilitário local de escape HTML
 function _authEsc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;')

@@ -23,10 +23,16 @@ async function initApp() {
     // Fase 04 — inicializa auth Supabase e puxa config do cloud se logado
     if (typeof AuthStore !== 'undefined') {
       await AuthStore.init();
+      _applyRoleUI();
       if (AuthStore.isLoggedIn()) {
         const pulled = await InstallationStore.pullFromCloud();
         if (pulled > 0) { window.location.reload(); return; }
       }
+    }
+
+    // Painel integrador
+    if (typeof IntegratorPanel !== 'undefined') {
+      IntegratorPanel.init(document.getElementById('integrator-section'));
     }
 
     await ConfigLoader.load();
@@ -146,10 +152,11 @@ function switchView(view) {
 
   // Atualiza título do header
   const titles = {
-    dashboard: ['Dashboard',    'Controle rápido das suas zonas'],
-    ambientes: ['Ambientes',    'Filtre e controle seus cômodos'],
-    cenas:     ['Cenas',        'Automações e atalhos'],
-    planta:    ['Planta baixa', 'Mapa interativo dos dispositivos']
+    dashboard:   ['Dashboard',    'Controle rápido das suas zonas'],
+    ambientes:   ['Ambientes',    'Filtre e controle seus cômodos'],
+    cenas:       ['Cenas',        'Automações e atalhos'],
+    planta:      ['Planta baixa', 'Mapa interativo dos dispositivos'],
+    integrador:  ['Painel',       'Todas as instalações gerenciadas']
   };
   const [title, sub] = titles[view] || titles.dashboard;
   const titleEl = document.getElementById('header-title');
@@ -186,6 +193,25 @@ function switchView(view) {
     FloorPlan.setCompact(view === 'dashboard');
     if (view === 'planta') FloorPlan.refresh();
   }
+
+  // Carrega painel integrador quando a view for selecionada
+  if (view === 'integrador' && typeof IntegratorPanel !== 'undefined') {
+    IntegratorPanel.load();
+  }
+}
+
+// Mostra/oculta nav e seção do integrador conforme role
+function _applyRoleUI() {
+  const isIntegrador = typeof AuthStore !== 'undefined' && AuthStore.isIntegrador();
+  const navGroup = document.getElementById('sidebar-group-integrador');
+  if (navGroup) navGroup.classList.toggle('hidden', !isIntegrador);
+  // Se era view integrador e perdeu a role, volta pro dashboard
+  if (!isIntegrador && _navView === 'integrador') switchView('dashboard');
+}
+
+// Chamado pelo auth-store ao mudar role/login/logout
+function _onRoleChange() {
+  _applyRoleUI();
 }
 
 function _renderFilterBar(bar) {

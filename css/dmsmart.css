@@ -1075,6 +1075,15 @@ body.wizard-open {
 #zones-filter-bar:empty { display: none; }
 .app-main:not([data-view="ambientes"]) #zones-filter-bar { display: none; }
 
+/* Painel integrador: oculto por default, visível só na view integrador */
+.integrator-section { display: none; }
+.app-main[data-view="integrador"] .integrator-section { display: block; }
+.app-main[data-view="integrador"] #dashboard-hero   { display: none; }
+.app-main[data-view="integrador"] .zones-grid        { display: none; }
+.app-main[data-view="integrador"] #zones-filter-bar  { display: none; }
+.app-main[data-view="integrador"] #scenes-section    { display: none !important; }
+.app-main[data-view="integrador"] .floorplan-section { display: none !important; }
+
 /* =========================================
    Filter pills
    ========================================= */
@@ -3291,4 +3300,227 @@ details.ze-system-group[open] .ze-system-summary::after { transform: rotate(90de
 .no-token-banner-btn:hover {
   background: rgba(251, 191, 36, 0.25);
   border-color: rgba(251, 191, 36, 0.6);
+}
+
+/* =========================================
+   Painel Integrador
+   ========================================= */
+
+.intp-loading,
+.intp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 60px 24px;
+  color: var(--text-3);
+  font-size: var(--fs-sm);
+  text-align: center;
+}
+.intp-empty svg {
+  width: 40px;
+  height: 40px;
+  opacity: 0.35;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.5;
+}
+.intp-empty-hint {
+  font-size: 12px;
+  color: var(--text-3);
+  opacity: 0.7;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+.intp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 0 2px;
+}
+.intp-count {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  font-weight: 600;
+}
+
+.intp-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.intp-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: background .2s, border-color .2s, box-shadow .2s;
+}
+.intp-card:hover {
+  background: var(--bg-elev-2);
+  border-color: var(--bg-elev-3);
+}
+.intp-card--active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary-glow), 0 12px 28px -16px var(--primary-glow);
+}
+
+.intp-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.intp-card-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--bg-elev-2);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-2);
+  flex-shrink: 0;
+}
+.intp-card--active .intp-card-icon {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+.intp-card-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+}
+
+.intp-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 3px 8px;
+  border-radius: 99px;
+  background: var(--bg-elev-3);
+  color: var(--text-3);
+  border: 1px solid var(--border-soft);
+}
+.intp-badge--active {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-color: rgba(0,87,255,.3);
+}
+
+.intp-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.intp-card-name {
+  font-size: var(--fs);
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+.intp-card-url {
+  font-size: 12px;
+  color: var(--text-3);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.intp-card-meta {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 2px;
+}
+
+.intp-manage-btn {
+  width: 100%;
+  padding: 9px 14px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-elev-2);
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  transition: background .2s, border-color .2s, color .2s;
+}
+.intp-manage-btn:hover {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+.intp-card--active .intp-manage-btn {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary);
+  cursor: default;
+}
+
+/* Card "Novo cliente" */
+.intp-card-new {
+  background: transparent;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-lg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-2);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  min-height: 160px;
+  transition: background .2s, border-color .2s, color .2s, transform .1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.intp-card-new:hover {
+  background: var(--bg-elev);
+  border-color: var(--primary);
+  color: var(--text);
+}
+.intp-card-new:active { transform: scale(0.98); }
+
+.intp-card-new-plus {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+/* Role badge na sidebar */
+.sidebar-auth-role {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-radius: 99px;
+  padding: 1px 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+  text-transform: uppercase;
 }
