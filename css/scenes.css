@@ -127,6 +127,47 @@
   background: var(--danger-soft);
 }
 
+/* Empty state */
+.scenes-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 24px;
+  text-align: center;
+}
+.scenes-empty-icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elev-2);
+  border-radius: 16px;
+  color: var(--text-3);
+}
+.scenes-empty-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.scenes-empty-title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-2);
+}
+.scenes-empty-sub {
+  font-size: 12px;
+  color: var(--text-3);
+  max-width: 280px;
+  line-height: 1.5;
+}
+
 /* Mobile: scroll horizontal em telas pequenas */
 @media (max-width: 480px) {
   .scenes-section { padding: 0 16px 8px; }
