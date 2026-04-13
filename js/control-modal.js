@@ -3,6 +3,8 @@
 // Abre via badge click em UIRenderer. Fecha via X, backdrop, Escape.
 // Sincroniza estado ao vivo com StateStore enquanto aberto.
 
+let _alarmPin = '';
+
 const ControlModal = {
   _overlay: null,
   _device: null,
@@ -47,6 +49,10 @@ const ControlModal = {
     this._render();
     this._overlay.classList.remove('hidden');
     document.body.classList.add('modal-open');
+
+    if (device.type === 'camera') {
+      _ctrlCameraLoad(this._overlay, device);
+    }
 
     if (this._unsub) this._unsub();
     this._unsub = StateStore.subscribe(device.entity, (newState) => {
@@ -555,8 +561,296 @@ const ControlRenderers = {
         modal._call('media_player', 'volume_set', { entity_id: device.entity, volume_level: pct / 100 });
       }, 150);
     }
+  },
+
+  sensor: {
+    body(device, state) {
+      const attrs = (state && state.attributes) || {};
+      const v = state ? state.state : null;
+      const unit = attrs.unit_of_measurement || '';
+      const num = Number(v);
+      const display = (v == null || v === 'unknown' || v === 'unavailable')
+        ? '—'
+        : (Number.isFinite(num) ? (Math.round(num * 10) / 10) : v);
+      const cls = attrs.device_class || 'sensor';
+      const lastChanged = state && state.last_changed ? _ctrlRelTime(state.last_changed) : '';
+      return `
+        <div class="control-sensor">
+          <div class="sensor-big">
+            <span class="sensor-big-val" data-ctrl-sensor-val>${_ctrlEsc(String(display))}</span>
+            ${unit ? `<span class="sensor-big-unit">${_ctrlEsc(unit)}</span>` : ''}
+          </div>
+          <div class="sensor-meta">${_ctrlEsc(cls)}${lastChanged ? ` · ${lastChanged}` : ''}</div>
+        </div>
+      `;
+    },
+    status(device, state) {
+      if (!state) return '—';
+      return 'Leitura ao vivo';
+    },
+    sync(body, device, state) {
+      const attrs = (state && state.attributes) || {};
+      const v = state ? state.state : null;
+      const num = Number(v);
+      const display = (v == null || v === 'unknown' || v === 'unavailable')
+        ? '—'
+        : (Number.isFinite(num) ? (Math.round(num * 10) / 10) : v);
+      const el = body.querySelector('[data-ctrl-sensor-val]');
+      if (el) el.textContent = String(display);
+    }
+  },
+
+  binary_sensor: {
+    body(device, state) {
+      const attrs = (state && state.attributes) || {};
+      const isOn = state && state.state === 'on';
+      const cls = attrs.device_class || '';
+      const label = _ctrlBinaryLabel(state ? state.state : 'off', cls);
+      const lastChanged = state && state.last_changed ? _ctrlRelTime(state.last_changed) : '';
+      return `
+        <div class="control-binary ${isOn ? 'on' : ''}">
+          <div class="binary-dot"></div>
+          <div class="binary-label" data-ctrl-binary-label>${_ctrlEsc(label)}</div>
+          ${lastChanged ? `<div class="binary-meta">desde ${lastChanged}</div>` : ''}
+        </div>
+      `;
+    },
+    status(device, state) {
+      if (!state) return '—';
+      const cls = (state.attributes && state.attributes.device_class) || '';
+      return _ctrlBinaryLabel(state.state, cls);
+    },
+    sync(body, device, state) {
+      const wrap = body.querySelector('.control-binary');
+      const isOn = state && state.state === 'on';
+      if (wrap) wrap.classList.toggle('on', isOn);
+      const lbl = body.querySelector('[data-ctrl-binary-label]');
+      const cls = (state && state.attributes && state.attributes.device_class) || '';
+      if (lbl) lbl.textContent = _ctrlBinaryLabel(state ? state.state : 'off', cls);
+    }
+  },
+
+  camera: {
+    body(device, state) {
+      return `
+        <div class="control-camera">
+          <div class="camera-frame" data-ctrl-camera>
+            <div class="camera-loading">Carregando snapshot…</div>
+          </div>
+          <button type="button" class="camera-refresh" data-ctrl="camera-refresh" aria-label="Atualizar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
+            <span>Atualizar</span>
+          </button>
+        </div>
+      `;
+    },
+    status(device, state) {
+      if (!state || state.state === 'unavailable') return 'Indisponível';
+      return 'Câmera ao vivo';
+    },
+    sync() { /* sem sync incremental — refresh manual */ },
+    handle(action, btn, device, state, modal) {
+      if (action !== 'camera-refresh') return;
+      _ctrlCameraLoad(modal._overlay, device);
+    }
+  },
+
+  alarm_control_panel: {
+    body(device, state) {
+      _alarmPin = '';
+      const s = state ? state.state : 'unknown';
+      return _ctrlAlarmBody(s);
+    },
+    status(device, state) {
+      return state ? _ctrlAlarmStateLabel(state.state) : '—';
+    },
+    sync(body, device, state) {
+      const s = state ? state.state : 'unknown';
+      const badge = body.querySelector('[data-alarm-state]');
+      if (badge) {
+        badge.textContent = _ctrlAlarmStateLabel(s);
+        badge.className = `alarm-state-badge alarm-state-${s}`;
+      }
+      const actions = body.querySelector('[data-alarm-actions]');
+      if (actions) actions.innerHTML = _ctrlAlarmActions(s);
+    },
+    handle(action, btn, device, state, modal) {
+      if (action.startsWith('pin-')) {
+        const digit = action.slice(4);
+        if (digit === 'back') {
+          _alarmPin = _alarmPin.slice(0, -1);
+        } else if (digit === 'clear') {
+          _alarmPin = '';
+        } else if (_alarmPin.length < 8) {
+          _alarmPin += digit;
+        }
+        const display = modal._overlay.querySelector('[data-alarm-pin]');
+        if (display) display.innerHTML = _ctrlAlarmPinDots(_alarmPin);
+        return;
+      }
+      if (action === 'alarm-disarm') {
+        const code = _alarmPin;
+        _alarmPin = '';
+        const display = modal._overlay.querySelector('[data-alarm-pin]');
+        if (display) display.innerHTML = _ctrlAlarmPinDots('');
+        modal._optimistic({ state: 'disarmed' });
+        modal._call('alarm_control_panel', 'alarm_disarm', { entity_id: device.entity, code });
+        return;
+      }
+      if (action === 'alarm-arm-home') {
+        const code = _alarmPin;
+        _alarmPin = '';
+        const display = modal._overlay.querySelector('[data-alarm-pin]');
+        if (display) display.innerHTML = _ctrlAlarmPinDots('');
+        modal._optimistic({ state: 'arming' });
+        modal._call('alarm_control_panel', 'alarm_arm_home', { entity_id: device.entity, code });
+        return;
+      }
+      if (action === 'alarm-arm-away') {
+        const code = _alarmPin;
+        _alarmPin = '';
+        const display = modal._overlay.querySelector('[data-alarm-pin]');
+        if (display) display.innerHTML = _ctrlAlarmPinDots('');
+        modal._optimistic({ state: 'arming' });
+        modal._call('alarm_control_panel', 'alarm_arm_away', { entity_id: device.entity, code });
+        return;
+      }
+    }
   }
 };
+
+/* ==================================================================
+   Alarm helpers
+   ================================================================== */
+
+function _ctrlAlarmStateLabel(s) {
+  const map = {
+    disarmed: 'Desarmado',
+    armed_home: 'Armado — Casa',
+    armed_away: 'Armado — Fora',
+    armed_night: 'Armado — Noite',
+    armed_vacation: 'Armado — Férias',
+    triggered: 'ALARME DISPARADO',
+    arming: 'Armando...',
+    pending: 'Aguardando...',
+    unavailable: 'Indisponível'
+  };
+  return map[s] || s;
+}
+
+function _ctrlAlarmPinDots(pin) {
+  let html = '';
+  for (let i = 0; i < 6; i++) {
+    html += `<span class="alarm-pin-dot${i < pin.length ? ' filled' : ''}"></span>`;
+  }
+  return html;
+}
+
+function _ctrlAlarmActions(s) {
+  if (s === 'disarmed') {
+    return `
+      <button type="button" class="alarm-action-btn alarm-arm-home" data-ctrl="alarm-arm-home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>Armar Casa</span>
+      </button>
+      <button type="button" class="alarm-action-btn alarm-arm-away" data-ctrl="alarm-arm-away">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span>Armar Fora</span>
+      </button>
+    `;
+  }
+  if (['armed_home','armed_away','armed_night','armed_vacation','triggered','pending'].includes(s)) {
+    const isTriggered = s === 'triggered';
+    return `
+      <button type="button" class="alarm-action-btn alarm-disarm${isTriggered ? ' alarm-triggered-pulse' : ''}" data-ctrl="alarm-disarm">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>Desarmar</span>
+      </button>
+    `;
+  }
+  return `<div class="alarm-transitioning">${_ctrlAlarmStateLabel(s)}</div>`;
+}
+
+function _ctrlAlarmBody(s) {
+  return `
+    <div class="control-alarm">
+      <div class="alarm-state-badge alarm-state-${s}" data-alarm-state>${_ctrlAlarmStateLabel(s)}</div>
+      <div class="alarm-pin-display" data-alarm-pin>${_ctrlAlarmPinDots('')}</div>
+      <div class="alarm-keypad">
+        ${[1,2,3,4,5,6,7,8,9].map(n => `<button type="button" class="alarm-key" data-ctrl="pin-${n}">${n}</button>`).join('')}
+        <button type="button" class="alarm-key alarm-key-func" data-ctrl="pin-back">⌫</button>
+        <button type="button" class="alarm-key" data-ctrl="pin-0">0</button>
+        <button type="button" class="alarm-key alarm-key-func" data-ctrl="pin-clear">✕</button>
+      </div>
+      <div class="alarm-actions" data-alarm-actions>${_ctrlAlarmActions(s)}</div>
+    </div>
+  `;
+}
+
+function _ctrlCameraLoad(overlay, device) {
+  const frame = overlay.querySelector('[data-ctrl-camera]');
+  if (!frame) return;
+  frame.innerHTML = '<div class="camera-loading">Carregando snapshot…</div>';
+  if (typeof HAClient === 'undefined' || !HAClient.getCameraImageUrl) {
+    frame.innerHTML = '<div class="camera-error">HAClient indisponível</div>';
+    return;
+  }
+  HAClient.getCameraImageUrl(device.entity).then(url => {
+    if (!url) {
+      frame.innerHTML = '<div class="camera-error">Sem snapshot disponível</div>';
+      return;
+    }
+    const img = new Image();
+    img.alt = device.name || device.entity;
+    img.onload = () => { frame.innerHTML = ''; frame.appendChild(img); };
+    img.onerror = () => { frame.innerHTML = '<div class="camera-error">Falha ao carregar imagem</div>'; };
+    img.src = url + (url.includes('?') ? '&' : '?') + '_ts=' + Date.now();
+  }).catch(() => {
+    frame.innerHTML = '<div class="camera-error">Falha ao assinar URL</div>';
+  });
+}
+
+function _ctrlBinaryLabel(stateVal, deviceClass) {
+  const on = stateVal === 'on';
+  const map = {
+    door: on ? 'Aberta' : 'Fechada',
+    window: on ? 'Aberta' : 'Fechada',
+    garage_door: on ? 'Aberto' : 'Fechado',
+    opening: on ? 'Aberto' : 'Fechado',
+    motion: on ? 'Movimento' : 'Sem movimento',
+    occupancy: on ? 'Ocupado' : 'Livre',
+    presence: on ? 'Presença' : 'Ausente',
+    moisture: on ? 'Molhado' : 'Seco',
+    smoke: on ? 'Fumaça detectada' : 'Limpo',
+    gas: on ? 'Gás detectado' : 'Limpo',
+    safety: on ? 'Alerta' : 'Ok',
+    sound: on ? 'Som detectado' : 'Silêncio',
+    vibration: on ? 'Vibração' : 'Parado',
+    plug: on ? 'Plugado' : 'Desplugado',
+    power: on ? 'Com energia' : 'Sem energia',
+    light: on ? 'Claro' : 'Escuro',
+    connectivity: on ? 'Conectado' : 'Desconectado',
+    battery: on ? 'Bateria fraca' : 'Bateria ok',
+    problem: on ? 'Problema' : 'Ok'
+  };
+  if (deviceClass && map[deviceClass]) return map[deviceClass];
+  return on ? 'Detectado' : 'Livre';
+}
+
+function _ctrlRelTime(iso) {
+  if (!iso) return '';
+  const t = new Date(iso).getTime();
+  if (!Number.isFinite(t)) return '';
+  const diff = Math.max(0, Date.now() - t);
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return `${sec}s atrás`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}min atrás`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h atrás`;
+  const dy = Math.floor(hr / 24);
+  return `${dy}d atrás`;
+}
 
 /* ==================================================================
    Helpers
@@ -622,7 +916,11 @@ function _ctrlDomainIcon(type) {
     climate: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v13"/><circle cx="12" cy="18" r="3"/><path d="M9 9h6"/><path d="M9 13h6"/></svg>',
     cover: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M4 9h16"/><path d="M4 15h16"/><path d="M12 3v18"/></svg>',
     fan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="2"/><path d="M12 10V4s4 0 4 4-4 2-4 2z"/><path d="M14 12h6s0 4-4 4-2-4-2-4z"/><path d="M12 14v6s-4 0-4-4 4-2 4-2z"/><path d="M10 12H4s0-4 4-4 2 4 2 4z"/></svg>',
-    media_player: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>'
+    media_player: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg>',
+    camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+    sensor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6"/><circle cx="12" cy="13" r="3"/><path d="M5 21a7 7 0 0 1 14 0"/></svg>',
+    binary_sensor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>',
+    alarm_control_panel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a6 6 0 0 0-6 6v4H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1V8a6 6 0 0 0-6-6z"/><circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none"/></svg>'
   };
   return icons[type] || icons.switch;
 }

@@ -21,6 +21,7 @@ const HAClient = {
   _reconnectAttempts: 0,
   _reconnectTimer: null,
   _manualClose: false,
+  _allStates: [],
 
   setConfig({ url, token }) {
     this._url = url;
@@ -136,11 +137,24 @@ const HAClient = {
 
   async _afterAuth() {
     const states = await this._send({ type: 'get_states' });
+    this._allStates = Array.isArray(states) ? states : [];
     this._stateListeners.forEach(cb => {
       states.forEach(st => { try { cb(st.entity_id, st); } catch (e) { console.error(e); } });
     });
     await this._send({ type: 'subscribe_events', event_type: 'state_changed' });
     return states;
+  },
+
+  getAllStates() { return this._allStates || []; },
+
+  async refreshAllStates() {
+    try {
+      const states = await this._send({ type: 'get_states' });
+      this._allStates = Array.isArray(states) ? states : [];
+      return this._allStates;
+    } catch {
+      return this._allStates || [];
+    }
   },
 
   _send(payload) {
@@ -172,5 +186,23 @@ const HAClient = {
 
   callService(domain, service, serviceData = {}) {
     return this._send({ type: 'call_service', domain, service, service_data: serviceData });
+  },
+
+  async signPath(path, expires = 600) {
+    const result = await this._send({ type: 'auth/sign_path', path, expires });
+    return result && result.path ? result.path : null;
+  },
+
+  async getCameraImageUrl(entityId) {
+    if (!this._url || !entityId) return null;
+    try {
+      const signed = await this.signPath(`/api/camera_proxy/${entityId}`, 600);
+      if (!signed) return null;
+      const base = this._url.replace(/\/$/, '');
+      return `${base}${signed}`;
+    } catch (err) {
+      console.warn('[ha-client] signPath falhou:', err);
+      return null;
+    }
   }
 };

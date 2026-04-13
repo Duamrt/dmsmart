@@ -13,6 +13,7 @@ async function initApp() {
     initInstallationSelector();
     if (typeof ControlModal !== 'undefined') ControlModal.init();
     if (typeof ZoneModal !== 'undefined') ZoneModal.init();
+    if (typeof ZoneEditor !== 'undefined') ZoneEditor.init();
 
     await ConfigLoader.load();
     const seedConfig = ConfigLoader.get();
@@ -441,10 +442,26 @@ async function connectToHA(installation) {
     return;
   }
 
-  const watched = new Set(ZoneRegistry.allEntityIds());
   HAClient.onStateChanged((entityId, newState) => {
+    // Dinâmico: quando zonas são adicionadas depois do boot, novas entidades
+    // passam a ser observadas automaticamente.
+    const watched = new Set(ZoneRegistry.allEntityIds());
     if (!watched.has(entityId)) return;
     StateStore.update(entityId, newState);
+  });
+
+  // Quando o usuário cria/edita zonas, seeda o StateStore a partir do cache
+  // de get_states do HAClient, pros novos devices aparecerem com estado real.
+  ZoneRegistry.onChange(() => {
+    if (typeof HAClient === 'undefined' || !HAClient.getAllStates) return;
+    const allStates = HAClient.getAllStates();
+    if (!Array.isArray(allStates) || allStates.length === 0) return;
+    const byId = new Map(allStates.map(s => [s.entity_id, s]));
+    for (const entityId of ZoneRegistry.allEntityIds()) {
+      if (!StateStore.get(entityId) && byId.has(entityId)) {
+        StateStore.update(entityId, byId.get(entityId));
+      }
+    }
   });
 
   const token = InstallationStore.getToken(installation.id);
@@ -481,9 +498,13 @@ function initHero(installation) {
   eyebrow.textContent = greet;
   title.textContent = installation.name || 'Instalação';
 
-  const zoneCount = Array.isArray(installation.zones) ? installation.zones.length : 0;
-  const deviceCount = (installation.zones || []).reduce((sum, z) => sum + (z.devices || []).length, 0);
-  sub.textContent = `${zoneCount} zona${zoneCount === 1 ? '' : 's'} · ${deviceCount} dispositivo${deviceCount === 1 ? '' : 's'}`;
+  const updateSubtitle = () => {
+    const zones = ZoneRegistry.all();
+    const zoneCount = zones.length;
+    const deviceCount = zones.reduce((sum, z) => sum + ((z.devices || []).length), 0);
+    sub.textContent = `${zoneCount} zona${zoneCount === 1 ? '' : 's'} · ${deviceCount} dispositivo${deviceCount === 1 ? '' : 's'}`;
+  };
+  updateSubtitle();
 
   const statDevicesOn = document.getElementById('stat-devices-on');
   const statZonesActive = document.getElementById('stat-zones-active');
@@ -511,6 +532,9 @@ function initHero(installation) {
 
   recompute();
   StateStore.subscribeAll(recompute);
+  if (typeof ZoneRegistry.onChange === 'function') {
+    ZoneRegistry.onChange(() => { updateSubtitle(); recompute(); });
+  }
 }
 
 function initConnectionIndicator() {

@@ -13,7 +13,8 @@ const USEFUL_DOMAINS = {
   climate: { label: 'Clima / Ar', type: 'climate' },
   cover: { label: 'Cortinas / Portões', type: 'cover' },
   media_player: { label: 'TVs e mídia', type: 'media_player' },
-  fan: { label: 'Ventiladores', type: 'fan' }
+  fan: { label: 'Ventiladores', type: 'fan' },
+  alarm_control_panel: { label: 'Alarme', type: 'alarm_control_panel' }
 };
 
 const ZONE_ICONS = ['sofa', 'bed', 'kitchen', 'shower', 'car', 'tree', 'hanger', 'washing', 'monitor'];
