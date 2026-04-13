@@ -925,6 +925,82 @@ body.wizard-open {
   50% { opacity: 0.4; }
 }
 
+/* =========================================
+   Toast de reconexão HA + toasts genéricos
+   ========================================= */
+
+.ha-reconnect-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: #1c1f26;
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: 99px;
+  color: #fbbf24;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0,0,0,.5);
+  opacity: 0;
+  transition: opacity .3s, transform .3s;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.ha-reconnect-toast svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  animation: spin 1.2s linear infinite;
+}
+
+.ha-reconnect-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.app-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  padding: 10px 20px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 4px 20px rgba(0,0,0,.5);
+  opacity: 0;
+  transition: opacity .3s, transform .3s;
+  z-index: 9998;
+  pointer-events: none;
+}
+
+.app-toast.visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.app-toast-default {
+  background: var(--primary);
+  color: #fff;
+}
+
+.app-toast-success {
+  background: #14532d;
+  border: 1px solid rgba(34, 197, 94, .4);
+  color: #4ade80;
+}
+
 .app-main {
   flex: 1;
   padding: 32px;

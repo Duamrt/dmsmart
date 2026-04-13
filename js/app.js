@@ -543,18 +543,75 @@ function initConnectionIndicator() {
   const dot = document.querySelector('.connection-dot');
   const label = document.querySelector('.connection-label');
   if (!dot) return;
+
+  let reconnectToast = null;
+  let reconnectCount = 0;
+  let prevStatus = null;
+
   HAClient.onStatusChange((status) => {
     dot.setAttribute('data-status', status);
     const txt = {
-      connecting: 'Conectando',
-      online: 'Conectado',
+      connecting:   'Conectando',
+      online:       'Conectado',
       reconnecting: 'Reconectando',
-      offline: 'Offline',
+      offline:      'Offline',
       auth_invalid: 'Token inválido'
     }[status] || status;
     dot.title = txt;
     if (label) label.textContent = txt;
+
+    // Toast de reconexão
+    if (status === 'reconnecting') {
+      reconnectCount++;
+      if (!reconnectToast) {
+        reconnectToast = document.createElement('div');
+        reconnectToast.className = 'ha-reconnect-toast';
+        document.body.appendChild(reconnectToast);
+        // força reflow pra transição funcionar
+        reconnectToast.getBoundingClientRect();
+        reconnectToast.classList.add('visible');
+      }
+      reconnectToast.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
+        <span>Reconectando ao HA${reconnectCount > 1 ? ` (tentativa ${reconnectCount})` : '…'}</span>
+      `;
+    }
+
+    if (status === 'online' && prevStatus === 'reconnecting') {
+      reconnectCount = 0;
+      if (reconnectToast) {
+        reconnectToast.classList.remove('visible');
+        const t = reconnectToast;
+        reconnectToast = null;
+        setTimeout(() => t.remove(), 400);
+      }
+      // flash de "reconectado"
+      _showToast('HA reconectado', 'success', 2000);
+    }
+
+    if (status === 'offline' || status === 'auth_invalid') {
+      reconnectCount = 0;
+      if (reconnectToast) {
+        reconnectToast.classList.remove('visible');
+        const t = reconnectToast;
+        reconnectToast = null;
+        setTimeout(() => t.remove(), 400);
+      }
+    }
+
+    prevStatus = status;
   });
+}
+
+function _showToast(msg, type = 'default', duration = 2800) {
+  const toast = document.createElement('div');
+  toast.className = `app-toast app-toast-${type}`;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  toast.getBoundingClientRect();
+  toast.classList.add('visible');
+  setTimeout(() => { toast.classList.remove('visible'); }, duration);
+  setTimeout(() => { toast.remove(); }, duration + 400);
 }
 
 function initClock() {
@@ -605,19 +662,7 @@ document.addEventListener('dmsmart:installation-created', async (e) => {
   await connectToHA(active);
   if (typeof ScenesPanel !== 'undefined') ScenesPanel.load();
 
-  // Toast de confirmação
-  const toast = document.createElement('div');
-  toast.textContent = `✓ ${active.name} adicionada`;
-  Object.assign(toast.style, {
-    position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
-    background: 'var(--color-primary, #2563eb)', color: '#fff',
-    padding: '10px 20px', borderRadius: '8px', zIndex: '9999',
-    fontSize: '14px', fontWeight: '500', pointerEvents: 'none',
-    transition: 'opacity .4s'
-  });
-  document.body.appendChild(toast);
-  setTimeout(() => { toast.style.opacity = '0'; }, 2400);
-  setTimeout(() => { toast.remove(); }, 2900);
+  _showToast(`✓ ${active.name} adicionada`);
 
   console.log(`[dmsmart] Instalação adicionada: ${active.name}`);
 });
