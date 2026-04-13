@@ -40,6 +40,7 @@ async function initApp() {
 
     initHero(active);
     initConnectionIndicator();
+    if (typeof ScenesPanel !== 'undefined') ScenesPanel.init(document.getElementById('scenes-section'));
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js')
@@ -48,6 +49,7 @@ async function initApp() {
     }
 
     await connectToHA(active);
+    if (typeof ScenesPanel !== 'undefined') ScenesPanel.load();
 
     console.log(`[dmsmart] ${active.name} iniciado`);
   } catch (err) {
@@ -579,3 +581,43 @@ function initClock() {
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
+
+document.addEventListener('dmsmart:installation-created', async (e) => {
+  const id = e.detail && e.detail.id;
+  const active = id ? InstallationStore.get(id) : ActiveInstallation.get();
+  if (!active) { window.location.reload(); return; }
+
+  // Atualiza header e dropdown
+  updateHeaderInstallation(active);
+  const dropdown = document.getElementById('install-dropdown');
+  if (dropdown) renderInstallationDropdown(dropdown);
+
+  // Reinicializa zonas e UI
+  ZoneRegistry.init({ zones: active.zones });
+  const zonesGrid = document.querySelector('.zones-grid');
+  if (zonesGrid) UIRenderer.init(zonesGrid);
+  initHero(active);
+
+  // Reconecta HA
+  if (typeof HAClient !== 'undefined' && typeof HAClient.disconnect === 'function') {
+    try { HAClient.disconnect(); } catch (_) {}
+  }
+  await connectToHA(active);
+  if (typeof ScenesPanel !== 'undefined') ScenesPanel.load();
+
+  // Toast de confirmação
+  const toast = document.createElement('div');
+  toast.textContent = `✓ ${active.name} adicionada`;
+  Object.assign(toast.style, {
+    position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
+    background: 'var(--color-primary, #2563eb)', color: '#fff',
+    padding: '10px 20px', borderRadius: '8px', zIndex: '9999',
+    fontSize: '14px', fontWeight: '500', pointerEvents: 'none',
+    transition: 'opacity .4s'
+  });
+  document.body.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; }, 2400);
+  setTimeout(() => { toast.remove(); }, 2900);
+
+  console.log(`[dmsmart] Instalação adicionada: ${active.name}`);
+});

@@ -575,6 +575,7 @@ const Wizard = {
   },
 
   _finalize() {
+    const isFirst = InstallationStore.all().length === 0;
     const inst = InstallationStore.create({
       name: this.draft.name,
       haUrl: this.draft.haUrl,
@@ -583,7 +584,11 @@ const Wizard = {
     InstallationStore.setToken(inst.id, this.draft.token);
     ActiveInstallation.setId(inst.id);
     this.close();
-    window.location.reload();
+    if (isFirst) {
+      window.location.reload();
+    } else {
+      document.dispatchEvent(new CustomEvent('dmsmart:installation-created', { detail: { id: inst.id } }));
+    }
   },
 
   _esc(s) {

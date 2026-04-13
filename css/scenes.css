@@ -1,0 +1,147 @@
+/* scenes.css — Cenas & Automações */
+
+.scenes-section {
+  padding: 0 24px 8px;
+}
+.scenes-section.hidden { display: none; }
+
+.scenes-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.scenes-title {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.scenes-badge {
+  background: var(--bg-elev-3);
+  color: var(--text-2);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+
+.scenes-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  gap: 12px;
+}
+
+.scene-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 12px 16px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: background .18s, border-color .18s, transform .12s, box-shadow .18s;
+  position: relative;
+  overflow: hidden;
+  min-height: 96px;
+}
+
+.scene-card:hover {
+  background: var(--bg-elev-2);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary-glow);
+}
+.scene-card:active {
+  transform: scale(.96);
+}
+
+.scene-card-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-soft);
+  border-radius: 10px;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+.scene-card-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.scene-card-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  text-align: center;
+  line-height: 1.3;
+  word-break: break-word;
+  transition: color .18s;
+}
+.scene-card:hover .scene-card-name {
+  color: var(--text);
+}
+
+/* Ativando — pulso */
+@keyframes scene-pulse {
+  0%   { box-shadow: 0 0 0 0 var(--primary-glow); }
+  60%  { box-shadow: 0 0 0 10px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.scene-card.scene-activating {
+  animation: scene-pulse .7s ease-out;
+  border-color: var(--primary);
+  pointer-events: none;
+}
+.scene-card.scene-activating .scene-card-icon {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* Ativado — flash verde */
+.scene-card.scene-activated {
+  border-color: var(--success);
+  background: rgba(34, 197, 94, .1);
+}
+.scene-card.scene-activated .scene-card-icon {
+  background: rgba(34, 197, 94, .2);
+  color: var(--success);
+}
+.scene-card.scene-activated .scene-card-name {
+  color: var(--success);
+}
+
+/* Erro */
+.scene-card.scene-error {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+/* Mobile: scroll horizontal em telas pequenas */
+@media (max-width: 480px) {
+  .scenes-section { padding: 0 16px 8px; }
+  .scenes-list {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 10px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .scenes-list::-webkit-scrollbar { display: none; }
+  .scene-card {
+    min-width: 96px;
+    flex-shrink: 0;
+  }
+}
