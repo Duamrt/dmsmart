@@ -391,8 +391,20 @@
   flex: none;
   margin-bottom: 20px;
 }
+/* Viewport sem clipping — imagem escala inteira via max-height na própria img */
 .floorplan-section.fp-compact .floorplan-viewport {
-  max-height: 270px;
+  max-height: none;
+  overflow: hidden;
+}
+/* Imagem escala proporcionalmente até 320px de altura — sem corte, marcadores na posição certa */
+.floorplan-section.fp-compact .floorplan-img {
+  max-height: 320px;
+  width: auto;
+  max-width: 100%;
+}
+/* Wrap segue o tamanho real da imagem — evita marcadores voando fora */
+.floorplan-section.fp-compact .floorplan-img-wrap {
+  min-width: 0;
 }
 .floorplan-section.fp-compact #fp-edit-btn,
 .floorplan-section.fp-compact label.btn-fp {
@@ -406,12 +418,12 @@
   padding: 1px 5px;
 }
 .floorplan-section.fp-compact .fp-marker {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
 }
 .floorplan-section.fp-compact .fp-marker svg {
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
 }
 
 /* Mobile */
