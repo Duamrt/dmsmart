@@ -2,7 +2,7 @@
 // Cache-first para o shell da aplicação
 // Ao fazer deploy: incrementar CACHE_NAME para invalidar cache antigo
 
-const CACHE_NAME = 'dmsmart-v04131630';
+const CACHE_NAME = 'dmsmart-v04131930';
 
 const SHELL_ASSETS = [
   '/',
@@ -13,7 +13,10 @@ const SHELL_ASSETS = [
   '/css/zones.css',
   '/css/wizard.css',
   '/css/floorplan.css',
+  '/css/auth.css',
   '/js/version.js',
+  '/js/supabase-client.js',
+  '/js/auth-store.js',
   '/js/config-loader.js',
   '/js/installation-store.js',
   '/js/active-installation.js',

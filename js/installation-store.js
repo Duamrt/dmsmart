@@ -68,6 +68,7 @@ const InstallationStore = {
       index.push(id);
       this._writeIndex(index);
     }
+    this.syncToCloud(id).catch(() => {});
     return installation;
   },
 
@@ -85,6 +86,7 @@ const InstallationStore = {
       updated.zones = patch.zones.map((z, idx) => this._normalizeZone(z, idx));
     }
     localStorage.setItem(this.KEY_INSTALL(id), JSON.stringify(updated));
+    this.syncToCloud(id).catch(() => {});
     return updated;
   },
 
@@ -93,6 +95,7 @@ const InstallationStore = {
     localStorage.removeItem(this.KEY_TOKEN(id));
     const index = this._readIndex().filter(x => x !== id);
     this._writeIndex(index);
+    this.deleteFromCloud(id).catch(() => {});
   },
 
   getToken(id) {
@@ -151,5 +154,72 @@ const InstallationStore = {
       entity: d.entity || '',
       isCritical: !!d.isCritical
     };
+  },
+
+  // ── Cloud sync (Fase 04) ──────────────────────────────────────────────────
+  // Token HA NUNCA vai pro cloud — fica só no localStorage.
+
+  async syncToCloud(id) {
+    if (typeof AuthStore === 'undefined' || !AuthStore.isLoggedIn()) return;
+    const inst = this.get(id);
+    if (!inst) return;
+    const user = AuthStore.getUser();
+    const { error } = await SUPA.from('installations').upsert({
+      id:         inst.id,
+      user_id:    user.id,
+      name:       inst.name,
+      ha_url:     inst.haUrl  || '',
+      zones:      inst.zones  || [],
+      created_at: inst.createdAt,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'id' });
+    if (error) console.warn('[dmsmart] syncToCloud:', error.message);
+  },
+
+  async deleteFromCloud(id) {
+    if (typeof AuthStore === 'undefined' || !AuthStore.isLoggedIn()) return;
+    const { error } = await SUPA.from('installations').delete().eq('id', id);
+    if (error) console.warn('[dmsmart] deleteFromCloud:', error.message);
+  },
+
+  // Puxa do cloud e mescla no localStorage.
+  // Cloud vence se updatedAt for mais recente.
+  // Retorna o número de registros novos/atualizados.
+  async pullFromCloud() {
+    if (typeof AuthStore === 'undefined' || !AuthStore.isLoggedIn()) return 0;
+    const { data, error } = await SUPA.from('installations').select('*');
+    if (error || !Array.isArray(data)) return 0;
+
+    let count = 0;
+    for (const row of data) {
+      const local = this.get(row.id);
+      const cloudTs = new Date(row.updated_at).getTime();
+      const localTs = local ? new Date(local.updatedAt).getTime() : 0;
+      if (!local || cloudTs > localTs) {
+        const inst = {
+          id:        row.id,
+          name:      row.name,
+          haUrl:     row.ha_url  || '',
+          zones:     Array.isArray(row.zones) ? row.zones : [],
+          createdAt: row.created_at,
+          updatedAt: row.updated_at
+        };
+        localStorage.setItem(this.KEY_INSTALL(row.id), JSON.stringify(inst));
+        const index = this._readIndex();
+        if (!index.includes(row.id)) {
+          index.push(row.id);
+          this._writeIndex(index);
+        }
+        count++;
+      }
+    }
+    return count;
+  },
+
+  // Empurra todas as instalações locais pro cloud (usado no primeiro login).
+  async pushAllToCloud() {
+    if (typeof AuthStore === 'undefined' || !AuthStore.isLoggedIn()) return;
+    const all = this.all();
+    await Promise.all(all.map(inst => this.syncToCloud(inst.id).catch(() => {})));
   }
 };

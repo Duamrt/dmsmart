@@ -20,6 +20,14 @@ async function initApp() {
     if (typeof ZoneModal !== 'undefined') ZoneModal.init();
     if (typeof ZoneEditor !== 'undefined') ZoneEditor.init();
 
+    // Fase 04 — inicializa auth Supabase e puxa config do cloud se logado
+    if (typeof AuthStore !== 'undefined') {
+      await AuthStore.init();
+      if (AuthStore.isLoggedIn()) {
+        await InstallationStore.pullFromCloud();
+      }
+    }
+
     await ConfigLoader.load();
     const seedConfig = ConfigLoader.get();
 

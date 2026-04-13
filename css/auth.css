@@ -1,0 +1,206 @@
+/* auth.css — estilos de login/conta (Fase 04) */
+
+/* ── Botão no sidebar ──────────────────────────────────────────────────── */
+#sidebar-auth {
+  padding: 4px 8px 8px;
+}
+
+.sidebar-auth-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  color: var(--text-secondary, #8b949e);
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s;
+  text-align: left;
+  overflow: hidden;
+}
+
+.sidebar-auth-btn:hover {
+  background: var(--bg-card, #161b22);
+  color: var(--text-primary, #e6edf3);
+}
+
+.sidebar-auth-btn svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+}
+
+/* Avatar com iniciais */
+.sidebar-auth-avatar {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent, #1f6feb);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.sidebar-auth-email {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.sidebar-auth-chevron {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  opacity: 0.5;
+}
+
+/* ── Modal de login ────────────────────────────────────────────────────── */
+.auth-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  padding: 16px;
+}
+
+.auth-modal-overlay.hidden {
+  display: none;
+}
+
+.auth-modal-card {
+  background: var(--bg-surface, #0d1117);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.auth-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border, #30363d);
+}
+
+.auth-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #e6edf3);
+}
+
+.auth-modal-title svg {
+  width: 18px;
+  height: 18px;
+  color: var(--accent, #1f6feb);
+}
+
+.auth-modal-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #8b949e);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.auth-modal-close:hover {
+  color: var(--text-primary, #e6edf3);
+  background: var(--bg-card, #161b22);
+}
+
+.auth-modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-field label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary, #8b949e);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.auth-field input {
+  background: var(--bg-card, #161b22);
+  border: 1px solid var(--border, #30363d);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--text-primary, #e6edf3);
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.auth-field input:focus {
+  border-color: var(--accent, #1f6feb);
+}
+
+.auth-error {
+  font-size: 13px;
+  color: #f85149;
+  min-height: 18px;
+}
+
+.auth-submit-btn {
+  width: 100%;
+  padding: 11px;
+  background: var(--accent, #1f6feb);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.auth-submit-btn:hover:not(:disabled) {
+  background: #388bfd;
+}
+
+.auth-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.auth-modal-foot {
+  padding: 12px 20px 16px;
+  font-size: 12px;
+  color: var(--text-muted, #6e7681);
+  text-align: center;
+  border-top: 1px solid var(--border, #30363d);
+}
