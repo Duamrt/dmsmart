@@ -448,15 +448,20 @@ const ManageModal = {
     if (isEditingConn) {
       const currentToken = InstallationStore.getToken(inst.id) || '';
       return `
-        <div class="manage-row ${isActive ? 'active' : ''}" data-id="${_esc(inst.id)}">
-          <div class="manage-edit-wrap" style="flex:1;display:flex;flex-direction:column;gap:8px;">
-            <input type="url" class="manage-edit-input" id="manage-conn-url-${_esc(inst.id)}"
-              value="${_esc(inst.haUrl || '')}" placeholder="http://192.168.x.x:8123" />
-            <textarea class="manage-edit-input" id="manage-conn-token-${_esc(inst.id)}"
-              rows="3" placeholder="Token longo prazo (opcional — deixe em branco para manter o atual)"
-              style="resize:vertical;font-size:11px;">${_esc(currentToken)}</textarea>
+        <div class="manage-conn-edit" data-id="${_esc(inst.id)}">
+          <div class="manage-conn-fields">
+            <div class="manage-conn-field">
+              <label class="manage-conn-label">URL do Home Assistant</label>
+              <input type="url" class="manage-edit-input" id="manage-conn-url-${_esc(inst.id)}"
+                value="${_esc(inst.haUrl || '')}" placeholder="https://ha.dmstack.com.br" />
+            </div>
+            <div class="manage-conn-field">
+              <label class="manage-conn-label">Token de longa duração${currentToken ? ' <span class="manage-conn-hint">• salvo neste dispositivo</span>' : ''}</label>
+              <textarea class="manage-edit-input manage-conn-token" id="manage-conn-token-${_esc(inst.id)}"
+                rows="2" placeholder="${currentToken ? 'Deixe vazio para manter o atual' : 'Cole o token aqui'}">${_esc(currentToken)}</textarea>
+            </div>
           </div>
-          <div class="manage-row-actions" style="align-self:flex-start;">
+          <div class="manage-conn-actions">
             <button type="button" class="manage-icon-btn" data-manage="save-connection" data-id="${_esc(inst.id)}" title="Salvar">
               <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>
             </button>
