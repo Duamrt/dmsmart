@@ -24,7 +24,8 @@ async function initApp() {
     if (typeof AuthStore !== 'undefined') {
       await AuthStore.init();
       if (AuthStore.isLoggedIn()) {
-        await InstallationStore.pullFromCloud();
+        const pulled = await InstallationStore.pullFromCloud();
+        if (pulled > 0) { window.location.reload(); return; }
       }
     }
 
