@@ -64,17 +64,11 @@ const ScenesPanel = {
 
   render() {
     if (!this._container) return;
-    this._container.classList.remove('hidden');
     if (!this._scenes.length) {
-      this._container.innerHTML = `
-        <div class="scenes-empty">
-          <div class="scenes-empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
-          <div class="scenes-empty-title">Nenhuma cena encontrada</div>
-          <div class="scenes-empty-sub">Crie cenas ou scripts no Home Assistant para controlá-los aqui</div>
-        </div>
-      `;
+      this._container.classList.add('hidden');
       return;
     }
+    this._container.classList.remove('hidden');
 
     const cards = this._scenes.map(s => `
       <button class="scene-card" type="button" data-id="${_esc(s.id)}" data-type="${_esc(s.type)}">

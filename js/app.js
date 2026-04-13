@@ -687,9 +687,17 @@ async function connectToHA(installation) {
 
   const token = InstallationStore.getToken(installation.id);
   if (!token) {
-    console.warn('[dmsmart] Sem token — modo mock');
+    console.warn('[dmsmart] Sem token — modo offline. Dispositivo não configurado.');
     StateStore.initMock();
+    _showNoTokenBanner(installation);
     return;
+  }
+
+  // Avisa se a URL é localhost e parece que não é o PC de origem
+  const isLocalhost = /^https?:\/\/(localhost|127\.)/i.test(installation.haUrl || '');
+  if (isLocalhost && !/localhost|127\./.test(location.hostname)) {
+    console.warn('[dmsmart] URL do HA é localhost mas o app está rodando em host remoto');
+    _showLocalHostWarning(installation);
   }
 
   HAClient.setConfig({ url: installation.haUrl, token });
@@ -703,6 +711,30 @@ async function connectToHA(installation) {
   }
 }
 
+function _showNoTokenBanner(installation) {
+  const existing = document.getElementById('no-token-banner');
+  if (existing) return;
+  const banner = document.createElement('div');
+  banner.id = 'no-token-banner';
+  banner.className = 'no-token-banner';
+  banner.innerHTML = `
+    <div class="no-token-banner-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    </div>
+    <div class="no-token-banner-text">
+      <strong>Dispositivo não configurado</strong>
+      <span>O token do Home Assistant não está salvo neste dispositivo. Configure para sair do modo offline.</span>
+    </div>
+    <button class="no-token-banner-btn" type="button" onclick="openManageModal();document.getElementById('no-token-banner')?.remove()">Configurar</button>
+  `;
+  const main = document.querySelector('.main-content') || document.body;
+  main.prepend(banner);
+}
+
+function _showLocalHostWarning(installation) {
+  console.warn('[dmsmart] HA URL usa localhost — não vai funcionar em dispositivos remotos. Use a URL do túnel (ex: https://ha.dmstack.com.br)');
+}
+
 function initHero(installation) {
   const eyebrow = document.getElementById('hero-eyebrow');
   const title = document.getElementById('hero-title');
@@ -713,7 +745,19 @@ function initHero(installation) {
   const greet = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
 
   eyebrow.textContent = greet;
-  title.textContent = installation.name || 'Instalação';
+  // Usa o primeiro nome do usuário logado; fallback para nome da instalação
+  let displayName = installation.name || 'Instalação';
+  if (typeof AuthStore !== 'undefined' && AuthStore.isLoggedIn()) {
+    const user = AuthStore.getUser();
+    const meta = user?.user_metadata;
+    const rawName = meta?.full_name || meta?.name || user?.email || '';
+    // Extrai primeiro nome (antes do @ se email, ou primeira palavra)
+    const firstName = rawName.includes('@')
+      ? rawName.split('@')[0].replace(/[._-]/g, ' ').split(' ')[0]
+      : rawName.split(' ')[0];
+    if (firstName) displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+  }
+  title.textContent = displayName;
 
   const updateSubtitle = () => {
     const zones = ZoneRegistry.all();
