@@ -33,7 +33,8 @@ const ZONE_EDITOR_DOMAINS = {
   media_player:         { label: 'TVs e mídia',        type: 'media_player' },
   fan:                  { label: 'Ventiladores',       type: 'fan' },
   camera:               { label: 'Câmeras',            type: 'camera' },
-  alarm_control_panel:  { label: 'Alarmes',            type: 'alarm_control_panel' }
+  alarm_control_panel:  { label: 'Alarmes',            type: 'alarm_control_panel' },
+  valve:                { label: 'Válvulas / Irrigação', type: 'valve' }
 };
 
 const ZoneEditor = {

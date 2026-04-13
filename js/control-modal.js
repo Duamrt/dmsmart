@@ -65,6 +65,8 @@ const ControlModal = {
     this._overlay.classList.add('hidden');
     document.body.classList.remove('modal-open');
     if (this._unsub) { this._unsub(); this._unsub = null; }
+    if (this._valveInterval) { clearInterval(this._valveInterval); this._valveInterval = null; }
+    if (this._valveTimeout)  { clearTimeout(this._valveTimeout);  this._valveTimeout  = null; }
     this._device = null;
     this._lastState = null;
   },
@@ -655,6 +657,105 @@ const ControlRenderers = {
     }
   },
 
+  valve: {
+    body(device, state) {
+      const s = state ? state.state : 'unknown';
+      const isOpen = s === 'open' || s === 'on';
+      const isTransitioning = s === 'opening' || s === 'closing';
+      const stateLabel = { open: 'Aberta', closed: 'Fechada', opening: 'Abrindo…', closing: 'Fechando…', on: 'Aberta', off: 'Fechada', unknown: '—', unavailable: 'Indisponível' };
+      return `
+        <div class="control-valve">
+          <button type="button" class="big-toggle ${isOpen ? 'on' : ''}" data-ctrl="valve-toggle" ${isTransitioning ? 'disabled' : ''}>
+            <div class="big-toggle-ring">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3v4M12 17v4M3 12h4M17 12h4"/>
+                <circle cx="12" cy="12" r="4"/>
+                <path d="M12 8v1M12 15v1M8 12h1M15 12h1"/>
+              </svg>
+            </div>
+            <div class="big-toggle-label">${stateLabel[s] || s}</div>
+          </button>
+        </div>
+        <div class="control-section">
+          <div class="control-section-head"><span>Fechar automaticamente após</span></div>
+          <div class="valve-timer-presets">
+            <button type="button" class="valve-preset" data-ctrl="valve-timer" data-mins="5">5 min</button>
+            <button type="button" class="valve-preset" data-ctrl="valve-timer" data-mins="10">10 min</button>
+            <button type="button" class="valve-preset" data-ctrl="valve-timer" data-mins="15">15 min</button>
+            <button type="button" class="valve-preset" data-ctrl="valve-timer" data-mins="30">30 min</button>
+          </div>
+          <div class="valve-timer-custom">
+            <input type="number" class="valve-timer-input" data-ctrl-valve-custom min="1" max="120" placeholder="outro (min)">
+            <button type="button" class="valve-preset" data-ctrl="valve-timer-custom">Iniciar</button>
+          </div>
+          <div class="valve-countdown hidden" data-ctrl-valve-countdown></div>
+          <button type="button" class="valve-cancel hidden" data-ctrl="valve-cancel">Cancelar timer</button>
+        </div>
+      `;
+    },
+    status(device, state) {
+      if (!state) return '—';
+      const map = { open: 'Aberta', closed: 'Fechada', opening: 'Abrindo…', closing: 'Fechando…', on: 'Aberta', off: 'Fechada' };
+      return map[state.state] || state.state;
+    },
+    sync(body, device, state) {
+      const s = state ? state.state : 'unknown';
+      const isOpen = s === 'open' || s === 'on';
+      const isTransitioning = s === 'opening' || s === 'closing';
+      const stateLabel = { open: 'Aberta', closed: 'Fechada', opening: 'Abrindo…', closing: 'Fechando…', on: 'Aberta', off: 'Fechada' };
+      const toggle = body.querySelector('[data-ctrl="valve-toggle"]');
+      if (toggle) {
+        toggle.classList.toggle('on', isOpen);
+        toggle.disabled = isTransitioning;
+        const lbl = toggle.querySelector('.big-toggle-label');
+        if (lbl) lbl.textContent = stateLabel[s] || s;
+      }
+    },
+    handle(action, btn, device, state, modal) {
+      const domain = device.entity.split('.')[0];
+      const s = state ? state.state : 'closed';
+      const isOpen = s === 'open' || s === 'on';
+      const openSvc  = domain === 'valve' ? 'open_valve'  : 'turn_on';
+      const closeSvc = domain === 'valve' ? 'close_valve' : 'turn_off';
+      const openState  = domain === 'valve' ? 'open'   : 'on';
+      const closeState = domain === 'valve' ? 'closed' : 'off';
+
+      if (action === 'valve-toggle') {
+        if (isOpen) {
+          _ctrlValveClearTimer(modal);
+          modal._optimistic({ state: closeState });
+          modal._call(domain, closeSvc, { entity_id: device.entity });
+        } else {
+          modal._optimistic({ state: openState });
+          modal._call(domain, openSvc, { entity_id: device.entity });
+        }
+        return;
+      }
+
+      if (action === 'valve-timer' || action === 'valve-timer-custom') {
+        let mins;
+        if (action === 'valve-timer') {
+          mins = Number(btn.getAttribute('data-mins'));
+        } else {
+          const input = modal._overlay.querySelector('[data-ctrl-valve-custom]');
+          mins = input ? Number(input.value) : 0;
+        }
+        if (!mins || mins < 1) return;
+        if (!isOpen) {
+          modal._optimistic({ state: openState });
+          modal._call(domain, openSvc, { entity_id: device.entity });
+        }
+        _ctrlValveStartTimer(modal, device, domain, mins * 60, closeSvc, closeState);
+        return;
+      }
+
+      if (action === 'valve-cancel') {
+        _ctrlValveClearTimer(modal);
+        return;
+      }
+    }
+  },
+
   alarm_control_panel: {
     body(device, state) {
       _alarmPin = '';
@@ -785,6 +886,54 @@ function _ctrlAlarmBody(s) {
       <div class="alarm-actions" data-alarm-actions>${_ctrlAlarmActions(s)}</div>
     </div>
   `;
+}
+
+/* ==================================================================
+   Valve helpers — timer de fechamento automático
+   ================================================================== */
+
+function _ctrlValveStartTimer(modal, device, domain, totalSecs, closeSvc, closeState) {
+  _ctrlValveClearTimer(modal);
+  const endTime = Date.now() + totalSecs * 1000;
+
+  const updateUI = () => {
+    const remaining = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
+    const countdown = modal._overlay && modal._overlay.querySelector('[data-ctrl-valve-countdown]');
+    const cancelBtn = modal._overlay && modal._overlay.querySelector('[data-ctrl="valve-cancel"]');
+    if (!countdown) return;
+    const min = Math.floor(remaining / 60);
+    const sec = remaining % 60;
+    countdown.textContent = `Fechando em ${min}:${String(sec).padStart(2, '0')}`;
+    countdown.classList.remove('hidden');
+    if (cancelBtn) cancelBtn.classList.remove('hidden');
+  };
+
+  updateUI();
+  modal._valveInterval = setInterval(updateUI, 1000);
+
+  modal._valveTimeout = setTimeout(() => {
+    clearInterval(modal._valveInterval);
+    modal._valveInterval = null;
+    modal._valveTimeout = null;
+    modal._optimistic({ state: closeState });
+    modal._call(domain, closeSvc, { entity_id: device.entity });
+    const countdown = modal._overlay && modal._overlay.querySelector('[data-ctrl-valve-countdown]');
+    const cancelBtn = modal._overlay && modal._overlay.querySelector('[data-ctrl="valve-cancel"]');
+    if (countdown) { countdown.textContent = 'Válvula fechada'; }
+    setTimeout(() => {
+      if (countdown) countdown.classList.add('hidden');
+      if (cancelBtn) cancelBtn.classList.add('hidden');
+    }, 2000);
+  }, totalSecs * 1000);
+}
+
+function _ctrlValveClearTimer(modal) {
+  if (modal._valveInterval) { clearInterval(modal._valveInterval); modal._valveInterval = null; }
+  if (modal._valveTimeout)  { clearTimeout(modal._valveTimeout);  modal._valveTimeout  = null; }
+  const countdown = modal._overlay && modal._overlay.querySelector('[data-ctrl-valve-countdown]');
+  const cancelBtn = modal._overlay && modal._overlay.querySelector('[data-ctrl="valve-cancel"]');
+  if (countdown) countdown.classList.add('hidden');
+  if (cancelBtn) cancelBtn.classList.add('hidden');
 }
 
 function _ctrlCameraLoad(overlay, device) {
@@ -920,7 +1069,8 @@ function _ctrlDomainIcon(type) {
     camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l2-2h6l2 2h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>',
     sensor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6"/><circle cx="12" cy="13" r="3"/><path d="M5 21a7 7 0 0 1 14 0"/></svg>',
     binary_sensor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>',
-    alarm_control_panel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a6 6 0 0 0-6 6v4H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1V8a6 6 0 0 0-6-6z"/><circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none"/></svg>'
+    alarm_control_panel: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a6 6 0 0 0-6 6v4H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-1V8a6 6 0 0 0-6-6z"/><circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none"/></svg>',
+    valve: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16M4 16h16"/><path d="M8 8V5a2 2 0 0 1 4 0v3"/><path d="M8 16v3a2 2 0 0 0 4 0v-3"/><rect x="6" y="8" width="12" height="8" rx="2"/><circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none"/></svg>'
   };
   return icons[type] || icons.switch;
 }

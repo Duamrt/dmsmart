@@ -79,6 +79,10 @@ const UIRenderer = {
         const labelMap = { disarmed: 'Desarmado', armed_home: 'Casa', armed_away: 'Fora', armed_night: 'Noite', armed_vacation: 'Férias', triggered: 'ALERTA!', arming: 'Armando…', pending: 'Pendente' };
         badgeClass = alarmMap[s] || 'alarm-unknown';
         badgeLabel = (labelMap[s] || s || '—');
+      } else if (device.type === 'valve') {
+        const isOpen = s === 'open' || s === 'on';
+        badgeClass = isOpen ? 'on' : 'off';
+        badgeLabel = device.name;
       } else {
         badgeClass = s === 'on' ? 'on' : 'off';
         badgeLabel = device.name;
