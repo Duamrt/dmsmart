@@ -1,14 +1,18 @@
 // floorplan.js — Planta Baixa Interativa
 // Armazena imagem (base64) e marcadores por instalação no localStorage.
 // Marcadores refletem estado em tempo real via StateStore.
+// Modo editor: clique para adicionar, arraste para reposicionar.
 
 const FloorPlan = (() => {
   let _container = null;
   let _installId = null;
   let _data = null;      // { imageData, markers: [{id, x, y, entityId, label}] }
   let _editMode = false;
-  let _pendingPos = null; // {x, y} esperando seleção de entidade
+  let _pendingPos = null;
   let _unsubAll = null;
+
+  // Estado do drag
+  let _drag = null; // { el, markerId, startX, startY, moved }
 
   /* ── Storage ──────────────────────────────────────────────── */
 
@@ -40,20 +44,17 @@ const FloorPlan = (() => {
     _loadData();
     _render();
 
-    // Assina mudanças de estado para atualizar cores dos marcadores
     if (_unsubAll) _unsubAll();
     if (typeof StateStore !== 'undefined') {
       _unsubAll = StateStore.subscribeAll(() => updateMarkers());
     }
   }
 
-  // Chamado quando a view "planta" é ativada pelo nav
   function refresh() {
     if (!_container || !_installId) return;
     _render();
   }
 
-  // Atualiza apenas as cores dos marcadores sem re-renderizar tudo
   function updateMarkers() {
     const wrap = document.getElementById('fp-img-wrap');
     if (!wrap) return;
@@ -69,11 +70,8 @@ const FloorPlan = (() => {
 
   function _render() {
     if (!_container) return;
-    if (!_data || !_data.imageData) {
-      _renderEmpty();
-    } else {
-      _renderMap();
-    }
+    if (!_data || !_data.imageData) _renderEmpty();
+    else _renderMap();
   }
 
   function _renderEmpty() {
@@ -96,7 +94,7 @@ const FloorPlan = (() => {
   }
 
   function _renderMap() {
-    const markers = (_data.markers || []).map(_markerHtml).join('');
+    const markers    = (_data.markers || []).map(_markerHtml).join('');
     const editActive = _editMode ? ' active' : '';
     const editMode   = _editMode ? ' edit-mode' : '';
 
@@ -113,7 +111,7 @@ const FloorPlan = (() => {
           <input type="file" accept="image/*" style="display:none" id="fp-upload-input">
         </label>
       </div>
-      ${_editMode ? '<div class="floorplan-hint">Clique na planta para adicionar um marcador</div>' : ''}
+      ${_editMode ? '<div class="floorplan-hint">Clique para adicionar marcador · Arraste para reposicionar</div>' : ''}
       <div class="floorplan-viewport${editMode}" id="fp-viewport">
         <div class="floorplan-img-wrap" id="fp-img-wrap">
           <img class="floorplan-img" id="fp-img" src="${_data.imageData}" alt="Planta baixa" draggable="false">
@@ -147,20 +145,105 @@ const FloorPlan = (() => {
     const wrap = document.getElementById('fp-img-wrap');
     if (!wrap) return;
     wrap.querySelectorAll('.fp-marker').forEach(el => {
+      // Botão remover
       const del = el.querySelector('.fp-marker-del');
       if (del) {
+        del.addEventListener('pointerdown', e => e.stopPropagation());
         del.addEventListener('click', e => {
           e.stopPropagation();
           _removeMarker(del.getAttribute('data-del'));
         });
       }
+
+      // Drag (edit mode) ou toggle (normal mode)
+      el.addEventListener('pointerdown', e => {
+        if (!_editMode) return;
+        if (e.target.closest('.fp-marker-del')) return;
+        e.stopPropagation();
+        e.preventDefault();
+        _startDrag(el, e);
+      });
+
       el.addEventListener('click', e => {
         if (_editMode) { e.stopPropagation(); return; }
         e.stopPropagation();
+        // Ignora se foi um drag
+        if (_drag && _drag.moved) return;
         const m = (_data.markers || []).find(x => x.id === el.getAttribute('data-marker-id'));
         if (m) _toggleEntity(m.entityId);
       });
     });
+  }
+
+  /* ── Drag & Drop ──────────────────────────────────────────── */
+
+  function _startDrag(el, e) {
+    _drag = {
+      el,
+      markerId: el.getAttribute('data-marker-id'),
+      startClientX: e.clientX,
+      startClientY: e.clientY,
+      moved: false
+    };
+
+    el.setPointerCapture(e.pointerId);
+    el.classList.add('fp-dragging');
+
+    // Fecha picker se aberto
+    document.getElementById('fp-picker')?.remove();
+    _pendingPos = null;
+
+    el.addEventListener('pointermove', _onDragMove);
+    el.addEventListener('pointerup',   _onDragEnd);
+    el.addEventListener('pointercancel', _onDragEnd);
+  }
+
+  function _onDragMove(e) {
+    if (!_drag) return;
+    const dx = e.clientX - _drag.startClientX;
+    const dy = e.clientY - _drag.startClientY;
+
+    // Marca como moved se deslocou mais de 4px
+    if (!_drag.moved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+      _drag.moved = true;
+    }
+    if (!_drag.moved) return;
+
+    const img = document.getElementById('fp-img');
+    if (!img) return;
+    const rect = img.getBoundingClientRect();
+
+    // Posição do ponteiro relativa à imagem (0-1)
+    const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const y = Math.max(0, Math.min(1, (e.clientY - rect.top)  / rect.height));
+
+    // Atualiza visualmente sem re-render
+    _drag.el.style.left = (x * 100).toFixed(3) + '%';
+    _drag.el.style.top  = (y * 100).toFixed(3) + '%';
+    _drag.currentX = x;
+    _drag.currentY = y;
+  }
+
+  function _onDragEnd(e) {
+    if (!_drag) return;
+    const { el, markerId, moved, currentX, currentY } = _drag;
+
+    el.removeEventListener('pointermove', _onDragMove);
+    el.removeEventListener('pointerup',   _onDragEnd);
+    el.removeEventListener('pointercancel', _onDragEnd);
+    el.classList.remove('fp-dragging');
+
+    if (moved && currentX !== undefined) {
+      // Persiste nova posição
+      const m = (_data.markers || []).find(x => x.id === markerId);
+      if (m) {
+        m.x = currentX;
+        m.y = currentY;
+        _saveData();
+      }
+    }
+
+    _drag = null;
   }
 
   function _removeMarker(id) {
@@ -178,13 +261,11 @@ const FloorPlan = (() => {
     _saveData();
     _pendingPos = null;
 
-    // Injeta marcador no DOM sem re-render
     const wrap = document.getElementById('fp-img-wrap');
     if (wrap) {
       const tmp = document.createElement('div');
       tmp.innerHTML = _markerHtml(m);
-      const node = tmp.firstElementChild;
-      wrap.appendChild(node);
+      wrap.appendChild(tmp.firstElementChild);
       _bindMarkers();
     }
   }
@@ -194,6 +275,8 @@ const FloorPlan = (() => {
   function _onViewportClick(e) {
     if (!_editMode) return;
     if (e.target.closest('.fp-marker') || e.target.closest('.fp-picker')) return;
+    // Ignora se terminou de arrastar
+    if (_drag && _drag.moved) return;
 
     const img = document.getElementById('fp-img');
     if (!img) return;
@@ -207,7 +290,6 @@ const FloorPlan = (() => {
   }
 
   function _showPicker(cx, cy) {
-    // Remove picker existente
     document.getElementById('fp-picker')?.remove();
 
     const entities = _availableEntities();
@@ -240,7 +322,6 @@ const FloorPlan = (() => {
 
     document.getElementById('fp-img-wrap').appendChild(picker);
 
-    // Ajusta se sair dos limites
     requestAnimationFrame(() => {
       const pRect = picker.getBoundingClientRect();
       if (pRect.right  > vRect.right)  picker.style.left = Math.max(0, left - pRect.width  - 14) + 'px';
@@ -260,9 +341,9 @@ const FloorPlan = (() => {
     });
 
     setTimeout(() => {
-      const handler = e => {
+      const handler = ev => {
         if (!picker.isConnected) { document.removeEventListener('click', handler); return; }
-        if (!picker.contains(e.target)) {
+        if (!picker.contains(ev.target)) {
           picker.remove();
           _pendingPos = null;
           document.removeEventListener('click', handler);
@@ -299,7 +380,7 @@ const FloorPlan = (() => {
     if (typeof StateStore === 'undefined') return 'off';
     const s = StateStore.get(entityId);
     if (!s) return 'off';
-    if (s.state === 'on')  return 'on';
+    if (s.state === 'on') return 'on';
     if (s.state === 'unavailable' || s.state === 'unknown') return 'unavailable';
     return 'off';
   }
@@ -329,6 +410,7 @@ const FloorPlan = (() => {
     _editMode = !_editMode;
     document.getElementById('fp-picker')?.remove();
     _pendingPos = null;
+    _drag = null;
     _renderMap();
   }
 

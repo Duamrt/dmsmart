@@ -175,6 +175,12 @@
 }
 .fp-marker:hover .fp-marker-tip { opacity: 1; }
 
+/* Cursor grab em edit mode */
+.floorplan-viewport.edit-mode .fp-marker { cursor: grab; }
+.floorplan-viewport.edit-mode .fp-marker.fp-dragging { cursor: grabbing; z-index: 100; transform: translate(-50%, -50%) scale(1.25); box-shadow: 0 6px 20px rgba(0,0,0,.5); }
+/* Desabilita transição durante drag para resposta imediata */
+.fp-marker.fp-dragging { transition: transform .08s, box-shadow .08s; }
+
 /* Delete button (edit mode only) */
 .fp-marker-del {
   display: none;
