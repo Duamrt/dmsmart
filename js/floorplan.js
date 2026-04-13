@@ -253,9 +253,9 @@ const FloorPlan = (() => {
         });
       }
 
-      // Drag (edit mode) ou toggle (normal mode)
+      // Drag: requer edit mode na view planta, ou está sempre ativo no dashboard (compacto)
       el.addEventListener('pointerdown', e => {
-        if (!_editMode) return;
+        if (!_editMode && !_compact) return;
         if (e.target.closest('.fp-marker-del')) return;
         e.stopPropagation();
         e.preventDefault();
@@ -548,8 +548,9 @@ const FloorPlan = (() => {
         for (let x = 0; x < width; x++) {
           const i = (y * width + x) * 4;
           const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
-          // Pixel de conteúdo: não transparente E não branco/cinza claro
-          const isBg = a < 20 || (r > 228 && g > 228 && b > 228);
+          // Pixel de fundo: transparente OU cinza/branco claro (baixa saturação + alta luminosidade)
+          const lo = Math.min(r, g, b), hi = Math.max(r, g, b);
+          const isBg = a < 20 || (lo > 195 && (hi - lo) < 40);
           if (!isBg) {
             if (x < left)   left   = x;
             if (x > right)  right  = x;
