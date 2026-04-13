@@ -623,11 +623,7 @@ function initHero(installation) {
   if (!eyebrow || !title || !sub) return;
 
   const h = new Date().getHours();
-  let greet;
-  if (h < 5) greet = 'Boa madrugada';
-  else if (h < 12) greet = 'Bom dia';
-  else if (h < 18) greet = 'Boa tarde';
-  else greet = 'Boa noite';
+  const greet = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
 
   eyebrow.textContent = greet;
   title.textContent = installation.name || 'Instalação';
