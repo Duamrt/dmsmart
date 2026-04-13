@@ -116,9 +116,9 @@ function initNav() {
     });
   });
 
-  // Restaura última view
+  // Restaura última view (sempre chama switchView pra garantir data-view no app-main)
   const saved = sessionStorage.getItem(NAV_VIEW_KEY);
-  if (saved && saved !== 'dashboard') switchView(saved);
+  switchView(saved || 'dashboard');
 }
 
 function switchView(view) {
