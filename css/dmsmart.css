@@ -219,6 +219,39 @@ body.wizard-open {
   text-overflow: ellipsis;
 }
 
+.sidebar-new-install {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: var(--r);
+  color: var(--text-3);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  width: 100%;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.sidebar-new-install:hover {
+  background: var(--bg-elev-2);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.sidebar-new-install svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  flex-shrink: 0;
+}
+
 .sidebar-toggle {
   display: flex;
   align-items: center;
@@ -257,6 +290,7 @@ body.wizard-open {
 .app-shell.sidebar-collapsed .sidebar-brand .logo-dot,
 .app-shell.sidebar-collapsed .sidebar-nav-item span,
 .app-shell.sidebar-collapsed .sidebar-install,
+.app-shell.sidebar-collapsed .sidebar-new-install span,
 .app-shell.sidebar-collapsed .sidebar-toggle span {
   display: none;
 }
