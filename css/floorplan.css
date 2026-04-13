@@ -167,7 +167,7 @@
   flex-shrink: 0;
 }
 
-/* Label always visible below marker */
+/* Label visível só no hover (evita sobreposição entre marcadores próximos) */
 .fp-marker-label {
   position: absolute;
   top: calc(100% + 5px);
@@ -176,20 +176,23 @@
   font-size: 9px;
   font-weight: 600;
   white-space: nowrap;
-  background: rgba(10, 12, 18, 0.82);
-  color: rgba(255,255,255,0.88);
+  background: rgba(10, 12, 18, 0.88);
+  color: rgba(255,255,255,0.92);
   padding: 2px 7px;
   border-radius: 5px;
   pointer-events: none;
-  max-width: 88px;
+  max-width: 108px;
   overflow: hidden;
   text-overflow: ellipsis;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.12);
   z-index: 5;
   letter-spacing: .01em;
+  opacity: 0;
+  transition: opacity .15s;
 }
+.fp-marker:hover .fp-marker-label { opacity: 1; }
 
 /* Marker states */
 .fp-marker[data-state="on"] {
