@@ -51,13 +51,22 @@ const UIRenderer = {
     this.container.appendChild(card);
     this._bindCardControls(card, zone);
 
+    const isSolar = zone.icon === 'solar';
     const update = () => {
       const devices = zone.devices.map(d => ({
         device: d,
         state: StateStore.get(d.entity)
       }));
-      const hasActive = devices.some(d => d.state && d.state.state === 'on');
-      card.className = `zone-card${hasActive ? ' has-active' : ''}`;
+      let hasActive;
+      if (isSolar) {
+        hasActive = devices.some(d => {
+          const n = parseFloat(d.state?.state);
+          return !isNaN(n) && n > 0;
+        });
+      } else {
+        hasActive = devices.some(d => d.state && d.state.state === 'on');
+      }
+      card.className = `zone-card${isSolar ? ' zone-card-solar' : ''}${hasActive ? ' has-active' : ''}`;
       card.innerHTML = this._buildCardHTML(zone, devices);
     };
 
@@ -67,6 +76,7 @@ const UIRenderer = {
   },
 
   _buildCardHTML(zone, devices) {
+    if (zone.icon === 'solar') return this._buildSolarCardHTML(zone, devices);
     const iconSVG = this._getIcon(zone.icon);
     const total = devices.length;
     const onCount = devices.filter(d => d.state && d.state.state === 'on').length;
@@ -118,6 +128,103 @@ const UIRenderer = {
     `;
   },
 
+  _buildSolarCardHTML(zone, devices) {
+    const iconSVG = this._getIcon('solar');
+
+    // Classify sensors: energy (kWh) → monthly; power with grid hint → grid; else → generation
+    let gen = null, grid = null, monthly = null;
+    for (const { device, state } of devices) {
+      const dc  = (state?.attributes?.device_class || '').toLowerCase();
+      const uom = (state?.attributes?.unit_of_measurement || '').toLowerCase();
+      const ent = (device.entity || '').toLowerCase();
+      const nm  = (device.name  || '').toLowerCase();
+      if (dc === 'energy' || uom === 'kwh') {
+        if (!monthly) monthly = { device, state };
+      } else {
+        const isGrid = ent.includes('grid') || ent.includes('rede') ||
+                       nm.includes('grid')  || nm.includes('rede')  ||
+                       ent.includes('import') || ent.includes('export') ||
+                       nm.includes('import') || nm.includes('export');
+        if (isGrid && !grid) grid = { device, state };
+        else if (!gen)        gen  = { device, state };
+      }
+    }
+    // position fallback
+    if (!gen && devices[0]) gen = devices[0];
+
+    const _fmtPwr = (s) => {
+      if (!s || !s.state || s.state === 'unavailable' || s.state === 'unknown') return { val: '--', unit: '' };
+      const n = parseFloat(s.state);
+      if (isNaN(n)) return { val: '--', unit: '' };
+      const uom = (s.attributes?.unit_of_measurement || '');
+      if (uom === 'W') {
+        const kw = n / 1000;
+        return { val: Math.abs(kw) < 10 ? kw.toFixed(2) : kw.toFixed(1), unit: 'kW', raw: n };
+      }
+      const dec = Math.abs(n) < 10 ? 2 : 1;
+      return { val: parseFloat(n.toFixed(dec)), unit: uom, raw: n };
+    };
+
+    const genFmt = gen     ? _fmtPwr(gen.state)     : { val: '--', unit: 'kW', raw: 0 };
+    const gridFmt = grid   ? _fmtPwr(grid.state)     : null;
+    const monFmt  = monthly ? _fmtPwr(monthly.state) : null;
+
+    const genRaw  = gen   ? parseFloat(gen.state?.state)  : NaN;
+    const gridRaw = grid  ? parseFloat(grid.state?.state) : NaN;
+    const isGenerating = !isNaN(genRaw) && genRaw > 0;
+    const isExporting  = !isNaN(gridRaw) && gridRaw > 0;
+
+    const statusText = !gen
+      ? 'Configure os sensores solares'
+      : isGenerating
+        ? `Gerando${grid ? (isExporting ? ' · Exportando' : ' · Importando') : ''}`
+        : 'Sem geração solar';
+
+    const genBadge = `<div class="solar-gen-badge${isGenerating ? ' active' : ''}">${genFmt.val}<span> ${genFmt.unit || 'kW'}</span></div>`;
+
+    let metricsHTML = '';
+    if (gen) {
+      metricsHTML += `
+        <div class="solar-metric">
+          <div class="solar-metric-value solar-gen">${genFmt.val} <span class="solar-metric-unit">${genFmt.unit}</span></div>
+          <div class="solar-metric-label">Geração</div>
+        </div>`;
+    }
+    if (grid) {
+      const absRaw = isNaN(gridRaw) ? 0 : Math.abs(gridRaw);
+      const absFmt = isNaN(gridRaw) ? gridFmt : _fmtPwr({ ...grid.state, state: String(absRaw) });
+      const gClass = isNaN(gridRaw) ? '' : (isExporting ? 'solar-export' : 'solar-import');
+      const gLabel = isNaN(gridRaw) ? (grid.device.name || 'Rede') : (isExporting ? 'Exportando' : 'Importando');
+      metricsHTML += `
+        <div class="solar-metric">
+          <div class="solar-metric-value ${gClass}">${absFmt.val} <span class="solar-metric-unit">${absFmt.unit}</span></div>
+          <div class="solar-metric-label">${gLabel}</div>
+        </div>`;
+    }
+    if (monthly) {
+      metricsHTML += `
+        <div class="solar-metric">
+          <div class="solar-metric-value solar-monthly">${monFmt.val} <span class="solar-metric-unit">${monFmt.unit}</span></div>
+          <div class="solar-metric-label">${monthly.device.name || 'Este mês'}</div>
+        </div>`;
+    }
+    if (!metricsHTML) {
+      metricsHTML = `<div class="solar-metric" style="flex:1"><div class="solar-metric-label" style="text-align:center;padding:4px 0">Adicione sensores ao ambiente</div></div>`;
+    }
+
+    return `
+      <div class="zone-card-head">
+        <div class="zone-icon">${iconSVG}</div>
+        ${genBadge}
+      </div>
+      <div class="zone-body">
+        <div class="zone-name">${zone.name}</div>
+        <div class="zone-sub">${statusText}</div>
+      </div>
+      <div class="solar-metrics">${metricsHTML}</div>
+    `;
+  },
+
   _bindCardControls(card, zone) {
     // Tap no chip de dispositivo = atalho rápido
     //   - switch/light: toggle direto (optimistic)
@@ -134,6 +241,8 @@ const UIRenderer = {
         const type = device.type || 'switch';
         if ((type === 'switch' || type === 'light') && !device.isCritical) {
           this._quickToggle(device);
+        } else if (type === 'sensor') {
+          // read-only, noop
         } else if (typeof ControlModal !== 'undefined') {
           ControlModal.open(device);
         }
@@ -173,7 +282,8 @@ const UIRenderer = {
       monitor: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M3 14h18"/><path d="M9 21h6"/><path d="M12 17v4"/></svg>`,
       toilet: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h4v7H6z"/><path d="M5 10h14v4a5 5 0 0 1-5 5h-4a5 5 0 0 1-5-5v-4z"/><path d="M10 19l-1 2M14 19l1 2"/></svg>`,
       door: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V4a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v18"/><path d="M2 22h20"/><circle cx="15" cy="13" r="0.8" fill="currentColor"/></svg>`,
-      lamp: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 1 4 10.5c-.7.6-1 1.3-1 2V16H9v-.5c0-.7-.3-1.4-1-2A6 6 0 0 1 12 3z"/></svg>`
+      lamp:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 1 4 10.5c-.7.6-1 1.3-1 2V16H9v-.5c0-.7-.3-1.4-1-2A6 6 0 0 1 12 3z"/></svg>`,
+      solar: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>`
     };
     return icons[iconName] || icons['sofa'];
   }

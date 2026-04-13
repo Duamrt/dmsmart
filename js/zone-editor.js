@@ -22,6 +22,7 @@ const ZONE_EDITOR_ICONS = [
   { name: 'car',     label: 'Garagem' },
   { name: 'tree',    label: 'Área externa' },
   { name: 'door',    label: 'Entrada' },
+  { name: 'solar',   label: 'Solar' },
   { name: 'lamp',    label: 'Outro' }
 ];
 
@@ -34,7 +35,8 @@ const ZONE_EDITOR_DOMAINS = {
   fan:                  { label: 'Ventiladores',       type: 'fan' },
   camera:               { label: 'Câmeras',            type: 'camera' },
   alarm_control_panel:  { label: 'Alarmes',            type: 'alarm_control_panel' },
-  valve:                { label: 'Válvulas / Irrigação', type: 'valve' }
+  valve:                { label: 'Válvulas / Irrigação', type: 'valve' },
+  sensor:               { label: 'Sensores / Solar',     type: 'sensor' }
 };
 
 const ZoneEditor = {

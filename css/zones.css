@@ -317,6 +317,108 @@
 }
 
 /* =========================================
+   Solar Card
+   ========================================= */
+
+.zone-card-solar .zone-icon {
+  color: #f59e0b;
+  background: rgba(245,158,11,.12);
+}
+
+.zone-card-solar.has-active .zone-icon {
+  color: #fbbf24;
+  background: rgba(245,158,11,.22);
+}
+
+.zone-card-solar.has-active {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 1px rgba(245,158,11,.25), 0 16px 32px -20px rgba(245,158,11,.3);
+}
+
+.zone-card-solar.has-active::before {
+  opacity: 1;
+  background:
+    radial-gradient(circle at 85% 0%, rgba(245,158,11,.18), transparent 55%),
+    linear-gradient(160deg, rgba(245,158,11,.07), transparent 60%);
+}
+
+.solar-gen-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+  padding: 6px 12px;
+  background: rgba(245,158,11,.1);
+  border: 1px solid rgba(245,158,11,.2);
+  border-radius: 99px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #f59e0b;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  transition: background .2s, color .2s, border-color .2s;
+}
+
+.solar-gen-badge span {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(245,158,11,.65);
+}
+
+.solar-gen-badge.active {
+  background: rgba(245,158,11,.2);
+  border-color: rgba(245,158,11,.4);
+  color: #fbbf24;
+}
+
+.solar-metrics {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 6px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+.solar-metric {
+  flex: 1;
+  min-width: 60px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-sm);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.solar-metric-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.solar-metric-unit {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-3);
+}
+
+.solar-metric-label {
+  font-size: 11px;
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.solar-metric-value.solar-gen     { color: #fbbf24; }
+.solar-metric-value.solar-export  { color: #4ade80; }
+.solar-metric-value.solar-import  { color: #f87171; }
+.solar-metric-value.solar-monthly { color: var(--primary); }
+
+/* =========================================
    Responsive
    ========================================= */
 
