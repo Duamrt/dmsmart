@@ -156,6 +156,10 @@ const FloorPlan = (() => {
           <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 1 1 3 3L7 19l-4 1 1-4z"/></svg>
           ${_editMode ? 'Sair do editor' : 'Editar'}
         </button>
+        <button type="button" class="btn-fp" id="fp-crop-btn" title="Remove espaço vazio ao redor da planta">
+          <svg viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg>
+          Recortar
+        </button>
         <label class="btn-fp" title="Trocar imagem da planta">
           <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           Trocar
@@ -172,6 +176,17 @@ const FloorPlan = (() => {
     `;
 
     document.getElementById('fp-edit-btn')?.addEventListener('click', _toggleEdit);
+
+    document.getElementById('fp-crop-btn')?.addEventListener('click', () => {
+      if (!_data.imageData) return;
+      const btn = document.getElementById('fp-crop-btn');
+      if (btn) { btn.textContent = '…'; btn.disabled = true; }
+      _autoCrop(_data.imageData, cropped => {
+        _data.imageData = cropped;
+        _saveData();
+        _render();
+      });
+    });
 
     const expandBtn = document.getElementById('fp-expand-btn');
     if (expandBtn) {
@@ -504,15 +519,62 @@ const FloorPlan = (() => {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = ev => {
-      if (!_data) _data = { markers: [] };
-      _data.imageData = ev.target.result;
-      _saveData();
-      _editMode = false;
-      // Mostra a section se estava oculta (caso dashboard)
-      _container.style.display = '';
-      _render();
+      _autoCrop(ev.target.result, cropped => {
+        if (!_data) _data = { markers: [] };
+        _data.imageData = cropped;
+        _saveData();
+        _editMode = false;
+        _container.style.display = '';
+        _render();
+      });
     };
     reader.readAsDataURL(file);
+  }
+
+  // Remove espaço vazio ao redor da imagem (pixels claros / fundo branco-cinza)
+  function _autoCrop(dataUrl, callback) {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width  = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+
+      const { data, width, height } = ctx.getImageData(0, 0, img.width, img.height);
+      let top = height, bottom = 0, left = width, right = 0;
+
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 4;
+          const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+          // Pixel de conteúdo: não transparente E não branco/cinza claro
+          const isBg = a < 20 || (r > 228 && g > 228 && b > 228);
+          if (!isBg) {
+            if (x < left)   left   = x;
+            if (x > right)  right  = x;
+            if (y < top)    top    = y;
+            if (y > bottom) bottom = y;
+          }
+        }
+      }
+
+      // Se não achou conteúdo (imagem toda branca), usa original
+      if (right <= left || bottom <= top) { callback(dataUrl); return; }
+
+      const pad = 16;
+      const cx = Math.max(0, left - pad);
+      const cy = Math.max(0, top  - pad);
+      const cw = Math.min(width,  right  + pad) - cx;
+      const ch = Math.min(height, bottom + pad) - cy;
+
+      const out = document.createElement('canvas');
+      out.width  = cw;
+      out.height = ch;
+      out.getContext('2d').drawImage(img, cx, cy, cw, ch, 0, 0, cw, ch);
+      callback(out.toDataURL('image/jpeg', 0.92));
+    };
+    img.src = dataUrl;
   }
 
   function _esc(str) {

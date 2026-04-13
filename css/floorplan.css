@@ -111,6 +111,7 @@
   cursor: default;
   -webkit-overflow-scrolling: touch;
   max-height: 72vh;
+  text-align: center; /* centraliza img-wrap quando mais estreito que viewport */
 }
 .floorplan-viewport.edit-mode {
   cursor: crosshair;
@@ -121,7 +122,8 @@
 .floorplan-img-wrap {
   position: relative;
   display: inline-block;
-  min-width: 100%;
+  min-width: 0;      /* permite encolher abaixo da largura do viewport */
+  text-align: left;  /* reseta para conteúdo interno */
 }
 .floorplan-img {
   display: block;
