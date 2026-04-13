@@ -72,8 +72,18 @@ const UIRenderer = {
     const onCount = devices.filter(d => d.state && d.state.state === 'on').length;
 
     const deviceBadges = devices.map(({ device, state }) => {
-      const isOn = state && state.state === 'on';
-      return `<button type="button" class="device-status ${isOn ? 'on' : 'off'}" data-device-id="${device.id}" aria-label="${device.name}">${device.name}</button>`;
+      const s = state ? state.state : null;
+      let badgeClass, badgeLabel;
+      if (device.type === 'alarm_control_panel') {
+        const alarmMap = { disarmed: 'alarm-disarmed', armed_home: 'alarm-armed', armed_away: 'alarm-armed', armed_night: 'alarm-armed', armed_vacation: 'alarm-armed', triggered: 'alarm-triggered', arming: 'alarm-arming', pending: 'alarm-arming' };
+        const labelMap = { disarmed: 'Desarmado', armed_home: 'Casa', armed_away: 'Fora', armed_night: 'Noite', armed_vacation: 'Férias', triggered: 'ALERTA!', arming: 'Armando…', pending: 'Pendente' };
+        badgeClass = alarmMap[s] || 'alarm-unknown';
+        badgeLabel = (labelMap[s] || s || '—');
+      } else {
+        badgeClass = s === 'on' ? 'on' : 'off';
+        badgeLabel = device.name;
+      }
+      return `<button type="button" class="device-status ${badgeClass}" data-device-id="${device.id}" aria-label="${device.name}">${badgeLabel}</button>`;
     }).join('');
 
     const climateDevice = devices.find(d => d.device.type === 'climate');
@@ -118,7 +128,7 @@ const UIRenderer = {
         const device = zoneData && zoneData.devices.find(d => d.id === deviceId);
         if (!device) return;
         const type = device.type || 'switch';
-        if (type === 'switch' || type === 'light') {
+        if ((type === 'switch' || type === 'light') && !device.isCritical) {
           this._quickToggle(device);
         } else if (typeof ControlModal !== 'undefined') {
           ControlModal.open(device);

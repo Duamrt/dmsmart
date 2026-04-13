@@ -432,7 +432,7 @@ const Wizard = {
         name: friendly,
         type: domainDef ? domainDef.type : 'switch',
         entity: entityId,
-        isCritical: critical.has(entityId)
+        isCritical: critical.has(entityId) || domain === 'alarm_control_panel'
       };
     });
   },

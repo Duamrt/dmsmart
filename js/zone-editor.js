@@ -26,15 +26,14 @@ const ZONE_EDITOR_ICONS = [
 ];
 
 const ZONE_EDITOR_DOMAINS = {
-  light:         { label: 'Luzes',              type: 'light' },
-  switch:        { label: 'Tomadas',            type: 'switch' },
-  climate:       { label: 'Clima / Ar',         type: 'climate' },
-  cover:         { label: 'Cortinas / Portões', type: 'cover' },
-  media_player:  { label: 'TVs e mídia',        type: 'media_player' },
-  fan:           { label: 'Ventiladores',       type: 'fan' },
-  camera:        { label: 'Câmeras',            type: 'camera' },
-  sensor:        { label: 'Sensores',           type: 'sensor' },
-  binary_sensor: { label: 'Sensores (on/off)',  type: 'binary_sensor' }
+  light:                { label: 'Luzes',              type: 'light' },
+  switch:               { label: 'Tomadas',            type: 'switch' },
+  climate:              { label: 'Clima / Ar',         type: 'climate' },
+  cover:                { label: 'Cortinas / Portões', type: 'cover' },
+  media_player:         { label: 'TVs e mídia',        type: 'media_player' },
+  fan:                  { label: 'Ventiladores',       type: 'fan' },
+  camera:               { label: 'Câmeras',            type: 'camera' },
+  alarm_control_panel:  { label: 'Alarmes',            type: 'alarm_control_panel' }
 };
 
 const ZoneEditor = {
@@ -104,11 +103,15 @@ const ZoneEditor = {
     const selectedIds = new Set(this._draft.devices.map(d => d.entity));
 
     const states = this._getAvailableStates();
-    const useful = states.filter(e => {
-      if (!e || !e.entity_id) return false;
+    const useful = [], system = [];
+    for (const e of states) {
+      if (!e || !e.entity_id) continue;
       const domain = e.entity_id.split('.')[0];
-      return !!ZONE_EDITOR_DOMAINS[domain];
-    });
+      if (!ZONE_EDITOR_DOMAINS[domain]) continue;
+      const cat = e.attributes && e.attributes.entity_category;
+      if (cat === 'diagnostic' || cat === 'config') system.push(e);
+      else useful.push(e);
+    }
 
     const groups = {};
     for (const e of useful) {
@@ -132,31 +135,45 @@ const ZoneEditor = {
       </button>
     `).join('');
 
-    const groupsHTML = Object.keys(groups).length === 0
+    const _buildRows = (items) => items.map(e => {
+      const friendly = (e.attributes && e.attributes.friendly_name) || e.entity_id;
+      const isSelected = selectedIds.has(e.entity_id);
+      const usedElsewhere = assignedByOthers.has(e.entity_id) && !isSelected;
+      return `
+        <label class="ze-entity-row ${isSelected ? 'on' : ''} ${usedElsewhere ? 'taken' : ''}">
+          <input type="checkbox" data-ze="entity" value="${_zeEsc(e.entity_id)}" ${isSelected ? 'checked' : ''} ${usedElsewhere ? 'disabled' : ''}>
+          <span class="ze-entity-text">
+            <span class="ze-entity-name">${_zeEsc(friendly)}</span>
+            <span class="ze-entity-id">${_zeEsc(e.entity_id)}${usedElsewhere ? ' · já em outro ambiente' : ''}</span>
+          </span>
+        </label>
+      `;
+    }).join('');
+
+    const mainGroupsHTML = Object.entries(groups).map(([domain, items]) => {
+      const label = ZONE_EDITOR_DOMAINS[domain].label;
+      return `
+        <div class="ze-group">
+          <div class="ze-group-label">${label} <span>(${items.length})</span></div>
+          ${_buildRows(items)}
+        </div>
+      `;
+    }).join('');
+
+    const systemHTML = system.length === 0 ? '' : `
+      <details class="ze-system-group">
+        <summary class="ze-system-summary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 1 0 4.93 19.07"/></svg>
+          Entidades do sistema <span>(${system.length})</span>
+        </summary>
+        <p class="ze-system-hint">Geradas automaticamente pelo Home Assistant. Não representam dispositivos físicos.</p>
+        <div class="ze-group">${_buildRows(system)}</div>
+      </details>
+    `;
+
+    const groupsHTML = Object.keys(groups).length === 0 && system.length === 0
       ? `<div class="ze-empty">Nenhum dispositivo disponível. ${this._isMockOrOffline() ? 'Conecte o Home Assistant pra ver entidades reais.' : ''}</div>`
-      : Object.entries(groups).map(([domain, items]) => {
-          const label = ZONE_EDITOR_DOMAINS[domain].label;
-          const rowsHTML = items.map(e => {
-            const friendly = (e.attributes && e.attributes.friendly_name) || e.entity_id;
-            const isSelected = selectedIds.has(e.entity_id);
-            const usedElsewhere = assignedByOthers.has(e.entity_id) && !isSelected;
-            return `
-              <label class="ze-entity-row ${isSelected ? 'on' : ''} ${usedElsewhere ? 'taken' : ''}">
-                <input type="checkbox" data-ze="entity" value="${_zeEsc(e.entity_id)}" ${isSelected ? 'checked' : ''} ${usedElsewhere ? 'disabled' : ''}>
-                <span class="ze-entity-text">
-                  <span class="ze-entity-name">${_zeEsc(friendly)}</span>
-                  <span class="ze-entity-id">${_zeEsc(e.entity_id)}${usedElsewhere ? ' · já em outro ambiente' : ''}</span>
-                </span>
-              </label>
-            `;
-          }).join('');
-          return `
-            <div class="ze-group">
-              <div class="ze-group-label">${label} <span>(${items.length})</span></div>
-              ${rowsHTML}
-            </div>
-          `;
-        }).join('');
+      : mainGroupsHTML + systemHTML;
 
     const deleteBtn = this._mode === 'edit'
       ? `<button type="button" class="ze-delete" data-ze="delete">Excluir ambiente</button>`
@@ -181,7 +198,11 @@ const ZoneEditor = {
           </div>
           <div class="ze-field">
             <div class="ze-label">Dispositivos <span class="ze-count">${this._draft.devices.length} selecionado${this._draft.devices.length === 1 ? '' : 's'}</span></div>
-            <div class="ze-entities">${groupsHTML}</div>
+            <div class="ze-search-wrap">
+              <svg class="ze-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+              <input type="search" class="ze-search" data-ze="search" placeholder="Buscar dispositivo…" autocomplete="off">
+            </div>
+            <div class="ze-entities" data-ze="entities-list">${groupsHTML}</div>
           </div>
         </div>
         <div class="ze-foot">
@@ -222,12 +243,35 @@ const ZoneEditor = {
       this._updateCountLabel();
     });
 
+    this._overlay.addEventListener('input', (e) => {
+      if (!e.target.matches('[data-ze="search"]')) return;
+      this._filterEntities(e.target.value.trim().toLowerCase());
+    });
+
     this._overlay.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') this.close();
       if (e.key === 'Enter' && e.target && e.target.matches('[data-ze="name"]')) {
         e.preventDefault();
         this._save();
       }
+    });
+  },
+
+  _filterEntities(q) {
+    const list = this._overlay && this._overlay.querySelector('[data-ze="entities-list"]');
+    if (!list) return;
+    const rows = list.querySelectorAll('.ze-entity-row');
+    const groups = list.querySelectorAll('.ze-group');
+
+    rows.forEach(row => {
+      const name = (row.querySelector('.ze-entity-name') || {}).textContent || '';
+      const id   = (row.querySelector('.ze-entity-id') || {}).textContent || '';
+      row.style.display = (!q || name.toLowerCase().includes(q) || id.toLowerCase().includes(q)) ? '' : 'none';
+    });
+
+    groups.forEach(g => {
+      const anyVisible = Array.from(g.querySelectorAll('.ze-entity-row')).some(r => r.style.display !== 'none');
+      g.style.display = anyVisible ? '' : 'none';
     });
   },
 
@@ -256,7 +300,7 @@ const ZoneEditor = {
         name: friendly,
         type: domainDef ? domainDef.type : 'switch',
         entity: entityId,
-        isCritical: false
+        isCritical: domain === 'alarm_control_panel'
       };
     });
   },
