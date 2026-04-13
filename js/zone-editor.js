@@ -36,7 +36,7 @@ const ZONE_EDITOR_DOMAINS = {
   camera:               { label: 'Câmeras',            type: 'camera' },
   alarm_control_panel:  { label: 'Alarmes',            type: 'alarm_control_panel' },
   valve:                { label: 'Válvulas / Irrigação', type: 'valve' },
-  sensor:               { label: 'Sensores / Solar',     type: 'sensor' }
+  sensor:               { label: 'Energia / Solar',      type: 'sensor' }
 };
 
 const ZoneEditor = {
@@ -105,12 +105,24 @@ const ZoneEditor = {
     }
     const selectedIds = new Set(this._draft.devices.map(d => d.entity));
 
+    // Classes de device_class que fazem sentido mostrar para sensores
+    const SENSOR_DC_ALLOWED = new Set([
+      'power', 'energy', 'voltage', 'current', 'battery',
+      'temperature', 'humidity', 'illuminance', 'frequency',
+      'apparent_power', 'reactive_power', 'power_factor'
+    ]);
+
     const states = this._getAvailableStates();
     const useful = [], system = [];
     for (const e of states) {
       if (!e || !e.entity_id) continue;
       const domain = e.entity_id.split('.')[0];
       if (!ZONE_EDITOR_DOMAINS[domain]) continue;
+      // Para sensor.*: só mostra os com device_class relevante (exclui system sensors, sun, backup, etc.)
+      if (domain === 'sensor') {
+        const dc = e.attributes && e.attributes.device_class;
+        if (!dc || !SENSOR_DC_ALLOWED.has(dc)) continue;
+      }
       const cat = e.attributes && e.attributes.entity_category;
       if (cat === 'diagnostic' || cat === 'config') system.push(e);
       else useful.push(e);

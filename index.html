@@ -32,6 +32,23 @@
             </button>
           </li>
           <li>
+            <button class="sidebar-nav-item" type="button" data-nav="ambientes">
+              <span class="sidebar-nav-icon">
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+              </span>
+              <span>Ambientes</span>
+            </button>
+          </li>
+          <li>
+            <button class="sidebar-nav-item" type="button" data-nav="cenas">
+              <span class="sidebar-nav-icon">
+                <svg viewBox="0 0 24 24"><path d="M13 3L6 14h7l-2 7 9-11h-7l2-7z"/></svg>
+              </span>
+              <span>Cenas</span>
+            </button>
+          </li>
+          <li class="sidebar-nav-sep"></li>
+          <li>
             <button class="sidebar-nav-item" type="button" data-action="new-installation">
               <span class="sidebar-nav-icon">
                 <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
@@ -112,13 +129,14 @@
           </div>
         </section>
         <section class="scenes-section hidden" id="scenes-section" aria-label="Cenas e automações"></section>
+        <div id="zones-filter-bar" class="zones-filter-bar" aria-label="Filtro de ambientes"></div>
         <section class="zones-grid" aria-label="Zonas da instalação">
           <!-- Cards renderizados pelo ui-renderer.js -->
         </section>
       </main>
 
       <footer class="app-footer">
-        <span class="app-version" id="app-version">v04132200</span>
+        <span class="app-version" id="app-version">v04132330</span>
       </footer>
     </div>
   </div>

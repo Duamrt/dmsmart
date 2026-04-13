@@ -926,6 +926,99 @@ body.wizard-open {
 }
 
 /* =========================================
+   Sidebar — separador de nav
+   ========================================= */
+
+.sidebar-nav-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 0;
+  pointer-events: none;
+}
+
+/* =========================================
+   Views — controle via data-view no app-main
+   ========================================= */
+
+/* Dashboard: tudo visível (padrão) */
+
+/* Ambientes: sem hero, sem cenas, zones + filter */
+.app-main[data-view="ambientes"] #dashboard-hero   { display: none; }
+.app-main[data-view="ambientes"] #scenes-section   { display: none !important; }
+
+/* Cenas: sem hero, sem zones, cenas full */
+.app-main[data-view="cenas"] #dashboard-hero       { display: none; }
+.app-main[data-view="cenas"] .zones-grid           { display: none; }
+.app-main[data-view="cenas"] #zones-filter-bar     { display: none; }
+.app-main[data-view="cenas"] #scenes-section       { display: block !important; }
+
+/* Filter bar: oculta por default, visível só em ambientes */
+#zones-filter-bar:empty { display: none; }
+.app-main:not([data-view="ambientes"]) #zones-filter-bar { display: none; }
+
+/* =========================================
+   Filter pills
+   ========================================= */
+
+.zones-filter-bar {
+  padding-bottom: 4px;
+}
+
+.filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s, border-color .15s, color .15s;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.filter-pill:hover {
+  background: var(--bg-elev-2);
+  color: var(--text);
+}
+
+.filter-pill.active {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.filter-pill-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.filter-pill-icon svg {
+  width: 100%;
+  height: 100%;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* =========================================
    Toast de reconexão HA + toasts genéricos
    ========================================= */
 

@@ -4,11 +4,16 @@
 // - Se há, inicializa zonas, clock, status e conecta no HA
 // - Controla sidebar, seletor de instalação no header e modal de gerenciar
 
-const SIDEBAR_KEY = 'dmsmart_sidebar_collapsed';
+const SIDEBAR_KEY    = 'dmsmart_sidebar_collapsed';
+const NAV_VIEW_KEY   = 'dmsmart_nav_view';
+
+let _navView   = 'dashboard';
+let _navFilter = 'all';
 
 async function initApp() {
   try {
     initSidebar();
+    initNav();
     initClock();
     initInstallationSelector();
     if (typeof ControlModal !== 'undefined') ControlModal.init();
@@ -91,6 +96,133 @@ function initSidebar() {
       Wizard.init(document.getElementById('wiz'));
       Wizard.open({ skipWelcome: true });
     });
+  });
+}
+
+function initNav() {
+  document.querySelectorAll('[data-nav]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      switchView(btn.getAttribute('data-nav'));
+      // fecha sidebar no mobile
+      const shell = document.getElementById('app-shell');
+      if (shell && window.matchMedia('(max-width: 900px)').matches) {
+        shell.classList.remove('sidebar-open');
+      }
+    });
+  });
+
+  // Restaura última view
+  const saved = sessionStorage.getItem(NAV_VIEW_KEY);
+  if (saved && saved !== 'dashboard') switchView(saved);
+}
+
+function switchView(view) {
+  _navView   = view;
+  _navFilter = 'all';
+  sessionStorage.setItem(NAV_VIEW_KEY, view);
+
+  // Atualiza active no sidebar
+  document.querySelectorAll('[data-nav]').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-nav') === view);
+  });
+
+  // Aplica view ao app-main via data-view (CSS controla visibilidade das seções)
+  const main = document.querySelector('.app-main');
+  if (main) main.setAttribute('data-view', view);
+
+  // Atualiza título do header
+  const titles = {
+    dashboard: ['Dashboard',  'Controle rápido das suas zonas'],
+    ambientes: ['Ambientes',  'Filtre e controle seus cômodos'],
+    cenas:     ['Cenas',      'Automações e atalhos']
+  };
+  const [title, sub] = titles[view] || titles.dashboard;
+  const titleEl = document.getElementById('header-title');
+  const subEl   = document.getElementById('header-sub');
+  if (titleEl) titleEl.textContent = title;
+  if (subEl)   subEl.textContent   = sub;
+
+  // Render filter bar se ambientes
+  const filterBar = document.getElementById('zones-filter-bar');
+  if (filterBar) {
+    if (view === 'ambientes') {
+      _renderFilterBar(filterBar);
+    } else {
+      filterBar.innerHTML = '';
+      _applyZoneFilter('all');
+    }
+  }
+
+  // Força cenas visíveis se view=cenas (ScenesPanel pode ter mantido hidden)
+  if (view === 'cenas') {
+    const scenesSection = document.getElementById('scenes-section');
+    if (scenesSection) scenesSection.classList.remove('hidden');
+  }
+}
+
+function _renderFilterBar(bar) {
+  const TYPE_META = {
+    light:               { label: 'Luzes',      icon: '<svg viewBox="0 0 24 24"><path d="M9 17h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 1 4 10.5c-.7.6-1 1.3-1 2V16H9v-.5c0-.7-.3-1.4-1-2A6 6 0 0 1 12 3z"/></svg>' },
+    switch:              { label: 'Tomadas',    icon: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16v.01"/></svg>' },
+    climate:             { label: 'Clima',      icon: '<svg viewBox="0 0 24 24"><path d="M12 2v6m0 8v6M4.93 4.93l4.24 4.24m5.66 5.66 4.24 4.24M2 12h6m8 0h6M4.93 19.07l4.24-4.24m5.66-5.66 4.24-4.24"/></svg>' },
+    cover:               { label: 'Cortinas',   icon: '<svg viewBox="0 0 24 24"><path d="M3 4h18M3 20h18M12 4v16M6 4v4M18 4v4"/></svg>' },
+    media_player:        { label: 'Mídia',      icon: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M3 14h18M9 21h6M12 17v4"/></svg>' },
+    fan:                 { label: 'Ventiladores', icon: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M12 4a4 4 0 0 1 4 4c0 2.5-2 3-4 4s-4 1.5-4 4a4 4 0 0 1 4-4c2.5 0 3 2 4 4s1.5 4 4 4a4 4 0 0 1-4-4c0-2.5 2-3 4-4s4-1.5 4-4a4 4 0 0 1-4 4c-2.5 0-3-2-4-4S9.5 4 8 4a4 4 0 0 1 4 0z"/></svg>' },
+    camera:              { label: 'Câmeras',    icon: '<svg viewBox="0 0 24 24"><path d="M23 7 16 12l7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>' },
+    alarm_control_panel: { label: 'Segurança',  icon: '<svg viewBox="0 0 24 24"><path d="M12 22s-8-4-8-10V5l8-3 8 3v7c0 6-8 10-8 10z"/></svg>' },
+    valve:               { label: 'Irrigação',  icon: '<svg viewBox="0 0 24 24"><path d="M12 20a6 6 0 0 0 6-6c0-4-6-12-6-12S6 10 6 14a6 6 0 0 0 6 6z"/></svg>' },
+    sensor:              { label: 'Solar',      icon: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>' }
+  };
+
+  // Detecta tipos presentes nas zonas atuais
+  const present = new Set();
+  for (const zone of ZoneRegistry.all()) {
+    for (const d of zone.devices) {
+      if (TYPE_META[d.type]) present.add(d.type);
+    }
+    // Zona com ícone solar agrupa em sensor
+    if (zone.icon === 'solar') present.add('sensor');
+  }
+
+  const filters = ['all', ...Object.keys(TYPE_META).filter(t => present.has(t))];
+  const labels  = { all: 'Todos', ...Object.fromEntries(Object.entries(TYPE_META).map(([k,v])=>[k,v.label])) };
+  const icons   = { all: '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>', ...Object.fromEntries(Object.entries(TYPE_META).map(([k,v])=>[k,v.icon])) };
+
+  bar.innerHTML = `<div class="filter-pills">${
+    filters.map(f => `
+      <button type="button" class="filter-pill${_navFilter === f ? ' active' : ''}" data-filter="${f}">
+        <span class="filter-pill-icon">${icons[f] || ''}</span>
+        <span>${labels[f] || f}</span>
+      </button>
+    `).join('')
+  }</div>`;
+
+  bar.querySelectorAll('[data-filter]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _navFilter = btn.getAttribute('data-filter');
+      bar.querySelectorAll('[data-filter]').forEach(b => b.classList.toggle('active', b === btn));
+      _applyZoneFilter(_navFilter);
+    });
+  });
+
+  _applyZoneFilter('all');
+}
+
+function _applyZoneFilter(filter) {
+  const grid = document.querySelector('.zones-grid');
+  if (!grid) return;
+  grid.querySelectorAll('.zone-card:not(.zone-card-new)').forEach(card => {
+    if (filter === 'all') { card.style.display = ''; return; }
+    const zoneId = card.id.replace('zone-', '');
+    const zone = ZoneRegistry.get(zoneId);
+    if (!zone) { card.style.display = 'none'; return; }
+    let match = false;
+    if (filter === 'sensor') {
+      match = zone.icon === 'solar' || zone.devices.some(d => d.type === 'sensor');
+    } else {
+      match = zone.devices.some(d => d.type === filter);
+    }
+    card.style.display = match ? '' : 'none';
   });
 }
 
