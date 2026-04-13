@@ -36,7 +36,8 @@ const ZONE_EDITOR_DOMAINS = {
   camera:               { label: 'Câmeras',            type: 'camera' },
   alarm_control_panel:  { label: 'Alarmes',            type: 'alarm_control_panel' },
   valve:                { label: 'Válvulas / Irrigação', type: 'valve' },
-  sensor:               { label: 'Energia / Solar',      type: 'sensor' }
+  sensor:               { label: 'Energia / Solar',      type: 'sensor' },
+  binary_sensor:        { label: 'Sensores',             type: 'binary_sensor' }
 };
 
 const ZoneEditor = {
@@ -113,6 +114,7 @@ const ZoneEditor = {
     ]);
 
     const states = this._getAvailableStates();
+    const stateMap = new Map(states.map(s => [s.entity_id, s]));
     const useful = [], system = [];
     for (const e of states) {
       if (!e || !e.entity_id) continue;
@@ -126,6 +128,16 @@ const ZoneEditor = {
       const cat = e.attributes && e.attributes.entity_category;
       if (cat === 'diagnostic' || cat === 'config') system.push(e);
       else useful.push(e);
+    }
+    // Em modo edição: garante que dispositivos já na zona apareçam mesmo se não estiverem nos estados disponíveis
+    if (this._mode === 'edit') {
+      const seenIds = new Set(states.map(s => s.entity_id));
+      for (const d of this._draft.devices) {
+        if (!d.entity || seenIds.has(d.entity)) continue;
+        const domain = d.entity.split('.')[0];
+        if (!ZONE_EDITOR_DOMAINS[domain]) continue;
+        useful.push({ entity_id: d.entity, state: 'unknown', attributes: { friendly_name: d.name || d.entity } });
+      }
     }
 
     const groups = {};
