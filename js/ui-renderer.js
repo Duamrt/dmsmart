@@ -2,6 +2,8 @@
 // Renderiza cards de zona no .zones-grid
 // Cada card se inscreve no StateStore para atualizar automaticamente
 
+const _recentlyToggled = new Set();
+
 const UIRenderer = {
   container: null,
   _zoneUnsubs: [],
@@ -97,7 +99,8 @@ const UIRenderer = {
         badgeClass = s === 'on' ? 'on' : 'off';
         badgeLabel = device.name;
       }
-      return `<button type="button" class="device-status ${badgeClass}" data-device-id="${device.id}" aria-label="${device.name}">${badgeLabel}</button>`;
+      const justToggled = _recentlyToggled.has(device.entity) ? ' just-toggled' : '';
+      return `<button type="button" class="device-status ${badgeClass}${justToggled}" data-device-id="${device.id}" aria-label="${device.name}">${badgeLabel}</button>`;
     }).join('');
 
     const climateDevice = devices.find(d => d.device.type === 'climate');
@@ -260,6 +263,8 @@ const UIRenderer = {
     const current = StateStore.get(device.entity);
     const isOn = current && current.state === 'on';
     const next = { ...(current || { entity_id: device.entity, attributes: {} }), state: isOn ? 'off' : 'on' };
+    _recentlyToggled.add(device.entity);
+    setTimeout(() => _recentlyToggled.delete(device.entity), 350);
     StateStore.update(device.entity, next);
     const domain = device.entity.split('.')[0];
     if (typeof HAClient !== 'undefined' && HAClient.callService) {

@@ -14,7 +14,7 @@ async function initApp() {
   try {
     initSidebar();
     initNav();
-    initClock();
+
     initInstallationSelector();
     if (typeof ControlModal !== 'undefined') ControlModal.init();
     if (typeof ZoneModal !== 'undefined') ZoneModal.init();
@@ -263,13 +263,22 @@ function _applyZoneFilter(filter) {
   });
 }
 
+function _formatInstallName(raw) {
+  if (!raw) return '—';
+  return raw
+    .replace(/[-_]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
+
 function updateHeaderInstallation(installation) {
   const sidebarEl = document.getElementById('sidebar-install-name');
   const pillName = document.getElementById('install-pill-name');
   const pill = document.getElementById('install-pill');
   const wrap = document.getElementById('header-install-wrap');
 
-  const label = installation && installation.name ? installation.name : '—';
+  const label = _formatInstallName(installation && installation.name);
   if (sidebarEl) sidebarEl.textContent = label;
   if (pillName) pillName.textContent = label;
 
@@ -345,7 +354,7 @@ function renderInstallationDropdown(el) {
           <svg viewBox="0 0 24 24"><path d="M3 12 12 4l9 8"/><path d="M5 10v10h14V10"/></svg>
         </span>
         <span class="install-item-body">
-          <span class="install-item-name">${_esc(inst.name)}</span>
+          <span class="install-item-name">${_esc(_formatInstallName(inst.name))}</span>
           <span class="install-item-sub">${_esc(sub)}</span>
         </span>
         ${isActive ? '<span class="install-item-check"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg></span>' : ''}
@@ -762,7 +771,7 @@ function initHero(installation) {
 
   eyebrow.textContent = greet;
   // Usa o primeiro nome do usuário logado; fallback para nome da instalação
-  let displayName = installation.name || 'Instalação';
+  let displayName = _formatInstallName(installation.name) || 'Instalação';
   if (typeof AuthStore !== 'undefined' && AuthStore.isLoggedIn()) {
     const user = AuthStore.getUser();
     const meta = user?.user_metadata;
@@ -889,28 +898,6 @@ function _showToast(msg, type = 'default', duration = 2800) {
   setTimeout(() => { toast.remove(); }, duration + 400);
 }
 
-function initClock() {
-  const clockEl = document.querySelector('.clock');
-  const dateEl = document.querySelector('.date');
-  if (!clockEl || !dateEl) return;
-
-  function updateClock() {
-    const now = new Date();
-    clockEl.textContent = now.toLocaleTimeString('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-    dateEl.textContent = now.toLocaleDateString('pt-BR', {
-      weekday: 'short',
-      day: '2-digit',
-      month: 'short'
-    });
-  }
-
-  updateClock();
-  setInterval(updateClock, 1000);
-}
 
 document.addEventListener('DOMContentLoaded', initApp);
 
