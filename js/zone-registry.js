@@ -124,10 +124,11 @@ const ZoneRegistry = {
   _genZoneId() { return 'zone_' + Math.random().toString(36).slice(2, 8); },
 
   _normalizeDevice(d) {
+    const domain = d.entity ? d.entity.split('.')[0] : '';
     return {
       id: d.id || ('dev_' + Math.random().toString(36).slice(2, 8)),
       name: d.name || d.entity || 'Dispositivo',
-      type: d.type || 'switch',
+      type: d.type || domain || 'switch',
       entity: d.entity || '',
       isCritical: !!d.isCritical
     };

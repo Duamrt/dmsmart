@@ -203,10 +203,14 @@ function _renderFilterBar(bar) {
   };
 
   // Detecta tipos presentes nas zonas atuais
+  // Usa entity_id como fonte de verdade (domain = primeiro segmento antes do ponto)
+  // para evitar falsos 'switch' vindos do fallback de normalização antiga
   const present = new Set();
   for (const zone of ZoneRegistry.all()) {
     for (const d of zone.devices) {
-      if (TYPE_META[d.type]) present.add(d.type);
+      const domain = d.entity ? d.entity.split('.')[0] : '';
+      const type = (TYPE_META[d.type] ? d.type : null) || (TYPE_META[domain] ? domain : null);
+      if (type) present.add(type);
     }
     // Zona com ícone solar agrupa em sensor
     if (zone.icon === 'solar') present.add('sensor');
@@ -245,10 +249,15 @@ function _applyZoneFilter(filter) {
     const zone = ZoneRegistry.get(zoneId);
     if (!zone) { card.style.display = 'none'; return; }
     let match = false;
+    const _devMatchesType = (d, t) => {
+      if (d.type === t) return true;
+      const domain = d.entity ? d.entity.split('.')[0] : '';
+      return domain === t;
+    };
     if (filter === 'sensor') {
-      match = zone.icon === 'solar' || zone.devices.some(d => d.type === 'sensor');
+      match = zone.icon === 'solar' || zone.devices.some(d => _devMatchesType(d, 'sensor'));
     } else {
-      match = zone.devices.some(d => d.type === filter);
+      match = zone.devices.some(d => _devMatchesType(d, filter));
     }
     card.style.display = match ? '' : 'none';
   });
