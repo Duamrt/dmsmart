@@ -168,10 +168,17 @@ function switchView(view) {
     }
   }
 
-  // Força cenas visíveis se view=cenas (ScenesPanel pode ter mantido hidden)
-  if (view === 'cenas') {
-    const scenesSection = document.getElementById('scenes-section');
-    if (scenesSection) scenesSection.classList.remove('hidden');
+  // Controle de visibilidade da seção de cenas por view
+  const scenesSection = document.getElementById('scenes-section');
+  if (scenesSection) {
+    if (view === 'cenas') {
+      // Na aba Cenas: sempre visível (mostra estado vazio com botão criar)
+      scenesSection.classList.remove('hidden');
+    } else if (view === 'dashboard') {
+      // No Dashboard: esconde quando vazio para não criar área preta
+      const hasContent = scenesSection.querySelector('.scene-card, .scenes-list');
+      if (!hasContent) scenesSection.classList.add('hidden');
+    }
   }
 
   // Atualiza modo compacto/completo da planta

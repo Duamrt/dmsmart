@@ -15,6 +15,7 @@ const _SVG = {
   door:       '<svg viewBox="0 0 24 24"><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 12v.01"/><path d="M13 4l-9 4v12h9V4z"/></svg>',
   sparkle:    '<svg viewBox="0 0 24 24"><path d="M12 2L9.5 9.5 2 12l7.5 2.5L12 22l2.5-7.5L22 12l-7.5-2.5z"/></svg>',
   lightning:  '<svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+  plus:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
 };
 
 function _sceneIcon(name) {
@@ -38,9 +39,17 @@ function _esc(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function _slugify(s) {
+  return s.trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
+}
+
 const ScenesPanel = {
   _container: null,
   _scenes: [],
+  _modal: null,
 
   init(container) {
     this._container = container;
@@ -64,34 +73,58 @@ const ScenesPanel = {
 
   render() {
     if (!this._container) return;
+
     if (!this._scenes.length) {
-      this._container.classList.add('hidden');
+      // Estado vazio — sempre renderiza o conteúdo, visibilidade controlada pelo setView
+      this._container.innerHTML = `
+        <div class="scenes-empty-page">
+          <div class="scenes-empty-page-icon">${_SVG.sparkle}</div>
+          <div class="scenes-empty-page-title">Nenhuma cena ainda</div>
+          <div class="scenes-empty-page-sub">Crie uma cena capturando o estado atual dos seus dispositivos — sem sair do app.</div>
+          <button class="scenes-create-btn" type="button" id="scenes-create-first">
+            ${_SVG.plus} Nova cena
+          </button>
+          <div class="scenes-tips">
+            <div class="scenes-tip-label">Sugestões</div>
+            <div class="scenes-tip-list">
+              ${['Cinema', 'Boa noite', 'Bom dia', 'Trabalho', 'Chegou em casa'].map(n => `
+                <button class="scenes-tip-pill" type="button" data-name="${_esc(n)}">${n}</button>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+      this._container.querySelector('#scenes-create-first')
+        .addEventListener('click', () => this._openCreateModal());
+      this._container.querySelectorAll('.scenes-tip-pill').forEach(pill => {
+        pill.addEventListener('click', () => this._openCreateModal(pill.getAttribute('data-name')));
+      });
       return;
     }
-    this._container.classList.remove('hidden');
-
-    const cards = this._scenes.map(s => `
-      <button class="scene-card" type="button" data-id="${_esc(s.id)}" data-type="${_esc(s.type)}">
-        <span class="scene-card-icon">${_sceneIcon(s.name)}</span>
-        <span class="scene-card-name">${_esc(s.name)}</span>
-      </button>
-    `).join('');
 
     this._container.innerHTML = `
       <div class="scenes-header">
         <span class="scenes-title">Cenas &amp; Automações</span>
         <span class="scenes-badge">${this._scenes.length}</span>
+        <button class="scenes-add-btn" type="button" id="scenes-add-btn" title="Nova cena">${_SVG.plus}</button>
       </div>
-      <div class="scenes-list">${cards}</div>
+      <div class="scenes-list">${this._scenes.map(s => `
+        <button class="scene-card" type="button" data-id="${_esc(s.id)}" data-type="${_esc(s.type)}">
+          <span class="scene-card-icon">${_sceneIcon(s.name)}</span>
+          <span class="scene-card-name">${_esc(s.name)}</span>
+        </button>
+      `).join('')}</div>
     `;
 
+    this._container.querySelector('#scenes-add-btn')
+      .addEventListener('click', () => this._openCreateModal());
     this._container.querySelectorAll('.scene-card').forEach(btn => {
       btn.addEventListener('click', () => this._activate(btn));
     });
   },
 
   _activate(btn) {
-    const id  = btn.getAttribute('data-id');
+    const id   = btn.getAttribute('data-id');
     const type = btn.getAttribute('data-type');
     if (!id || typeof HAClient === 'undefined') return;
 
@@ -110,5 +143,145 @@ const ScenesPanel = {
         btn.classList.add('scene-error');
         setTimeout(() => { btn.classList.remove('scene-error'); btn.disabled = false; }, 1500);
       });
+  },
+
+  // ─── Modal de criação ────────────────────────────────────────────
+
+  _openCreateModal(prefillName = '') {
+    if (document.getElementById('scene-create-modal')) return;
+
+    // Coleta dispositivos controláveis das zonas
+    const devices = this._getControllableDevices();
+
+    const modal = document.createElement('div');
+    modal.id = 'scene-create-modal';
+    modal.className = 'scene-create-overlay';
+    modal.innerHTML = `
+      <div class="scene-create-dialog">
+        <div class="scene-create-header">
+          <span class="scene-create-title">Nova cena</span>
+          <button class="scene-create-close" type="button" data-action="close" aria-label="Fechar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <div class="scene-create-body">
+          <label class="scene-create-label">Nome da cena</label>
+          <input class="scene-create-input" id="scene-name-input" type="text"
+            placeholder="Ex: Cinema, Boa noite, Chegou em casa…"
+            value="${_esc(prefillName)}" autocomplete="off" />
+
+          <label class="scene-create-label" style="margin-top:18px">
+            Dispositivos
+            <span class="scene-create-hint">O estado atual de cada selecionado será capturado.</span>
+          </label>
+
+          ${devices.length ? `
+            <div class="scene-device-list" id="scene-device-list">
+              ${devices.map(d => `
+                <label class="scene-device-row">
+                  <input type="checkbox" class="scene-device-check" value="${_esc(d.entity)}" checked />
+                  <span class="scene-device-name">${_esc(d.name)}</span>
+                  <span class="scene-device-zone">${_esc(d.zone)}</span>
+                  <span class="scene-device-state ${d.on ? 'scene-device-on' : 'scene-device-off'}">${d.on ? 'Ligado' : 'Desligado'}</span>
+                </label>
+              `).join('')}
+            </div>
+          ` : `<div class="scene-create-hint" style="margin-top:8px">Nenhum dispositivo configurado nas zonas.</div>`}
+        </div>
+
+        <div class="scene-create-footer">
+          <div class="scene-create-error hidden" id="scene-create-error"></div>
+          <button class="scene-create-cancel" type="button" data-action="close">Cancelar</button>
+          <button class="scene-create-save" type="button" id="scene-save-btn">Criar cena</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal || e.target.closest('[data-action="close"]')) this._closeCreateModal();
+    });
+    modal.addEventListener('keydown', (e) => { if (e.key === 'Escape') this._closeCreateModal(); });
+    document.getElementById('scene-save-btn').addEventListener('click', () => this._saveScene());
+    setTimeout(() => {
+      const inp = document.getElementById('scene-name-input');
+      if (inp) inp.focus();
+    }, 80);
+  },
+
+  _closeCreateModal() {
+    const modal = document.getElementById('scene-create-modal');
+    if (modal) modal.remove();
+  },
+
+  _getControllableDevices() {
+    if (typeof ZoneRegistry === 'undefined') return [];
+    const devices = [];
+    for (const zone of ZoneRegistry.all()) {
+      for (const device of (zone.devices || [])) {
+        const domain = (device.entity || '').split('.')[0];
+        if (['sensor', 'binary_sensor', 'camera'].includes(domain)) continue;
+        const state = typeof StateStore !== 'undefined' ? StateStore.get(device.entity) : null;
+        devices.push({
+          entity: device.entity,
+          name: device.name || device.entity,
+          zone: zone.name || '',
+          on: state ? (state.state === 'on' || state.state === 'home') : false,
+        });
+      }
+    }
+    return devices;
+  },
+
+  async _saveScene() {
+    const nameInput = document.getElementById('scene-name-input');
+    const errEl     = document.getElementById('scene-create-error');
+    const saveBtn   = document.getElementById('scene-save-btn');
+
+    const name = nameInput ? nameInput.value.trim() : '';
+    if (!name) {
+      errEl.textContent = 'Informe um nome para a cena.';
+      errEl.classList.remove('hidden');
+      nameInput && nameInput.focus();
+      return;
+    }
+
+    const checks = document.querySelectorAll('#scene-device-list .scene-device-check:checked');
+    const entities = Array.from(checks).map(c => c.value);
+    if (!entities.length) {
+      errEl.textContent = 'Selecione ao menos um dispositivo.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    if (typeof HAClient === 'undefined') {
+      errEl.textContent = 'Sem conexão com o Home Assistant.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    errEl.classList.add('hidden');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Salvando…';
+
+    try {
+      await HAClient.callService('scene', 'create', {
+        scene_id: _slugify(name),
+        snapshot_entities: entities,
+      });
+
+      this._closeCreateModal();
+      if (typeof _showToast === 'function') _showToast(`Cena "${name}" criada`, 'success');
+
+      // Recarrega o painel após um breve delay para o HA processar
+      setTimeout(() => this.load(), 800);
+    } catch (err) {
+      console.warn('[scenes] erro ao criar cena:', err);
+      errEl.textContent = 'Erro ao criar cena. Verifique a conexão com o HA.';
+      errEl.classList.remove('hidden');
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Criar cena';
+    }
   },
 };
