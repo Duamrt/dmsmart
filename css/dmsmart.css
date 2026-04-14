@@ -224,7 +224,7 @@ body.wizard-open {
 }
 
 .sidebar-install {
-  padding: 12px 14px;
+  padding: 10px 14px;
   background: var(--bg-elev-2);
   border-radius: var(--r);
   border: 1px solid var(--border-soft);
@@ -233,6 +233,12 @@ body.wizard-open {
   gap: 2px;
   white-space: nowrap;
   overflow: hidden;
+  margin-bottom: 2px;
+}
+
+/* Versão do topo — sem margin extra, fica logo abaixo do logo */
+.sidebar-install--top {
+  margin: 0 0 4px;
 }
 
 .sidebar-install-label {
@@ -348,12 +354,24 @@ body.wizard-open {
   flex-shrink: 0;
 }
 
+/* Área de perfil — agrupa auth + badge + notificações */
+.sidebar-profile-area {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: var(--bg-elev-2);
+  border-radius: var(--r);
+  border: 1px solid var(--border-soft);
+}
+
 /* Estado recolhido: esconde textos */
 .app-shell.sidebar-collapsed .sidebar-brand .logo-smart,
 .app-shell.sidebar-collapsed .sidebar-brand .logo-dot,
 .app-shell.sidebar-collapsed .sidebar-nav-item span,
 .app-shell.sidebar-collapsed .sidebar-group-label,
-.app-shell.sidebar-collapsed .sidebar-install,
+.app-shell.sidebar-collapsed .sidebar-install--top,
+.app-shell.sidebar-collapsed .sidebar-profile-area,
 .app-shell.sidebar-collapsed .sidebar-new-install span,
 .app-shell.sidebar-collapsed .sidebar-toggle span {
   display: none;
