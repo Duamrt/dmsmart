@@ -45,6 +45,8 @@ async function initApp() {
     // Licenciamento
     if (typeof LicenseManager !== 'undefined') {
       LicenseManager.init();
+      // Re-avalia a view ativa agora que auth+plano foram carregados (fix race condition)
+      switchView(_navView);
     }
     // Checkout Stripe — trata retorno ?checkout=success|cancel
     if (typeof LicenseCheckout !== 'undefined') {

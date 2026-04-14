@@ -110,6 +110,12 @@
 .enrg-kpi-unit  { font-size: 11px; color: rgba(255,255,255,.4); margin-top: 2px; }
 .enrg-kpi-label { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 4px; }
 
+/* Estado vazio — sensor não configurado */
+.enrg-kpi[data-empty] .enrg-kpi-val  { font-weight: 300; color: rgba(255,255,255,.3); }
+.enrg-kpi[data-empty] .enrg-kpi-unit { opacity: .4; }
+.enrg-kpi[data-empty] .enrg-kpi-label{ opacity: .4; }
+.enrg-kpi[data-empty] .enrg-kpi-icon { opacity: .45; }
+
 /* ── Bandeira tarifária ───────────────────────── */
 .enrg-flag-bar {
   display: flex;
@@ -193,6 +199,13 @@
   text-align: center;
   padding: 20px;
 }
+.enrg-chart-wait--empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.enrg-chart-wait--empty svg { stroke: rgba(255,255,255,.2); }
 
 /* ── Side column ──────────────────────────────── */
 .enrg-side-col {
@@ -220,7 +233,9 @@
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 12px;
   overflow: hidden;
+  transition: border-color .2s;
 }
+.enrg-ranking-card:hover { border-color: rgba(255,255,255,.15); }
 .enrg-rank-empty {
   padding: 20px 16px;
   font-size: 12px;
@@ -276,7 +291,9 @@
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 12px;
   overflow: hidden;
+  transition: border-color .2s;
 }
+.enrg-roi-card:hover { border-color: rgba(255,255,255,.15); }
 .enrg-roi-empty {
   padding: 16px;
   font-size: 12px;
@@ -315,7 +332,9 @@
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 12px;
   overflow: hidden;
+  transition: border-color .2s;
 }
+.enrg-compare-card:hover { border-color: rgba(255,255,255,.15); }
 .enrg-compare-hint {
   padding: 20px 16px;
   font-size: 13px;
@@ -325,7 +344,6 @@
 .enrg-compare-wrap {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0;
   padding: 16px;
   gap: 16px;
 }

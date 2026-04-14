@@ -124,7 +124,7 @@ const EnergyDashboard = (() => {
 
   <!-- KPIs -->
   <div class="enrg-kpi-row">
-    <div class="enrg-kpi enrg-kpi--grid">
+    <div class="enrg-kpi enrg-kpi--grid"${!haGrid ? ' data-empty="true"' : ''}>
       <div class="enrg-kpi-icon"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
       <div class="enrg-kpi-body">
         <div class="enrg-kpi-val" id="enrg-grid-val">${haGrid ? gridKW.toFixed(2) : '—'}</div>
@@ -132,7 +132,7 @@ const EnergyDashboard = (() => {
         <div class="enrg-kpi-label">Consumo da rede</div>
       </div>
     </div>
-    <div class="enrg-kpi enrg-kpi--solar">
+    <div class="enrg-kpi enrg-kpi--solar"${!hasSolar ? ' data-empty="true"' : ''}>
       <div class="enrg-kpi-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></div>
       <div class="enrg-kpi-body">
         <div class="enrg-kpi-val" id="enrg-solar-val">${hasSolar ? solarKW.toFixed(2) : '—'}</div>
@@ -140,7 +140,7 @@ const EnergyDashboard = (() => {
         <div class="enrg-kpi-label">Geração solar</div>
       </div>
     </div>
-    <div class="enrg-kpi enrg-kpi--net${netKW >= 0 ? ' enrg-kpi--surplus' : ' enrg-kpi--deficit'}" id="enrg-net-card">
+    <div class="enrg-kpi enrg-kpi--net${netKW >= 0 ? ' enrg-kpi--surplus' : ' enrg-kpi--deficit'}" id="enrg-net-card"${!(haGrid || hasSolar) ? ' data-empty="true"' : ''}>
       <div class="enrg-kpi-icon"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
       <div class="enrg-kpi-body">
         <div class="enrg-kpi-val" id="enrg-net-val">${(haGrid || hasSolar) ? (netKW >= 0 ? '+' : '') + netKW.toFixed(2) : '—'}</div>
@@ -148,11 +148,11 @@ const EnergyDashboard = (() => {
         <div class="enrg-kpi-label">Saldo líquido</div>
       </div>
     </div>
-    <div class="enrg-kpi enrg-kpi--cost">
+    <div class="enrg-kpi enrg-kpi--cost"${!haGrid ? ' data-empty="true"' : ''}>
       <div class="enrg-kpi-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.88 14.91v.94h-1.75v-.94c-1.12-.24-2.07-.96-2.14-2.23h1.28c.06.69.54 1.23 1.74 1.23 1.28 0 1.57-.64 1.57-1.04 0-.54-.29-1.05-1.75-1.4-1.63-.4-2.74-1.06-2.74-2.4 0-1.13.91-1.86 2.04-2.11V8h1.75v.96c1.22.3 1.83 1.22 1.87 2.22H13.5c-.03-.73-.42-1.23-1.46-1.23-.98 0-1.57.45-1.57 1.07 0 .55.43.91 1.75 1.25 1.35.36 2.74.91 2.74 2.56-.01 1.2-.91 1.85-2.08 2.08z"/></svg></div>
       <div class="enrg-kpi-body">
         <div class="enrg-kpi-val" id="enrg-cost-val">${haGrid && costMonth > 0 ? 'R$&nbsp;' + costMonth.toFixed(0) : '—'}</div>
-        <div class="enrg-kpi-unit" id="enrg-cost-unit">${haGrid && costProj > 0 ? 'proj. R$&nbsp;' + costProj.toFixed(0) : 'estimado'}</div>
+        <div class="enrg-kpi-unit" id="enrg-cost-unit">${haGrid && costProj > 0 ? 'proj. R$&nbsp;' + costProj.toFixed(0) : 'sem dados'}</div>
         <div class="enrg-kpi-label">Custo do mês</div>
       </div>
     </div>
@@ -163,7 +163,7 @@ const EnergyDashboard = (() => {
     <div class="enrg-flag-dot" style="background:${t.flag.color}" id="enrg-flag-dot"></div>
     <div class="enrg-flag-info">
       Bandeira <strong id="enrg-flag-name">${t.flag.label}</strong>
-      <span class="enrg-flag-rate" id="enrg-flag-rate">· R$ ${t.total.toFixed(5)}/kWh</span>
+      <span class="enrg-flag-rate" id="enrg-flag-rate">· R$ ${t.total.toFixed(4)}/kWh</span>
     </div>
     <button type="button" class="enrg-flag-edit" data-enrg-open-cfg>Editar configurações ↗</button>
   </div>
@@ -292,7 +292,7 @@ const EnergyDashboard = (() => {
 
   function _renderROI(invest, annualSave, payback, hasSolar) {
     if (!hasSolar || invest === 0)
-      return `<div class="enrg-roi-empty">Configure o sensor solar e o investimento para ver o retorno.
+      return `<div class="enrg-roi-empty">Configure o sensor solar e o investimento para calcular o retorno esperado.
         <button type="button" class="enrg-cfg-link" data-enrg-open-cfg>Configurar →</button></div>`;
     const years  = payback ? Math.floor(payback) : null;
     const months = payback ? Math.round((payback % 1) * 12) : null;
@@ -361,6 +361,18 @@ const EnergyDashboard = (() => {
       set('enrg-cost-val',  'R$&nbsp;' + costMonth.toFixed(0));
       set('enrg-cost-unit', 'proj. R$&nbsp;' + costProj.toFixed(0));
     }
+
+    // Sync data-empty nos cards conforme sensores disponíveis
+    const setEmpty = (sel, isEmpty) => {
+      const card = _el?.querySelector(sel);
+      if (!card) return;
+      if (isEmpty) card.setAttribute('data-empty', 'true');
+      else card.removeAttribute('data-empty');
+    };
+    setEmpty('.enrg-kpi--grid',  gridKW === null);
+    setEmpty('.enrg-kpi--solar', solarKW === null);
+    setEmpty('#enrg-net-card',   gridKW === null && solarKW === null);
+    setEmpty('.enrg-kpi--cost',  gridKW === null);
   }
 
   function _updateRanking() {
@@ -446,7 +458,13 @@ const EnergyDashboard = (() => {
     if (!body) return;
     const { labels, grid, solar, net } = _chartData;
     if (!labels?.length || (grid.every(v => v === 0) && solar.every(v => v === 0))) {
-      _showChartMsg('Sem dados históricos — aguarde coleta de leituras.');
+      const el = document.getElementById('enrg-chart-body');
+      if (el) el.innerHTML = `<div class="enrg-chart-wait enrg-chart-wait--empty">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 3v18h18"/><path d="M7 16l4-4 4 4 4-6"/>
+        </svg>
+        Sem dados históricos — aguarde coleta de leituras.
+      </div>`;
       return;
     }
     const W   = Math.max(body.clientWidth || 560, 300);
