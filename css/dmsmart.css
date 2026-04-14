@@ -1125,6 +1125,17 @@ body.wizard-open {
 .app-main[data-view="energia"] .floorplan-section     { display: none !important; }
 .app-main[data-view="energia"] .integrator-section    { display: none; }
 
+/* Painel de relatórios */
+.reports-section { display: none; }
+.app-main[data-view="relatorios"] .reports-section    { display: block; }
+.app-main[data-view="relatorios"] #dashboard-hero     { display: none; }
+.app-main[data-view="relatorios"] .zones-grid         { display: none; }
+.app-main[data-view="relatorios"] #zones-filter-bar   { display: none; }
+.app-main[data-view="relatorios"] #scenes-section     { display: none !important; }
+.app-main[data-view="relatorios"] .floorplan-section  { display: none !important; }
+.app-main[data-view="relatorios"] .integrator-section { display: none; }
+.app-main[data-view="relatorios"] .energy-section     { display: none; }
+
 /* =========================================
    Filter pills
    ========================================= */
