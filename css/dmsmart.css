@@ -365,6 +365,7 @@ body.wizard-open {
   padding-right: 0;
 }
 
+.app-shell.sidebar-collapsed .sidebar-nav-item--soon::after { display: none; }
 .app-shell.sidebar-collapsed .sidebar-nav-item {
   justify-content: center;
   padding-left: 0;
