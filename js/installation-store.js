@@ -163,8 +163,11 @@ const InstallationStore = {
     if (typeof AuthStore === 'undefined' || !AuthStore.isLoggedIn()) return;
     const inst = this.get(id);
     if (!inst) return;
-    const user = AuthStore.getUser();
-    const { error } = await SUPA.from('installations').upsert({
+    const user    = AuthStore.getUser();
+    const profile = AuthStore.getProfile();
+    // Integrador registra a si mesmo em integrator_id (permite revogação futura pelo cliente)
+    const integrator_id = (profile?.role === 'integrador') ? user.id : null;
+    const payload = {
       id:         inst.id,
       user_id:    user.id,
       name:       inst.name,
@@ -172,7 +175,9 @@ const InstallationStore = {
       zones:      inst.zones  || [],
       created_at: inst.createdAt,
       updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
+    };
+    if (integrator_id) payload.integrator_id = integrator_id;
+    const { error } = await SUPA.from('installations').upsert(payload, { onConflict: 'id' });
     if (error) console.warn('[dmsmart] syncToCloud:', error.message);
   },
 

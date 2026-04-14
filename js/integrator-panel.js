@@ -71,15 +71,31 @@ const IntegratorPanel = {
     this._el.querySelectorAll('[data-manage]').forEach(btn => {
       btn.addEventListener('click', () => this._manage(btn.getAttribute('data-manage')));
     });
+    this._el.querySelectorAll('[data-revoke]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._revoke(btn.getAttribute('data-revoke'), btn.getAttribute('data-revoke-name'));
+      });
+    });
   },
 
   _renderCard(inst, activeId) {
-    const isActive  = inst.id === activeId;
-    const isClient  = inst._source === 'client';
-    const zoneCount = Array.isArray(inst.zones) ? inst.zones.length : 0;
-    const haHost    = inst.ha_url
+    const isActive   = inst.id === activeId;
+    const isClient   = inst._source === 'client';
+    const isLinked   = !!inst.integrator_id; // instalação do cliente vinculada ao integrador
+    const zoneCount  = Array.isArray(inst.zones) ? inst.zones.length : 0;
+    const haHost     = inst.ha_url
       ? (new URL(inst.ha_url.startsWith('http') ? inst.ha_url : 'http://' + inst.ha_url)).hostname
       : '—';
+
+    const revokeBtn = isLinked
+      ? `<button class="intp-revoke-btn" type="button"
+           data-revoke="${_authEsc(inst.id)}"
+           data-revoke-name="${_authEsc(inst.name)}"
+           title="Desvincular acesso do integrador">
+           Desvincular
+         </button>`
+      : '';
 
     return `
       <div class="intp-card${isActive ? ' intp-card--active' : ''}">
@@ -95,9 +111,12 @@ const IntegratorPanel = {
           <div class="intp-card-url">${_authEsc(haHost)}</div>
           <div class="intp-card-meta">${zoneCount} ambiente${zoneCount !== 1 ? 's' : ''}</div>
         </div>
-        <button class="intp-manage-btn" type="button" data-manage="${_authEsc(inst.id)}">
-          ${isActive ? 'Gerenciando' : 'Gerenciar'}
-        </button>
+        <div class="intp-card-actions">
+          <button class="intp-manage-btn" type="button" data-manage="${_authEsc(inst.id)}">
+            ${isActive ? 'Gerenciando' : 'Gerenciar'}
+          </button>
+          ${revokeBtn}
+        </div>
       </div>`;
   },
 
@@ -129,5 +148,20 @@ const IntegratorPanel = {
 
     ActiveInstallation.setId(installId);
     window.location.reload();
+  },
+
+  async _revoke(installId, installName) {
+    const label = installName || 'esta instalação';
+    if (!confirm(`Desvincular acesso de integrador de "${label}"?\n\nO cliente não poderá mais ser gerenciado por esta conta.`)) return;
+
+    const { error } = await SUPA.rpc('revoke_integrator', { p_installation_id: installId });
+    if (error) {
+      console.warn('[dmsmart] revoke_integrator:', error.message);
+      if (typeof _showToast === 'function') _showToast('Erro ao desvincular', 'error');
+      return;
+    }
+
+    if (typeof _showToast === 'function') _showToast(`"${label}" desvinculado`, 'success');
+    await this.load();
   }
 };

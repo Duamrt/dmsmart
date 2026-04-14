@@ -3579,6 +3579,29 @@ details.ze-system-group[open] .ze-system-summary::after { transform: rotate(90de
   cursor: default;
 }
 
+.intp-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.intp-revoke-btn {
+  width: 100%;
+  padding: 7px 14px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--danger, #e53e3e);
+  background: transparent;
+  color: var(--danger, #e53e3e);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  transition: background .2s, color .2s;
+}
+.intp-revoke-btn:hover {
+  background: rgba(229,62,62,.1);
+}
+
 /* Card "Novo cliente" */
 .intp-card-new {
   background: transparent;
