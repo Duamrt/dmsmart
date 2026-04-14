@@ -110,6 +110,7 @@ body.wizard-open {
   letter-spacing: -0.8px;
   white-space: nowrap;
   line-height: 1;
+  position: relative;
 }
 
 .sidebar-brand .logo-dm {
@@ -330,26 +331,29 @@ body.wizard-open {
 }
 
 .sidebar-toggle {
+  position: absolute;
+  right: -2px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 12px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
   background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  color: var(--text-2);
+  border: none;
+  border-radius: 50%;
+  color: var(--text-3);
   cursor: pointer;
-  font-family: inherit;
-  font-size: var(--fs-sm);
-  font-weight: 500;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: color 0.15s, background 0.15s;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .sidebar-toggle:hover {
-  background: var(--bg-elev-2);
   color: var(--text);
-  border-color: var(--primary);
+  background: var(--bg-elev-2);
 }
 
 .sidebar-toggle svg {
@@ -380,8 +384,7 @@ body.wizard-open {
 .app-shell.sidebar-collapsed .sidebar-group-label,
 .app-shell.sidebar-collapsed .sidebar-install-ctx,
 .app-shell.sidebar-collapsed .sidebar-profile-area,
-.app-shell.sidebar-collapsed .sidebar-new-install span,
-.app-shell.sidebar-collapsed .sidebar-toggle span {
+.app-shell.sidebar-collapsed .sidebar-new-install span {
   display: none;
 }
 
