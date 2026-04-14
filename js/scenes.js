@@ -109,18 +109,81 @@ const ScenesPanel = {
         <button class="scenes-add-btn" type="button" id="scenes-add-btn" title="Nova cena">${_SVG.plus}</button>
       </div>
       <div class="scenes-list">${this._scenes.map(s => `
-        <button class="scene-card" type="button" data-id="${_esc(s.id)}" data-type="${_esc(s.type)}">
-          <span class="scene-card-icon">${_sceneIcon(s.name)}</span>
-          <span class="scene-card-name">${_esc(s.name)}</span>
-        </button>
+        <div class="scene-card-wrap">
+          <button class="scene-card" type="button" data-id="${_esc(s.id)}" data-type="${_esc(s.type)}">
+            <span class="scene-card-icon">${_sceneIcon(s.name)}</span>
+            <span class="scene-card-name">${_esc(s.name)}</span>
+          </button>
+          ${s.type === 'scene' ? `
+          <button class="scene-more-btn" type="button" data-id="${_esc(s.id)}" data-name="${_esc(s.name)}" title="Opções" aria-label="Opções">⋯</button>
+          <div class="scene-more-menu hidden" id="smenu-${_esc(s.id.replace(/\./g,'-'))}">
+            <button type="button" class="scene-menu-edit" data-id="${_esc(s.id)}" data-name="${_esc(s.name)}">Editar</button>
+            <button type="button" class="scene-menu-delete" data-id="${_esc(s.id)}" data-name="${_esc(s.name)}">Excluir</button>
+          </div>
+          ` : ''}
+        </div>
       `).join('')}</div>
     `;
 
     this._container.querySelector('#scenes-add-btn')
       .addEventListener('click', () => this._openCreateModal());
+
     this._container.querySelectorAll('.scene-card').forEach(btn => {
       btn.addEventListener('click', () => this._activate(btn));
     });
+
+    // Menus ⋯
+    this._container.querySelectorAll('.scene-more-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.getAttribute('data-id');
+        const menuId = 'smenu-' + id.replace(/\./g, '-');
+        const menu = document.getElementById(menuId);
+        if (!menu) return;
+        const isOpen = !menu.classList.contains('hidden');
+        this._closeMenus();
+        if (!isOpen) menu.classList.remove('hidden');
+      });
+    });
+
+    this._container.querySelectorAll('.scene-menu-edit').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._closeMenus();
+        const scene = this._scenes.find(s => s.id === btn.getAttribute('data-id'));
+        if (scene) this._openCreateModal(scene.name, scene.id);
+      });
+    });
+
+    this._container.querySelectorAll('.scene-menu-delete').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._closeMenus();
+        this._deleteScene(btn.getAttribute('data-id'), btn.getAttribute('data-name'));
+      });
+    });
+
+    // Fechar menu ao clicar fora
+    document.addEventListener('click', this._boundCloseMenus = () => this._closeMenus(), { once: true });
+  },
+
+  _closeMenus() {
+    if (this._container) {
+      this._container.querySelectorAll('.scene-more-menu').forEach(m => m.classList.add('hidden'));
+    }
+  },
+
+  async _deleteScene(entityId, name) {
+    if (!confirm(`Excluir a cena "${name}"?\nEssa ação não pode ser desfeita.`)) return;
+    try {
+      const sceneId = entityId.replace(/^scene\./, '');
+      await HAClient.callService('scene', 'delete', { scene_id: sceneId });
+      if (typeof _showToast === 'function') _showToast(`Cena "${name}" excluída`, 'success');
+      setTimeout(() => this.load(), 600);
+    } catch (err) {
+      console.warn('[scenes] erro ao excluir:', err);
+      if (typeof _showToast === 'function') _showToast('Erro ao excluir a cena', 'error');
+    }
   },
 
   _activate(btn) {
@@ -145,10 +208,14 @@ const ScenesPanel = {
       });
   },
 
-  // ─── Modal de criação ────────────────────────────────────────────
+  // ─── Modal de criação / edição ───────────────────────────────────
 
-  _openCreateModal(prefillName = '') {
+  // editEntityId: se passado, abre em modo edição (atualiza cena existente)
+  _openCreateModal(prefillName = '', editEntityId = '') {
     if (document.getElementById('scene-create-modal')) return;
+
+    const isEdit = !!editEntityId;
+    const sceneId = editEntityId ? editEntityId.replace(/^scene\./, '') : '';
 
     // Coleta dispositivos controláveis das zonas
     const devices = this._getControllableDevices();
@@ -159,7 +226,7 @@ const ScenesPanel = {
     modal.innerHTML = `
       <div class="scene-create-dialog">
         <div class="scene-create-header">
-          <span class="scene-create-title">Nova cena</span>
+          <span class="scene-create-title">${isEdit ? 'Editar cena' : 'Nova cena'}</span>
           <button class="scene-create-close" type="button" data-action="close" aria-label="Fechar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
@@ -167,13 +234,17 @@ const ScenesPanel = {
 
         <div class="scene-create-body">
           <label class="scene-create-label">Nome da cena</label>
-          <input class="scene-create-input" id="scene-name-input" type="text"
-            placeholder="Ex: Cinema, Boa noite, Chegou em casa…"
-            value="${_esc(prefillName)}" autocomplete="off" />
+          ${isEdit
+            ? `<div style="padding:10px 12px;background:var(--bg-elev-2);border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--text)">${_esc(prefillName)}</div>
+               <input type="hidden" id="scene-name-input" value="${_esc(prefillName)}" />`
+            : `<input class="scene-create-input" id="scene-name-input" type="text"
+                 placeholder="Ex: Cinema, Boa noite, Chegou em casa…"
+                 value="${_esc(prefillName)}" autocomplete="off" />`
+          }
 
           <label class="scene-create-label" style="margin-top:18px">
             Dispositivos
-            <span class="scene-create-hint">O estado atual de cada selecionado será capturado.</span>
+            <span class="scene-create-hint">Defina o que cada dispositivo deve fazer quando a cena for ativada.</span>
           </label>
 
           ${devices.length ? `
@@ -183,7 +254,7 @@ const ScenesPanel = {
                   <input type="checkbox" class="scene-device-check" value="${_esc(d.entity)}" checked />
                   <span class="scene-device-name">${_esc(d.name)}</span>
                   <span class="scene-device-zone">${_esc(d.zone)}</span>
-                  <span class="scene-device-state ${d.on ? 'scene-device-on' : 'scene-device-off'}">${d.on ? 'Ligado' : 'Desligado'}</span>
+                  <button type="button" class="scene-state-toggle" data-state="${d.on ? 'on' : 'off'}">${d.on ? 'Ligar' : 'Desligar'}</button>
                 </label>
               `).join('')}
             </div>
@@ -193,7 +264,7 @@ const ScenesPanel = {
         <div class="scene-create-footer">
           <div class="scene-create-error hidden" id="scene-create-error"></div>
           <button class="scene-create-cancel" type="button" data-action="close">Cancelar</button>
-          <button class="scene-create-save" type="button" id="scene-save-btn">Criar cena</button>
+          <button class="scene-create-save" type="button" id="scene-save-btn" data-edit-id="${_esc(sceneId)}">${isEdit ? 'Recapturar estado' : 'Criar cena'}</button>
         </div>
       </div>
     `;
@@ -204,9 +275,21 @@ const ScenesPanel = {
     });
     modal.addEventListener('keydown', (e) => { if (e.key === 'Escape') this._closeCreateModal(); });
     document.getElementById('scene-save-btn').addEventListener('click', () => this._saveScene());
+
+    // Toggle Ligar / Desligar — stopPropagation para não marcar/desmarcar o checkbox da label
+    modal.addEventListener('click', (e) => {
+      const toggle = e.target.closest('.scene-state-toggle');
+      if (!toggle) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const newState = toggle.getAttribute('data-state') === 'on' ? 'off' : 'on';
+      toggle.setAttribute('data-state', newState);
+      toggle.textContent = newState === 'on' ? 'Ligar' : 'Desligar';
+    });
+
     setTimeout(() => {
       const inp = document.getElementById('scene-name-input');
-      if (inp) inp.focus();
+      if (inp && !isEdit) inp.focus();
     }, 80);
   },
 
@@ -247,9 +330,15 @@ const ScenesPanel = {
       return;
     }
 
+    // Coleta dispositivos selecionados + estado desejado
     const checks = document.querySelectorAll('#scene-device-list .scene-device-check:checked');
-    const entities = Array.from(checks).map(c => c.value);
-    if (!entities.length) {
+    const desiredStates = Array.from(checks).map(chk => {
+      const row = chk.closest('.scene-device-row');
+      const toggle = row ? row.querySelector('.scene-state-toggle') : null;
+      return { entity: chk.value, on: toggle ? toggle.getAttribute('data-state') === 'on' : true };
+    });
+
+    if (!desiredStates.length) {
       errEl.textContent = 'Selecione ao menos um dispositivo.';
       errEl.classList.remove('hidden');
       return;
@@ -263,25 +352,43 @@ const ScenesPanel = {
 
     errEl.classList.add('hidden');
     saveBtn.disabled = true;
-    saveBtn.textContent = 'Salvando…';
+    const isEdit = !!saveBtn.getAttribute('data-edit-id');
+    const editId = saveBtn.getAttribute('data-edit-id') || '';
+    saveBtn.textContent = 'Aplicando estados…';
+
+    // Em modo edição usa o scene_id original; em criação deriva do nome
+    const sceneId = isEdit ? editId : _slugify(name);
+    const entities = desiredStates.map(d => d.entity);
 
     try {
+      // 1. Aplica o estado desejado em cada dispositivo para o HA capturar no snapshot
+      await Promise.all(desiredStates.map(d =>
+        HAClient.callService('homeassistant', d.on ? 'turn_on' : 'turn_off', { entity_id: d.entity })
+          .catch(() => {}) // ignora erros individuais (ex: sensor sem turn_on)
+      ));
+
+      // 2. Aguarda o HA processar as mudanças de estado
+      saveBtn.textContent = 'Capturando snapshot…';
+      await new Promise(r => setTimeout(r, 800));
+
+      // 3. Captura o snapshot como cena
       await HAClient.callService('scene', 'create', {
-        scene_id: _slugify(name),
+        scene_id: sceneId,
         snapshot_entities: entities,
       });
 
       this._closeCreateModal();
-      if (typeof _showToast === 'function') _showToast(`Cena "${name}" criada`, 'success');
+      const msg = isEdit ? `Cena "${name}" atualizada` : `Cena "${name}" criada`;
+      if (typeof _showToast === 'function') _showToast(msg, 'success');
 
       // Recarrega o painel após um breve delay para o HA processar
       setTimeout(() => this.load(), 800);
     } catch (err) {
-      console.warn('[scenes] erro ao criar cena:', err);
-      errEl.textContent = 'Erro ao criar cena. Verifique a conexão com o HA.';
+      console.warn('[scenes] erro ao salvar cena:', err);
+      errEl.textContent = 'Erro ao salvar cena. Verifique a conexão com o HA.';
       errEl.classList.remove('hidden');
       saveBtn.disabled = false;
-      saveBtn.textContent = 'Criar cena';
+      saveBtn.textContent = isEdit ? 'Recapturar estado' : 'Criar cena';
     }
   },
 };
