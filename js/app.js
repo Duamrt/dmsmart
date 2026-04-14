@@ -83,7 +83,11 @@ async function initApp() {
     }
 
     await connectToHA(active);
-    if (typeof ScenesPanel !== 'undefined') ScenesPanel.load();
+    if (typeof ScenesPanel !== 'undefined') {
+      ScenesPanel.load();
+      // switchView rodou antes das cenas carregarem — reavalia visibilidade agora
+      _refreshScenesVisibility();
+    }
 
     console.log(`[dmsmart] ${active.name} iniciado`);
   } catch (err) {
@@ -145,6 +149,18 @@ function initNav() {
   switchView(saved || 'dashboard');
 }
 
+function _refreshScenesVisibility() {
+  const scenesSection = document.getElementById('scenes-section');
+  if (!scenesSection) return;
+  const view = _navView;
+  if (view === 'cenas') {
+    scenesSection.classList.remove('hidden');
+  } else if (view === 'dashboard') {
+    const hasContent = scenesSection.querySelector('.scene-card, .scenes-list');
+    scenesSection.classList.toggle('hidden', !hasContent);
+  }
+}
+
 function switchView(view) {
   _navView   = view;
   _navFilter = 'all';
@@ -186,17 +202,7 @@ function switchView(view) {
   }
 
   // Controle de visibilidade da seção de cenas por view
-  const scenesSection = document.getElementById('scenes-section');
-  if (scenesSection) {
-    if (view === 'cenas') {
-      // Na aba Cenas: sempre visível (mostra estado vazio com botão criar)
-      scenesSection.classList.remove('hidden');
-    } else if (view === 'dashboard') {
-      // No Dashboard: esconde quando vazio para não criar área preta
-      const hasContent = scenesSection.querySelector('.scene-card, .scenes-list');
-      if (!hasContent) scenesSection.classList.add('hidden');
-    }
-  }
+  _refreshScenesVisibility();
 
   // Atualiza modo compacto/completo da planta
   if (typeof FloorPlan !== 'undefined') {
