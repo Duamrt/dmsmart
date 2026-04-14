@@ -178,7 +178,8 @@ const ScenesPanel = {
     try {
       await HAClient.callService('scene', 'delete', { entity_id: entityId });
       if (typeof _showToast === 'function') _showToast(`Cena "${name}" excluída`, 'success');
-      setTimeout(() => this.load(), 600);
+      await HAClient.refreshAllStates();
+      this.load();
     } catch (err) {
       console.warn('[scenes] erro ao excluir:', err);
       if (typeof _showToast === 'function') _showToast('Erro ao excluir a cena', 'error');
@@ -384,8 +385,9 @@ const ScenesPanel = {
       const msg = isEdit ? `Cena "${name}" atualizada` : `Cena "${name}" criada`;
       if (typeof _showToast === 'function') _showToast(msg, 'success');
 
-      // Recarrega o painel após um breve delay para o HA processar
-      setTimeout(() => this.load(), 800);
+      // Força refresh dos estados (HAClient._allStates é estático após conexão)
+      await HAClient.refreshAllStates();
+      this.load();
     } catch (err) {
       console.warn('[scenes] erro ao salvar cena:', err);
       errEl.textContent = 'Erro ao salvar cena. Verifique a conexão com o HA.';
