@@ -595,11 +595,12 @@ const ManageModal = {
     }
 
     const sub = inst.haUrl ? _shortUrl(inst.haUrl) : 'Sem URL';
+    const createdLabel = inst.createdAt ? ' · criada ' + _fmtDate(inst.createdAt) : '';
     return `
       <div class="manage-row ${isActive ? 'active' : ''}" data-id="${_esc(inst.id)}">
         <div class="manage-row-body">
           <div class="manage-row-name">${_esc(inst.name)}</div>
-          <div class="manage-row-sub">${_esc(sub)} · ${zoneCount} zona${zoneCount === 1 ? '' : 's'}</div>
+          <div class="manage-row-sub">${_esc(sub)} · ${zoneCount} zona${zoneCount === 1 ? '' : 's'}${_esc(createdLabel)}</div>
           ${isActive ? '<span class="manage-row-badge">Ativa</span>' : ''}
         </div>
         <div class="manage-row-actions">
@@ -761,6 +762,13 @@ function _shortUrl(url) {
   } catch {
     return url.length > 42 ? url.slice(0, 40) + '…' : url;
   }
+}
+
+function _fmtDate(iso) {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+  } catch { return ''; }
 }
 
 function renderEmptyDashboard() {
