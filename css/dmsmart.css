@@ -1515,6 +1515,39 @@ body.wizard-open {
     left: 0;
     min-width: 260px;
   }
+  .app-main {
+    padding: 12px;
+    gap: 14px;
+  }
+  .app-header {
+    padding: 12px 16px;
+  }
+  .dashboard-hero {
+    padding: 16px;
+  }
+}
+
+/* Safe area — iPhone X notch / Dynamic Island */
+@supports (padding: env(safe-area-inset-left)) {
+  .app-sidebar {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .app-header {
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+  }
+  @media (max-width: 900px) {
+    .app-header {
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+    }
+    .app-main {
+      padding-left: max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
+    }
+  }
 }
 
 /* =========================================

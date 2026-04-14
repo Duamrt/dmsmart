@@ -5,10 +5,10 @@
 .zones-grid {
   display: grid;
   gap: 20px;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 
-@media (max-width: 767px) {
+@media (max-width: 768px) {
   .zones-grid {
     grid-template-columns: 1fr;
     gap: 12px;

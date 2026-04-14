@@ -64,8 +64,8 @@
 @media (max-width: 900px) {
   .enrg-kpi-row { grid-template-columns: repeat(2, 1fr); }
 }
-@media (max-width: 480px) {
-  .enrg-kpi-row { grid-template-columns: 1fr 1fr; }
+@media (max-width: 420px) {
+  .enrg-kpi-row { grid-template-columns: 1fr; }
 }
 
 .enrg-kpi {
