@@ -18,6 +18,13 @@ const _SVG = {
   plus:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
 };
 
+function _fmtSceneName(raw) {
+  return String(raw || '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, c => c.toUpperCase())
+    .trim();
+}
+
 function _sceneIcon(name) {
   const n = name.toLowerCase();
   if (/cinema|filme|tv|tele|assistir/.test(n)) return _SVG.film;
@@ -108,11 +115,13 @@ const ScenesPanel = {
         <span class="scenes-badge">${this._scenes.length}</span>
         <button class="scenes-add-btn" type="button" id="scenes-add-btn" title="Nova cena">${_SVG.plus}</button>
       </div>
-      <div class="scenes-list">${this._scenes.map(s => `
+      <div class="scenes-list">${this._scenes.map(s => {
+        const displayName = _fmtSceneName(s.name);
+        return `
         <div class="scene-card-wrap">
           <button class="scene-card" type="button" data-id="${_esc(s.id)}" data-type="${_esc(s.type)}">
             <span class="scene-card-icon">${_sceneIcon(s.name)}</span>
-            <span class="scene-card-name">${_esc(s.name)}</span>
+            <span class="scene-card-name">${_esc(displayName)}</span>
           </button>
           ${s.type === 'scene' ? `
           <button class="scene-more-btn" type="button" data-id="${_esc(s.id)}" data-name="${_esc(s.name)}" title="Opções" aria-label="Opções">⋯</button>
@@ -122,7 +131,7 @@ const ScenesPanel = {
           </div>
           ` : ''}
         </div>
-      `).join('')}</div>
+      `}).join('')}</div>
     `;
 
     this._container.querySelector('#scenes-add-btn')
