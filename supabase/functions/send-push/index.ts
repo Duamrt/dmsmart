@@ -34,66 +34,96 @@ function toBase64url(buf: ArrayBuffer): string {
 
 // Cria o JWT VAPID
 async function makeVapidJwt(audience: string, subject: string, publicKeyB64: string, privateKeyB64: string): Promise<string> {
-  const header = toBase64url(new TextEncoder().encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
-  const exp = Math.floor(Date.now() / 1000) + 12 * 3600;
-  const payload = toBase64url(new TextEncoder().encode(JSON.stringify({ aud: audience, exp, sub: subject })));
+  const step = { current: 'buildHeader' };
+  try {
+    const header = toBase64url(new TextEncoder().encode(JSON.stringify({ typ: 'JWT', alg: 'ES256' })));
+    const exp = Math.floor(Date.now() / 1000) + 12 * 3600;
+    const payload = toBase64url(new TextEncoder().encode(JSON.stringify({ aud: audience, exp, sub: subject })));
+    const sigInput = `${header}.${payload}`;
 
-  const sigInput = `${header}.${payload}`;
-  const privKey = await crypto.subtle.importKey(
-    'pkcs8',
-    fromBase64url(privateKeyB64),
-    { name: 'ECDSA', namedCurve: 'P-256' },
-    false, ['sign']
-  );
-  const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, privKey, new TextEncoder().encode(sigInput));
-  return `${sigInput}.${toBase64url(sig)}`;
+    step.current = 'decodePublicKey';
+    const pub = fromBase64url(publicKeyB64);
+
+    step.current = 'buildJwk';
+    const jwk = {
+      kty: 'EC', crv: 'P-256',
+      d: privateKeyB64,
+      x: toBase64url(pub.slice(1, 33).buffer),
+      y: toBase64url(pub.slice(33, 65).buffer),
+      key_ops: ['sign'],
+    };
+
+    step.current = 'importKey';
+    const privKey = await crypto.subtle.importKey(
+      'jwk', jwk,
+      { name: 'ECDSA', namedCurve: 'P-256' },
+      false, ['sign']
+    );
+
+    step.current = 'sign';
+    const sig = await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, privKey, new TextEncoder().encode(sigInput));
+    return `${sigInput}.${toBase64url(sig)}`;
+  } catch (e) {
+    throw new Error(`makeVapidJwt[${step.current}]: ${e instanceof Error ? e.message : String(e)}`);
+  }
 }
 
-// Encripta payload Web Push (RFC 8291 / draft-ietf-webpush-encryption)
+// Encripta payload Web Push (draft-ietf-webpush-encryption aesgcm)
 async function encryptPayload(payload: string, p256dhB64: string, authB64: string): Promise<{ body: Uint8Array; salt: string; serverPubB64: string }> {
-  const clientPubKey = await crypto.subtle.importKey('raw', fromBase64url(p256dhB64), { name: 'ECDH', namedCurve: 'P-256' }, false, []);
-  const authSecret = fromBase64url(authB64);
-  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const step = { current: 'importClientKey' };
+  try {
+    const clientPubKey = await crypto.subtle.importKey('raw', fromBase64url(p256dhB64), { name: 'ECDH', namedCurve: 'P-256' }, true, []);
+    const authSecret = fromBase64url(authB64);
+    const salt = crypto.getRandomValues(new Uint8Array(16));
 
-  const serverKeyPair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey', 'deriveBits']);
-  const serverPubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', serverKeyPair.publicKey));
+    step.current = 'generateServerKey';
+    const serverKeyPair = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey', 'deriveBits']);
+    const serverPubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', serverKeyPair.publicKey));
 
-  const sharedBits = await crypto.subtle.deriveBits({ name: 'ECDH', public: clientPubKey }, serverKeyPair.privateKey, 256);
+    step.current = 'deriveBitsECDH';
+    const sharedBits = await crypto.subtle.deriveBits({ name: 'ECDH', public: clientPubKey }, serverKeyPair.privateKey, 256);
 
-  // HKDF extract+expand per RFC 8291
-  const enc = new TextEncoder();
-  const hkdfKey = await crypto.subtle.importKey('raw', sharedBits, { name: 'HKDF' }, false, ['deriveBits']);
+    const enc = new TextEncoder();
+    step.current = 'importHkdfKey';
+    const hkdfKey = await crypto.subtle.importKey('raw', sharedBits, { name: 'HKDF' }, false, ['deriveBits']);
 
-  // PRK = HMAC-SHA256(auth_secret, shared_secret) — via HKDF
-  const prkBits = await crypto.subtle.deriveBits(
-    { name: 'HKDF', hash: 'SHA-256', salt: authSecret, info: enc.encode('Content-Encoding: auth\0') },
-    hkdfKey, 256
-  );
-  const prkKey = await crypto.subtle.importKey('raw', prkBits, { name: 'HKDF' }, false, ['deriveBits']);
+    step.current = 'derivePrk';
+    const prkBits = await crypto.subtle.deriveBits(
+      { name: 'HKDF', hash: 'SHA-256', salt: authSecret, info: enc.encode('Content-Encoding: auth\0') },
+      hkdfKey, 256
+    );
+    const prkKey = await crypto.subtle.importKey('raw', prkBits, { name: 'HKDF' }, false, ['deriveBits']);
 
-  // key_info = "Content-Encoding: aesgcm\0" + 0x00 + uint16 len + client_pub + uint16 len + server_pub
-  function u16(n: number) { return new Uint8Array([n >> 8, n & 0xff]); }
-  const keyInfo = new Uint8Array([
-    ...enc.encode('Content-Encoding: aesgcm\0'),
-    0x00,
-    ...u16(65), ...new Uint8Array(await crypto.subtle.exportKey('raw', clientPubKey)),
-    ...u16(65), ...serverPubRaw
-  ]);
-  const nonceInfo = new Uint8Array([
-    ...enc.encode('Content-Encoding: nonce\0'),
-    0x00,
-    ...u16(65), ...new Uint8Array(await crypto.subtle.exportKey('raw', clientPubKey)),
-    ...u16(65), ...serverPubRaw
-  ]);
+    step.current = 'buildKeyInfo';
+    function u16(n: number) { return new Uint8Array([n >> 8, n & 0xff]); }
+    const clientPubRaw = new Uint8Array(await crypto.subtle.exportKey('raw', clientPubKey));
+    const keyInfo = new Uint8Array([
+      ...enc.encode('Content-Encoding: aesgcm\0'),
+      ...enc.encode('P-256\0'),
+      ...u16(65), ...clientPubRaw,
+      ...u16(65), ...serverPubRaw
+    ]);
+    const nonceInfo = new Uint8Array([
+      ...enc.encode('Content-Encoding: nonce\0'),
+      ...enc.encode('P-256\0'),
+      ...u16(65), ...clientPubRaw,
+      ...u16(65), ...serverPubRaw
+    ]);
 
-  const keyBits   = await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt, info: keyInfo }, prkKey, 128);
-  const nonceBits = await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt, info: nonceInfo }, prkKey, 96);
+    step.current = 'deriveCEK';
+    const keyBits = await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt, info: keyInfo }, prkKey, 128);
+    step.current = 'deriveNonce';
+    const nonceBits = await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt, info: nonceInfo }, prkKey, 96);
 
-  const aesKey = await crypto.subtle.importKey('raw', keyBits, { name: 'AES-GCM' }, false, ['encrypt']);
-  const paddedPayload = new Uint8Array([0, 0, ...enc.encode(payload)]); // 2-byte padding len + content
-  const encBody = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonceBits }, aesKey, paddedPayload));
+    step.current = 'aesGcmEncrypt';
+    const aesKey = await crypto.subtle.importKey('raw', keyBits, { name: 'AES-GCM' }, false, ['encrypt']);
+    const paddedPayload = new Uint8Array([0, 0, ...enc.encode(payload)]);
+    const encBody = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: new Uint8Array(nonceBits) }, aesKey, paddedPayload));
 
-  return { body: encBody, salt: toBase64url(salt), serverPubB64: toBase64url(serverPubRaw) };
+    return { body: encBody, salt: toBase64url(salt), serverPubB64: toBase64url(serverPubRaw) };
+  } catch (e) {
+    throw new Error(`encryptPayload[${step.current}]: ${e instanceof Error ? e.message : String(e)}`);
+  }
 }
 
 async function sendWebPush(sub: { endpoint: string; p256dh: string; auth_key: string }, payloadStr: string, vapidPublic: string, vapidPrivate: string, vapidSubject: string) {
@@ -139,8 +169,8 @@ Deno.serve(async (req) => {
     const { installation_id, title, body: msgBody, icon, url, tag } = body;
     if (!installation_id || !title) return json({ error: 'installation_id e title são obrigatórios' }, 400);
 
-    const vapidPublic  = Deno.env.get('VAPID_PUBLIC_KEY')  || '';
-    const vapidPrivate = Deno.env.get('VAPID_PRIVATE_KEY') || '';
+    const vapidPublic  = (Deno.env.get('VAPID_PUBLIC_KEY')  || '').trim();
+    const vapidPrivate = (Deno.env.get('VAPID_PRIVATE_KEY') || '').trim();
     const vapidSubject = Deno.env.get('VAPID_SUBJECT')     || 'mailto:admin@dmsmart.app';
 
     if (!vapidPublic || !vapidPrivate) return json({ error: 'VAPID não configurado' }, 500);
