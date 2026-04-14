@@ -7,6 +7,7 @@ const PushManager = (() => {
 
   let _swReg = null;
   let _installationId = null;
+  let _subscribed = false; // rastreia se há subscription ativa (permission !== subscribed)
 
   function isSupported() {
     return 'Notification' in window && 'PushManager' in window && !!_swReg;
@@ -14,7 +15,9 @@ const PushManager = (() => {
 
   function getStatus() {
     if (!isSupported()) return 'unsupported';
-    return Notification.permission; // 'default' | 'granted' | 'denied'
+    if (Notification.permission === 'denied') return 'denied';
+    if (_subscribed) return 'granted';
+    return 'default';
   }
 
   function _urlBase64ToUint8Array(base64String) {
@@ -79,6 +82,7 @@ const PushManager = (() => {
         await _deleteSubscription(existing);
         await existing.unsubscribe();
       }
+      _subscribed = false;
       _renderButton();
       return;
     }
@@ -98,6 +102,7 @@ const PushManager = (() => {
         applicationServerKey: _urlBase64ToUint8Array(VAPID_PUBLIC)
       });
       await _saveSubscription(sub);
+      _subscribed = true;
     } catch (err) {
       console.warn('[push] falha ao inscrever:', err.message);
     }
@@ -115,11 +120,13 @@ const PushManager = (() => {
       btn.addEventListener('click', () => toggle());
     }
 
-    // Se já tem permissão, garante que a subscription está salva
-    if (getStatus() === 'granted') {
-      const existing = await _swReg.pushManager.getSubscription();
-      if (existing) await _saveSubscription(existing);
+    // Checa se já existe subscription ativa (define _subscribed antes de renderizar)
+    const existing = await _swReg.pushManager.getSubscription();
+    if (existing && Notification.permission === 'granted') {
+      _subscribed = true;
+      await _saveSubscription(existing);
     }
+    _renderButton();
   }
 
   return { init, toggle, getStatus, isSupported };
