@@ -42,11 +42,6 @@ async function initApp() {
     if (typeof ReportsPanel !== 'undefined') {
       ReportsPanel.init(document.getElementById('reports-section'));
     }
-    // Painel de alertas
-    if (typeof AlertsManager !== 'undefined') {
-      AlertsManager.init(document.getElementById('alerts-section'), active.id);
-    }
-
     await ConfigLoader.load();
     const seedConfig = ConfigLoader.get();
 
@@ -78,6 +73,9 @@ async function initApp() {
     initHero(active);
     initConnectionIndicator();
     if (typeof ScenesPanel !== 'undefined') ScenesPanel.init(document.getElementById('scenes-section'));
+    if (typeof AlertsManager !== 'undefined') {
+      AlertsManager.init(document.getElementById('alerts-section'), active.id);
+    }
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js')
