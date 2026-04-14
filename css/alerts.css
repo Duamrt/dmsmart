@@ -1,0 +1,226 @@
+/* alerts.css — Painel de Alertas dmsmart */
+
+/* ── Wrap ─────────────────────────────────────── */
+.alrt-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 16px 0 40px;
+  max-width: 640px;
+}
+
+/* ── Seção ────────────────────────────────────── */
+.alrt-section {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.alrt-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: rgba(255,255,255,.4);
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+/* ── Regra ────────────────────────────────────── */
+.alrt-rule {
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.alrt-rule:last-child { border-bottom: none; }
+
+.alrt-rule-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+}
+
+.alrt-rule-info { flex: 1; }
+.alrt-rule-name { font-size: 14px; color: rgba(255,255,255,.85); font-weight: 500; }
+.alrt-rule-sub  { font-size: 12px; color: rgba(255,255,255,.4);  margin-top: 2px; }
+
+/* ── Body expansível ──────────────────────────── */
+.alrt-rule-body {
+  padding: 4px 16px 16px 54px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Toggle switch ────────────────────────────── */
+.alrt-toggle {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.alrt-toggle input { opacity: 0; width: 0; height: 0; }
+.alrt-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,.15);
+  border-radius: 11px;
+  transition: background .2s;
+  cursor: pointer;
+}
+.alrt-toggle-slider::before {
+  content: '';
+  position: absolute;
+  left: 3px; top: 3px;
+  width: 16px; height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform .2s;
+}
+.alrt-toggle input:checked + .alrt-toggle-slider { background: #1f6feb; }
+.alrt-toggle input:checked + .alrt-toggle-slider::before { transform: translateX(16px); }
+
+/* ── Campos ───────────────────────────────────── */
+.alrt-field-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: rgba(255,255,255,.6);
+}
+
+.alrt-field-col {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 13px;
+  color: rgba(255,255,255,.6);
+}
+.alrt-field-col label { font-size: 12px; }
+
+.alrt-check-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(255,255,255,.6);
+  cursor: pointer;
+  user-select: none;
+}
+
+.alrt-number {
+  width: 72px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 6px;
+  color: #fff;
+  font-size: 13px;
+  padding: 5px 8px;
+  outline: none;
+  text-align: center;
+}
+.alrt-number:focus { border-color: #1f6feb; }
+
+.alrt-select {
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 6px;
+  color: rgba(255,255,255,.8);
+  font-size: 13px;
+  padding: 5px 10px;
+  outline: none;
+  cursor: pointer;
+  flex: 1;
+}
+.alrt-select:focus { border-color: #1f6feb; }
+
+.alrt-input {
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 8px;
+  color: rgba(255,255,255,.85);
+  font-size: 13px;
+  padding: 8px 12px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+.alrt-input:focus { border-color: #1f6feb; }
+
+.alrt-hint {
+  font-size: 11px;
+  color: rgba(255,255,255,.3);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+/* ── Telegram actions ─────────────────────────── */
+.alrt-tg-actions {
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.alrt-btn-secondary {
+  background: none;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 8px;
+  color: rgba(255,255,255,.55);
+  font-size: 12px;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.alrt-btn-secondary:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.8); }
+
+.alrt-btn-test {
+  background: rgba(31,111,235,.2);
+  border: 1px solid rgba(31,111,235,.4);
+  border-radius: 8px;
+  color: #60a5fa;
+  font-size: 12px;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.alrt-btn-test:hover { background: rgba(31,111,235,.35); }
+.alrt-btn-test:disabled { opacity: .5; cursor: default; }
+
+/* ── Feedback ─────────────────────────────────── */
+.alrt-feedback {
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 7px;
+  display: none;
+}
+.alrt-feedback:not(:empty) { display: block; }
+.alrt-feedback--ok    { background: rgba(74,222,128,.1);  color: #4ade80; border: 1px solid rgba(74,222,128,.2); }
+.alrt-feedback--error { background: rgba(248,113,113,.1); color: #f87171; border: 1px solid rgba(248,113,113,.2); }
+.alrt-feedback--info  { background: rgba(96,165,250,.1);  color: #93c5fd; border: 1px solid rgba(96,165,250,.2); }
+
+/* ── Save row ─────────────────────────────────── */
+.alrt-save-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.alrt-btn-save {
+  background: #1f6feb;
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px 28px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.alrt-btn-save:hover { background: #3b82f6; }
+
+/* ── Responsive ───────────────────────────────── */
+@media (max-width: 600px) {
+  .alrt-rule-body { padding-left: 16px; }
+  .alrt-tg-actions { flex-direction: column; }
+  .alrt-btn-secondary, .alrt-btn-test { width: 100%; text-align: center; }
+}
