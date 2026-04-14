@@ -188,6 +188,20 @@ const HAClient = {
     return this._send({ type: 'call_service', domain, service, service_data: serviceData });
   },
 
+  // Busca histórico via WebSocket (evita CORS do REST API)
+  // Retorna objeto { entity_id: [{s: state, lc: unixSec}, ...], ... }
+  fetchHistory(entityIds, startISO, endISO) {
+    return this._send({
+      type: 'history/history_during_period',
+      start_time: startISO,
+      end_time: endISO,
+      entity_ids: entityIds,
+      minimal_response: true,
+      no_attributes: true,
+      significant_changes_only: false
+    });
+  },
+
   async signPath(path, expires = 600) {
     const result = await this._send({ type: 'auth/sign_path', path, expires });
     return result && result.path ? result.path : null;

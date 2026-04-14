@@ -121,36 +121,25 @@ const ReportsPanel = (() => {
     _loading = false;
   }
 
+  // Usa WebSocket já conectada — sem CORS
   async function _fetchHistory(start, end, entities) {
-    const url = HAClient._url.replace(/\/$/, '');
-    const token = HAClient._token;
-    const startISO = start.toISOString();
-    const endISO = end.toISOString();
-    const entityList = entities.join(',');
-
-    const endpoint = `${url}/api/history/period/${encodeURIComponent(startISO)}?end_time=${encodeURIComponent(endISO)}&filter_entity_id=${encodeURIComponent(entityList)}&minimal_response=true&no_attributes=true`;
-
-    const res = await fetch(endpoint, {
-      headers: { Authorization: 'Bearer ' + token }
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json(); // array of arrays
+    return HAClient.fetchHistory(entities, start.toISOString(), end.toISOString());
+    // Retorna: { entity_id: [{s, lc}, ...], ... }  (lc = unix seconds)
   }
 
-  // ── Processar histórico ──────────────────────────────────────────────────
-  function _processHistory(historyArrays, start, end) {
-    if (!Array.isArray(historyArrays)) return [];
+  // ── Processar histórico (formato WS: objeto keyed por entity_id) ─────────
+  function _processHistory(historyObj, start, end) {
+    if (!historyObj || typeof historyObj !== 'object' || Array.isArray(historyObj)) return [];
     const totalMs = end - start;
     const results = [];
 
-    for (const entityHistory of historyArrays) {
-      if (!Array.isArray(entityHistory) || !entityHistory.length) continue;
-      const entityId = entityHistory[0].entity_id;
+    for (const [entityId, entityHistory] of Object.entries(historyObj)) {
+      if (!Array.isArray(entityHistory)) continue;
       const zone = typeof ZoneRegistry !== 'undefined' ? ZoneRegistry.findZoneByEntity(entityId) : null;
       const zoneId = zone ? zone.id : null;
       const zoneName = zone ? zone.name : '—';
 
-      // Nome amigável — tenta via HAClient._allStates
+      // Nome amigável
       let friendlyName = entityId;
       if (typeof HAClient !== 'undefined' && HAClient._allStates) {
         const st = HAClient._allStates.find(s => s.entity_id === entityId);
@@ -168,12 +157,13 @@ const ReportsPanel = (() => {
       for (let i = 0; i < entityHistory.length; i++) {
         const curr = entityHistory[i];
         const next = entityHistory[i + 1];
-        const currTime = new Date(curr.last_changed || curr.last_updated);
-        const nextTime = next ? new Date(next.last_changed || next.last_updated) : end;
+        // lc = last_changed em unix seconds; lu = last_updated
+        const currTime = new Date((curr.lc || curr.lu || 0) * 1000);
+        const nextTime = next ? new Date((next.lc || next.lu || 0) * 1000) : end;
         const durationMs = nextTime - currTime;
         if (durationMs < 0) continue;
 
-        const state = (curr.state || '').toLowerCase();
+        const state = (curr.s || '').toLowerCase();
         const isOn = state !== 'off' && state !== 'unavailable' && state !== 'unknown' && state !== 'idle';
         const isUnavailable = state === 'unavailable' || state === 'unknown';
 
@@ -187,7 +177,7 @@ const ReportsPanel = (() => {
 
         // Conta ciclo ligar
         if (isOn && i > 0) {
-          const prevState = (entityHistory[i - 1].state || '').toLowerCase();
+          const prevState = (entityHistory[i - 1].s || '').toLowerCase();
           const prevOff = prevState === 'off' || prevState === 'unavailable' || prevState === 'unknown' || prevState === 'idle';
           if (prevOff) cycles++;
         }
