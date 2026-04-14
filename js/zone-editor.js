@@ -355,12 +355,18 @@ const ZoneEditor = {
         icon: this._draft.icon,
         devices: this._draft.devices
       });
+      if (typeof ActivityLog !== 'undefined') {
+        ActivityLog.log('zone_edited', `Zona "${this._draft.name}" editada`);
+      }
     } else {
       ZoneRegistry.addZone({
         name: this._draft.name,
         icon: this._draft.icon,
         devices: this._draft.devices
       });
+      if (typeof ActivityLog !== 'undefined') {
+        ActivityLog.log('zone_created', `Zona "${this._draft.name}" criada`);
+      }
     }
 
     this.close();
@@ -372,7 +378,11 @@ const ZoneEditor = {
     if (!zone) { this.close(); return; }
     const ok = confirm(`Excluir o ambiente "${zone.name}"? Os dispositivos voltam a ficar disponíveis pra outros ambientes.`);
     if (!ok) return;
+    const deletedName = zone.name;
     ZoneRegistry.removeZone(this._zoneId);
+    if (typeof ActivityLog !== 'undefined') {
+      ActivityLog.log('zone_deleted', `Zona "${deletedName}" excluída`);
+    }
     this.close();
   },
 

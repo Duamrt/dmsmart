@@ -203,11 +203,16 @@ const ScenesPanel = {
     btn.classList.add('scene-activating');
     btn.disabled = true;
 
+    const sceneObj = this._scenes.find(s => s.id === id);
+    const sceneName = sceneObj ? _fmtSceneName(sceneObj.name) : id;
     HAClient.callService(type, 'turn_on', { entity_id: id })
       .then(() => {
         btn.classList.remove('scene-activating');
         btn.classList.add('scene-activated');
         setTimeout(() => { btn.classList.remove('scene-activated'); btn.disabled = false; }, 1800);
+        if (typeof ActivityLog !== 'undefined') {
+          ActivityLog.log('scene_activated', `Cena "${sceneName}" ativada`);
+        }
       })
       .catch(err => {
         console.warn('[scenes] falhou:', err);

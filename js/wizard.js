@@ -934,6 +934,9 @@ const Wizard = {
       return;
     }
     ActiveInstallation.setId(inst.id);
+    if (typeof ActivityLog !== 'undefined') {
+      ActivityLog.log('installation_created', `Instalação "${inst.name}" criada`);
+    }
     this.close();
     window.location.reload();
   },

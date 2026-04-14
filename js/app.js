@@ -199,6 +199,7 @@ function switchView(view) {
     energia:     ['Energia',      'Consumo, geração solar e custos'],
     relatorios:  ['Relatórios',   'Histórico de uso por dispositivo e ambiente'],
     alertas:     ['Alertas',      'Configure notificações proativas'],
+    atividade:   ['Atividade',   'Histórico de ações desta instalação'],
     planos:      ['Planos',       'Licenciamento e funcionalidades por plano']
   };
   const [title, sub] = titles[view] || titles.dashboard;
@@ -266,6 +267,10 @@ function switchView(view) {
   // Página de planos
   if (view === 'planos' && typeof LicenseManager !== 'undefined') {
     LicenseManager.renderPlansPage(document.getElementById('license-section'));
+  }
+  // Log de atividade — renderiza ao entrar na view (reload implícito = sempre fresco)
+  if (view === 'atividade' && typeof ActivityLog !== 'undefined') {
+    ActivityLog.render(document.getElementById('activity-section'));
   }
 }
 
