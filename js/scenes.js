@@ -176,8 +176,7 @@ const ScenesPanel = {
   async _deleteScene(entityId, name) {
     if (!confirm(`Excluir a cena "${name}"?\nEssa ação não pode ser desfeita.`)) return;
     try {
-      const sceneId = entityId.replace(/^scene\./, '');
-      await HAClient.callService('scene', 'delete', { scene_id: sceneId });
+      await HAClient.callService('scene', 'delete', { entity_id: entityId });
       if (typeof _showToast === 'function') _showToast(`Cena "${name}" excluída`, 'success');
       setTimeout(() => this.load(), 600);
     } catch (err) {
@@ -234,13 +233,9 @@ const ScenesPanel = {
 
         <div class="scene-create-body">
           <label class="scene-create-label">Nome da cena</label>
-          ${isEdit
-            ? `<div style="padding:10px 12px;background:var(--bg-elev-2);border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--text)">${_esc(prefillName)}</div>
-               <input type="hidden" id="scene-name-input" value="${_esc(prefillName)}" />`
-            : `<input class="scene-create-input" id="scene-name-input" type="text"
-                 placeholder="Ex: Cinema, Boa noite, Chegou em casa…"
-                 value="${_esc(prefillName)}" autocomplete="off" />`
-          }
+          <input class="scene-create-input" id="scene-name-input" type="text"
+            placeholder="Ex: Cinema, Boa noite, Chegou em casa…"
+            value="${_esc(prefillName)}" autocomplete="off" />
 
           <label class="scene-create-label" style="margin-top:18px">
             Dispositivos
@@ -264,7 +259,7 @@ const ScenesPanel = {
         <div class="scene-create-footer">
           <div class="scene-create-error hidden" id="scene-create-error"></div>
           <button class="scene-create-cancel" type="button" data-action="close">Cancelar</button>
-          <button class="scene-create-save" type="button" id="scene-save-btn" data-edit-id="${_esc(sceneId)}">${isEdit ? 'Recapturar estado' : 'Criar cena'}</button>
+          <button class="scene-create-save" type="button" id="scene-save-btn" data-edit-id="${_esc(sceneId)}" data-edit-entity="${_esc(editEntityId)}">${isEdit ? 'Salvar cena' : 'Criar cena'}</button>
         </div>
       </div>
     `;
@@ -353,11 +348,14 @@ const ScenesPanel = {
     errEl.classList.add('hidden');
     saveBtn.disabled = true;
     const isEdit = !!saveBtn.getAttribute('data-edit-id');
-    const editId = saveBtn.getAttribute('data-edit-id') || '';
+    const editId   = saveBtn.getAttribute('data-edit-id') || '';     // scene slug original
+    const editEntity = saveBtn.getAttribute('data-edit-entity') || ''; // entity_id original (scene.xxx)
     saveBtn.textContent = 'Aplicando estados…';
 
-    // Em modo edição usa o scene_id original; em criação deriva do nome
-    const sceneId = isEdit ? editId : _slugify(name);
+    const newSceneId = _slugify(name);
+    // Em modo edição: se o nome mudou cria com novo id e exclui o antigo; se igual usa mesmo id
+    const sceneId = isEdit ? newSceneId : newSceneId;
+    const renamed = isEdit && editId && editId !== newSceneId;
     const entities = desiredStates.map(d => d.entity);
 
     try {
@@ -377,6 +375,11 @@ const ScenesPanel = {
         snapshot_entities: entities,
       });
 
+      // 4. Se renomeou, exclui a cena antiga
+      if (renamed && editEntity) {
+        await HAClient.callService('scene', 'delete', { entity_id: editEntity }).catch(() => {});
+      }
+
       this._closeCreateModal();
       const msg = isEdit ? `Cena "${name}" atualizada` : `Cena "${name}" criada`;
       if (typeof _showToast === 'function') _showToast(msg, 'success');
@@ -388,7 +391,7 @@ const ScenesPanel = {
       errEl.textContent = 'Erro ao salvar cena. Verifique a conexão com o HA.';
       errEl.classList.remove('hidden');
       saveBtn.disabled = false;
-      saveBtn.textContent = isEdit ? 'Recapturar estado' : 'Criar cena';
+      saveBtn.textContent = isEdit ? 'Salvar cena' : 'Criar cena';
     }
   },
 };
