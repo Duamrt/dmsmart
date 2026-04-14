@@ -1,11 +1,8 @@
-// wizard.js
-// Wizard de criação de instalação:
-// boas-vindas → formulário → teste de conexão → descoberta de entidades
-// → criação de zonas → salvar.
-//
-// O passo 'discover' lista entidades do HA agrupadas por domínio. O usuário
-// cria N zonas, cada uma com nome + ícone + dispositivos atribuídos, e
-// marca quais ações são críticas (pedem confirmação extra no runtime).
+// wizard.js — Wizard de onboarding dmsmart
+// Fluxos:
+//   instalador → form → testing → discover/zones → finalize
+//   cliente    → client-form → testing → client-success → client-notif → client-tour → finalize
+// Progresso salvo em localStorage (dmsmart_onboarding) — retomável entre sessões.
 
 const USEFUL_DOMAINS = {
   light: { label: 'Luzes', type: 'light' },
@@ -19,15 +16,20 @@ const USEFUL_DOMAINS = {
 
 const ZONE_ICONS = ['sofa', 'bed', 'kitchen', 'shower', 'car', 'tree', 'hanger', 'washing', 'monitor'];
 
+const ONBOARDING_KEY = 'dmsmart_onboarding';
+
 const Wizard = {
   container: null,
-  step: 'welcome',
+  step: 'role-select',
+  _resumeToStep: null,
   draft: {
+    role: '',
     name: '',
-    haUrl: '',
+    haUrl: 'http://localhost:8123',
     token: '',
     zones: [],
-    editingZone: null
+    editingZone: null,
+    _tourSlide: 0
   },
   lastStates: null,
   lastError: null,
@@ -42,16 +44,35 @@ const Wizard = {
   },
 
   open({ skipWelcome = false } = {}) {
+    const saved = this._loadProgress();
+    if (saved && saved.step && !['role-select', 'resume', 'testing', 'welcome'].includes(saved.step)) {
+      this._resumeToStep = saved.step;
+      Object.assign(this.draft, saved.draft || {});
+      this.step = 'resume';
+      this._show();
+      return;
+    }
+    this._doOpen(skipWelcome);
+  },
+
+  _doOpen(skipWelcome = false) {
     this.draft = {
+      role: '',
       name: '',
       haUrl: 'http://localhost:8123',
       token: '',
       zones: [],
-      editingZone: null
+      editingZone: null,
+      _tourSlide: 0
     };
     this.lastStates = null;
     this.lastError = null;
-    this.step = skipWelcome ? 'form' : 'welcome';
+    this._resumeToStep = null;
+    this.step = skipWelcome ? 'form' : 'role-select';
+    this._show();
+  },
+
+  _show() {
     this.render();
     this.container.classList.remove('hidden');
     document.body.classList.add('wizard-open');
@@ -65,20 +86,113 @@ const Wizard = {
   goto(step) {
     this.step = step;
     this.render();
+    if (!['role-select', 'resume', 'testing', 'welcome'].includes(step)) {
+      this.saveProgress();
+    }
   },
+
+  // =========================================================================
+  // Progresso
+  // =========================================================================
+
+  saveProgress() {
+    try {
+      localStorage.setItem(ONBOARDING_KEY, JSON.stringify({
+        step: this.step,
+        draft: {
+          role: this.draft.role,
+          name: this.draft.name,
+          haUrl: this.draft.haUrl,
+          token: this.draft.token,
+          zones: this.draft.zones,
+          _tourSlide: this.draft._tourSlide || 0
+        }
+      }));
+    } catch {}
+  },
+
+  _loadProgress() {
+    try {
+      const raw = localStorage.getItem(ONBOARDING_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  },
+
+  clearProgress() {
+    localStorage.removeItem(ONBOARDING_KEY);
+  },
+
+  // =========================================================================
+  // Render
+  // =========================================================================
 
   render() {
     let html = '';
     switch (this.step) {
-      case 'welcome':   html = this._renderWelcome();   break;
-      case 'form':      html = this._renderForm();      break;
-      case 'testing':   html = this._renderTesting();   break;
-      case 'success':   html = this._renderSuccess();   break;
-      case 'error':     html = this._renderError();     break;
-      case 'discover':  html = this._renderDiscover();  break;
-      case 'zone-edit': html = this._renderZoneEdit();  break;
+      case 'resume':          html = this._renderResume();              break;
+      case 'role-select':     html = this._renderRoleSelect();          break;
+      case 'welcome':         html = this._renderWelcome();             break;
+      case 'form':            html = this._renderForm();                break;
+      case 'client-form':     html = this._renderClientForm();          break;
+      case 'testing':         html = this._renderTesting();             break;
+      case 'success':         html = this._renderSuccess();             break;
+      case 'client-success':  html = this._renderClientSuccess();       break;
+      case 'error':           html = this._renderError();               break;
+      case 'discover':        html = this._renderDiscover();            break;
+      case 'zone-edit':       html = this._renderZoneEdit();            break;
+      case 'client-notif':    html = this._renderClientNotifications(); break;
+      case 'client-tour':     html = this._renderClientTour();          break;
     }
     this.container.innerHTML = html;
+  },
+
+  _renderResume() {
+    return `
+      <div class="wiz-card">
+        <div class="wiz-logo">
+          <span class="logo-dm">DM</span><span class="logo-smart">SMART</span><span class="logo-dot"></span>
+        </div>
+        <h1 class="wiz-title">Continuar de onde parou?</h1>
+        <p class="wiz-subtitle">Você tem uma configuração em andamento.</p>
+        <div class="wiz-actions wiz-actions-stack">
+          <button class="wiz-btn wiz-btn-primary" data-action="resume-yes">Continuar</button>
+          <button class="wiz-btn wiz-btn-ghost" data-action="resume-no">Começar do zero</button>
+        </div>
+      </div>
+    `;
+  },
+
+  _renderRoleSelect() {
+    return `
+      <div class="wiz-card">
+        <div class="wiz-logo">
+          <span class="logo-dm">DM</span><span class="logo-smart">SMART</span><span class="logo-dot"></span>
+        </div>
+        <h1 class="wiz-title">Bem-vindo</h1>
+        <p class="wiz-subtitle">Como você vai usar o dmsmart?</p>
+        <div class="wiz-roles">
+          <button class="wiz-role-card" data-action="select-role" data-role="installer">
+            <div class="wiz-role-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+              </svg>
+            </div>
+            <div class="wiz-role-title">Instalador técnico</div>
+            <div class="wiz-role-desc">Configurar o sistema, conectar ao Home Assistant e criar as zonas</div>
+          </button>
+          <button class="wiz-role-card" data-action="select-role" data-role="client">
+            <div class="wiz-role-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+            </div>
+            <div class="wiz-role-title">Cliente / morador</div>
+            <div class="wiz-role-desc">O sistema já foi instalado, quero acessar e usar o painel</div>
+          </button>
+        </div>
+      </div>
+    `;
   },
 
   _renderWelcome() {
@@ -133,8 +247,46 @@ const Wizard = {
           </label>
 
           <div class="wiz-actions">
-            <button type="button" class="wiz-btn wiz-btn-ghost" data-action="back-welcome">Voltar</button>
+            <button type="button" class="wiz-btn wiz-btn-ghost" data-action="back-role">Voltar</button>
             <button type="submit" class="wiz-btn wiz-btn-primary">Testar conexão</button>
+          </div>
+        </form>
+      </div>
+    `;
+  },
+
+  _renderClientForm() {
+    const { name, haUrl, token } = this.draft;
+    return `
+      <div class="wiz-card">
+        <h1 class="wiz-title">Conectar ao sistema</h1>
+        <p class="wiz-subtitle">Peça os dados de acesso ao seu instalador.</p>
+
+        <form class="wiz-form" data-form="client-connect" novalidate>
+          <label class="wiz-field">
+            <span class="wiz-label">Nome (opcional)</span>
+            <input type="text" name="name" value="${this._esc(name)}"
+                   placeholder="Ex: Minha casa, Escritório"
+                   class="wiz-input" maxlength="60">
+          </label>
+
+          <label class="wiz-field">
+            <span class="wiz-label">Endereço do sistema</span>
+            <input type="url" name="haUrl" value="${this._esc(haUrl)}"
+                   placeholder="http://192.168.1.10:8123"
+                   class="wiz-input" required>
+            <span class="wiz-hint">Fornecido pelo instalador</span>
+          </label>
+
+          <label class="wiz-field">
+            <span class="wiz-label">Código de acesso (token)</span>
+            <textarea name="token" class="wiz-input wiz-textarea" rows="3"
+                      placeholder="Cole aqui o código fornecido pelo instalador" required>${this._esc(token)}</textarea>
+          </label>
+
+          <div class="wiz-actions">
+            <button type="button" class="wiz-btn wiz-btn-ghost" data-action="back-role">Voltar</button>
+            <button type="submit" class="wiz-btn wiz-btn-primary">Conectar</button>
           </div>
         </form>
       </div>
@@ -175,9 +327,27 @@ const Wizard = {
     `;
   },
 
+  _renderClientSuccess() {
+    const total = Array.isArray(this.lastStates) ? this.lastStates.length : 0;
+    return `
+      <div class="wiz-card">
+        <div class="wiz-check">✓</div>
+        <h1 class="wiz-title">Conectado!</h1>
+        <p class="wiz-subtitle">
+          Sistema acessível — ${total} entidades encontradas.<br>
+          Tudo certo para começar.
+        </p>
+        <div class="wiz-actions wiz-actions-stack">
+          <button class="wiz-btn wiz-btn-primary" data-action="go-client-notif">Continuar</button>
+        </div>
+      </div>
+    `;
+  },
+
   _renderError() {
     const err = this.lastError || 'Erro desconhecido';
     const hint = this._errorHint(err);
+    const backAction = this.draft.role === 'client' ? 'back-client-form' : 'back-form';
     return `
       <div class="wiz-card">
         <div class="wiz-error-icon">!</div>
@@ -185,7 +355,68 @@ const Wizard = {
         <p class="wiz-subtitle wiz-subtitle-error">${this._esc(err)}</p>
         <p class="wiz-note">${hint}</p>
         <div class="wiz-actions wiz-actions-stack">
-          <button class="wiz-btn wiz-btn-primary" data-action="back-form">Voltar e corrigir</button>
+          <button class="wiz-btn wiz-btn-primary" data-action="${backAction}">Voltar e corrigir</button>
+        </div>
+      </div>
+    `;
+  },
+
+  _renderClientNotifications() {
+    return `
+      <div class="wiz-card">
+        <h1 class="wiz-title">Notificações</h1>
+        <p class="wiz-subtitle">Quer receber alertas neste dispositivo?</p>
+        <p class="wiz-note">
+          Quando o instalador configurar automações — como presença detectada, alarme acionado
+          ou evento de energia — você recebe a notificação direto aqui.
+        </p>
+        <div class="wiz-actions wiz-actions-stack">
+          <button class="wiz-btn wiz-btn-primary" data-action="enable-notifications">Ativar notificações</button>
+          <button class="wiz-btn wiz-btn-ghost" data-action="skip-notifications">Agora não</button>
+        </div>
+      </div>
+    `;
+  },
+
+  _renderClientTour() {
+    const slide = this.draft._tourSlide || 0;
+    const slides = [
+      {
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`,
+        title: 'Controle por zonas',
+        desc: 'Cada cômodo fica num card. Toque para ligar, desligar ou ajustar qualquer dispositivo.'
+      },
+      {
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
+        title: 'Status em tempo real',
+        desc: 'O painel atualiza automaticamente conforme os dispositivos mudam. Sem precisar recarregar a página.'
+      },
+      {
+        icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
+        title: 'Alertas inteligentes',
+        desc: 'Use o botão de sino para ativar notificações push e receber alertas das automações configuradas.'
+      }
+    ];
+    const s = slides[slide];
+    const isLast = slide >= slides.length - 1;
+    const dots = slides.map((_, i) => `
+      <button class="wiz-tour-dot ${i === slide ? 'active' : ''}"
+              data-action="tour-goto" data-slide="${i}"
+              aria-label="Slide ${i + 1}"></button>
+    `).join('');
+
+    return `
+      <div class="wiz-card">
+        <div class="wiz-tour-icon">${s.icon}</div>
+        <h1 class="wiz-title">${s.title}</h1>
+        <p class="wiz-subtitle">${s.desc}</p>
+        <div class="wiz-tour-dots">${dots}</div>
+        <div class="wiz-actions wiz-actions-stack">
+          ${isLast
+            ? `<button class="wiz-btn wiz-btn-primary" data-action="tour-finish">Começar a usar</button>`
+            : `<button class="wiz-btn wiz-btn-primary" data-action="tour-next">Próximo</button>
+               <button class="wiz-btn wiz-btn-ghost" data-action="tour-finish">Pular tour</button>`
+          }
         </div>
       </div>
     `;
@@ -321,10 +552,66 @@ const Wizard = {
     if (!btn) return;
     const action = btn.getAttribute('data-action');
 
-    if (action === 'start')         return this.goto('form');
-    if (action === 'back-welcome')  return this.goto('welcome');
-    if (action === 'back-form')     return this.goto('form');
-    if (action === 'go-discover')   return this.goto('discover');
+    // Resume
+    if (action === 'resume-yes') {
+      this.step = this._resumeToStep || 'form';
+      this.render();
+      return;
+    }
+    if (action === 'resume-no') {
+      this.clearProgress();
+      this._doOpen();
+      return;
+    }
+
+    // Seleção de perfil
+    if (action === 'select-role') {
+      const role = btn.getAttribute('data-role');
+      this.draft.role = role;
+      this.goto(role === 'client' ? 'client-form' : 'form');
+      return;
+    }
+
+    // Navegação comum
+    if (action === 'back-role')        return this.goto('role-select');
+    if (action === 'back-form')        return this.goto('form');
+    if (action === 'back-client-form') return this.goto('client-form');
+    if (action === 'start')            return this.goto('form');
+    if (action === 'back-welcome')     return this.goto('role-select');
+    if (action === 'go-discover')      return this.goto('discover');
+    if (action === 'go-client-notif')  return this.goto('client-notif');
+
+    // Notificações
+    if (action === 'enable-notifications') {
+      localStorage.setItem('dmsmart_push_pending', '1');
+      if ('Notification' in window) {
+        Notification.requestPermission().finally(() => this.goto('client-tour'));
+      } else {
+        this.goto('client-tour');
+      }
+      return;
+    }
+    if (action === 'skip-notifications') return this.goto('client-tour');
+
+    // Tour
+    if (action === 'tour-next') {
+      this.draft._tourSlide = (this.draft._tourSlide || 0) + 1;
+      this.saveProgress();
+      this.render();
+      return;
+    }
+    if (action === 'tour-goto') {
+      const slide = Number(btn.getAttribute('data-slide'));
+      if (!Number.isNaN(slide)) {
+        this.draft._tourSlide = slide;
+        this.saveProgress();
+        this.render();
+      }
+      return;
+    }
+    if (action === 'tour-finish') return this._finalizeClient();
+
+    // Zonas
     if (action === 'add-zone') {
       this.draft.editingZone = { name: '', icon: ZONE_ICONS[0], devices: [] };
       return this.goto('zone-edit');
@@ -347,7 +634,8 @@ const Wizard = {
       }
       return;
     }
-    if (action === 'finalize')      return this._finalize();
+
+    if (action === 'finalize') return this._finalize();
   },
 
   _handleChange(ev) {
@@ -389,18 +677,26 @@ const Wizard = {
       return this.goto('discover');
     }
 
-    // form = conexão (default)
+    if (which === 'client-connect') {
+      const fd = new FormData(form);
+      this.draft.name    = (fd.get('name')   || '').toString().trim() || 'Minha instalação';
+      this.draft.haUrl   = (fd.get('haUrl')  || '').toString().trim();
+      this.draft.token   = (fd.get('token')  || '').toString().trim();
+      const err = this._validateClientDraft(this.draft);
+      if (err) { this.lastError = err; return this.goto('error'); }
+      this.goto('testing');
+      this._runTest();
+      return;
+    }
+
+    // Formulário do instalador (default)
     const fd = new FormData(form);
-    this.draft.name = (fd.get('name') || '').toString().trim();
+    this.draft.name  = (fd.get('name')  || '').toString().trim();
     this.draft.haUrl = (fd.get('haUrl') || '').toString().trim();
     this.draft.token = (fd.get('token') || '').toString().trim();
 
     const err = this._validateDraft(this.draft);
-    if (err) {
-      this.lastError = err;
-      return this.goto('error');
-    }
-
+    if (err) { this.lastError = err; return this.goto('error'); }
     this.goto('testing');
     this._runTest();
   },
@@ -445,12 +741,24 @@ const Wizard = {
     };
   },
 
+  // =========================================================================
+  // Validação
+  // =========================================================================
+
   _validateDraft({ name, haUrl, token }) {
     if (!name) return 'Dê um nome pra instalação.';
     if (!haUrl) return 'Informe a URL do Home Assistant.';
     if (!/^https?:\/\//i.test(haUrl)) return 'A URL precisa começar com http:// ou https://';
     if (!token) return 'Cole o token de longa duração.';
     if (token.length < 20) return 'Token parece inválido (muito curto).';
+    return null;
+  },
+
+  _validateClientDraft({ haUrl, token }) {
+    if (!haUrl) return 'Informe o endereço do sistema.';
+    if (!/^https?:\/\//i.test(haUrl)) return 'O endereço precisa começar com http:// ou https://';
+    if (!token) return 'Cole o código de acesso fornecido pelo instalador.';
+    if (token.length < 20) return 'Código de acesso inválido (muito curto).';
     return null;
   },
 
@@ -483,7 +791,6 @@ const Wizard = {
       if (!groups[domain]) groups[domain] = [];
       groups[domain].push(e);
     }
-    // Ordena dentro de cada grupo pelo friendly_name
     for (const k of Object.keys(groups)) {
       groups[k].sort((a, b) => {
         const an = (a.attributes && a.attributes.friendly_name) || a.entity_id;
@@ -495,7 +802,7 @@ const Wizard = {
   },
 
   // =========================================================================
-  // Conexão real
+  // Conexão
   // =========================================================================
 
   async _runTest() {
@@ -503,7 +810,7 @@ const Wizard = {
       const states = await this._testConnection(this.draft.haUrl, this.draft.token);
       this.lastStates = states;
       this.lastError = null;
-      this.goto('success');
+      this.goto(this.draft.role === 'client' ? 'client-success' : 'success');
     } catch (err) {
       this.lastError = err && err.message ? err.message : String(err);
       this.lastStates = null;
@@ -574,7 +881,12 @@ const Wizard = {
     });
   },
 
+  // =========================================================================
+  // Finalizar
+  // =========================================================================
+
   _finalize() {
+    this.clearProgress();
     const isFirst = InstallationStore.all().length === 0;
     const inst = InstallationStore.create({
       name: this.draft.name,
@@ -589,6 +901,19 @@ const Wizard = {
     } else {
       document.dispatchEvent(new CustomEvent('dmsmart:installation-created', { detail: { id: inst.id } }));
     }
+  },
+
+  _finalizeClient() {
+    this.clearProgress();
+    const inst = InstallationStore.create({
+      name: this.draft.name || 'Minha instalação',
+      haUrl: this.draft.haUrl,
+      zones: []
+    });
+    InstallationStore.setToken(inst.id, this.draft.token);
+    ActiveInstallation.setId(inst.id);
+    this.close();
+    window.location.reload();
   },
 
   _esc(s) {

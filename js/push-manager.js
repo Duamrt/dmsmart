@@ -125,6 +125,20 @@ const PushManager = (() => {
     if (existing && Notification.permission === 'granted') {
       _subscribed = true;
       await _saveSubscription(existing);
+    } else if (!existing && Notification.permission === 'granted' && localStorage.getItem('dmsmart_push_pending')) {
+      // Permissão foi concedida no wizard de onboarding — inscrever agora que o SW está pronto
+      localStorage.removeItem('dmsmart_push_pending');
+      try {
+        const sub = await _swReg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: _urlBase64ToUint8Array(VAPID_PUBLIC)
+        });
+        await _saveSubscription(sub);
+        _subscribed = true;
+        console.log('[push] auto-subscribe via onboarding concluído');
+      } catch (err) {
+        console.warn('[push] auto-subscribe via onboarding falhou:', err.message);
+      }
     }
     _renderButton();
   }

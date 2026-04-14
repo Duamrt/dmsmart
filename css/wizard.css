@@ -542,6 +542,122 @@ body.wizard-open .app-shell {
 }
 
 /* =========================================
+   Seleção de perfil (role-select)
+   ========================================= */
+
+.wiz-roles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 4px 0 8px;
+}
+
+.wiz-role-card {
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 24px 16px 20px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  transition: border-color 0.15s, background 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+
+.wiz-role-card:hover {
+  border-color: var(--primary);
+  background: var(--bg-elev-3);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.wiz-role-card:active {
+  transform: scale(0.97);
+}
+
+.wiz-role-icon {
+  width: 52px;
+  height: 52px;
+  background: var(--primary-soft);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.wiz-role-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.wiz-role-title {
+  font-size: var(--fs);
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.wiz-role-desc {
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+  line-height: 1.5;
+}
+
+@media (max-width: 480px) {
+  .wiz-roles {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================
+   Tour (cliente)
+   ========================================= */
+
+.wiz-tour-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  background: var(--primary-soft);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+}
+
+.wiz-tour-icon svg {
+  width: 40px;
+  height: 40px;
+}
+
+.wiz-tour-dots {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 28px;
+}
+
+.wiz-tour-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.wiz-tour-dot.active {
+  background: var(--primary);
+  transform: scale(1.4);
+}
+
+/* =========================================
    Mobile
    ========================================= */
 
