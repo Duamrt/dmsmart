@@ -885,7 +885,13 @@ const Wizard = {
   // Finalizar
   // =========================================================================
 
-  _finalize() {
+  async _finalize() {
+    // Verifica limite no banco antes de criar localmente
+    const limit = await InstallationStore.checkLimit();
+    if (!limit.allowed) {
+      if (typeof LicenseManager !== 'undefined') LicenseManager.openUpgradePrompt();
+      return;
+    }
     this.clearProgress();
     const isFirst = InstallationStore.all().length === 0;
     const inst = InstallationStore.create({
@@ -894,6 +900,12 @@ const Wizard = {
       zones: this.draft.zones
     });
     InstallationStore.setToken(inst.id, this.draft.token);
+    // Sincroniza e confirma que o banco aceitou
+    const sync = await InstallationStore.syncToCloud(inst.id);
+    if (sync && sync.limitExceeded) {
+      if (typeof LicenseManager !== 'undefined') LicenseManager.openUpgradePrompt();
+      return;
+    }
     ActiveInstallation.setId(inst.id);
     this.close();
     if (isFirst) {
@@ -903,7 +915,12 @@ const Wizard = {
     }
   },
 
-  _finalizeClient() {
+  async _finalizeClient() {
+    const limit = await InstallationStore.checkLimit();
+    if (!limit.allowed) {
+      if (typeof LicenseManager !== 'undefined') LicenseManager.openUpgradePrompt();
+      return;
+    }
     this.clearProgress();
     const inst = InstallationStore.create({
       name: this.draft.name || 'Minha instalação',
@@ -911,6 +928,11 @@ const Wizard = {
       zones: []
     });
     InstallationStore.setToken(inst.id, this.draft.token);
+    const sync = await InstallationStore.syncToCloud(inst.id);
+    if (sync && sync.limitExceeded) {
+      if (typeof LicenseManager !== 'undefined') LicenseManager.openUpgradePrompt();
+      return;
+    }
     ActiveInstallation.setId(inst.id);
     this.close();
     window.location.reload();

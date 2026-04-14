@@ -159,13 +159,21 @@ const InstallationStore = {
   // ── Cloud sync (Fase 04) ──────────────────────────────────────────────────
   // Token HA NUNCA vai pro cloud — fica só no localStorage.
 
+  // Verifica no banco se o usuário pode criar mais instalações.
+  // Retorna { allowed, count, limit, plan } ou { allowed: true } se offline.
+  async checkLimit() {
+    if (typeof AuthStore === 'undefined' || !AuthStore.isLoggedIn()) return { allowed: true };
+    const { data, error } = await SUPA.rpc('check_install_limit');
+    if (error) return { allowed: true }; // fail open — RLS ainda guarda
+    return data || { allowed: true };
+  },
+
   async syncToCloud(id) {
-    if (typeof AuthStore === 'undefined' || !AuthStore.isLoggedIn()) return;
+    if (typeof AuthStore === 'undefined' || !AuthStore.isLoggedIn()) return { ok: true };
     const inst = this.get(id);
-    if (!inst) return;
+    if (!inst) return { ok: true };
     const user    = AuthStore.getUser();
     const profile = AuthStore.getProfile();
-    // Integrador registra a si mesmo em integrator_id (permite revogação futura pelo cliente)
     const integrator_id = (profile?.role === 'integrador') ? user.id : null;
     const payload = {
       id:         inst.id,
@@ -178,7 +186,16 @@ const InstallationStore = {
     };
     if (integrator_id) payload.integrator_id = integrator_id;
     const { error } = await SUPA.from('installations').upsert(payload, { onConflict: 'id' });
-    if (error) console.warn('[dmsmart] syncToCloud:', error.message);
+    if (error) {
+      console.warn('[dmsmart] syncToCloud:', error.message);
+      // RLS bloqueou o INSERT (limite excedido no banco) — reverte local
+      if (error.code === '42501' || error.message?.includes('row-level security')) {
+        this.remove(id);
+        return { ok: false, limitExceeded: true };
+      }
+      return { ok: false };
+    }
+    return { ok: true };
   },
 
   async deleteFromCloud(id) {
