@@ -10,6 +10,9 @@
 }
 .lic-badge-btn:hover { background: rgba(255,255,255,.08); }
 .lic-inst-count { font-size: 11px; color: var(--text-muted, #6b7280); margin-left: auto; }
+.lic-inst-count--overlimit { color: #f87171; font-weight: 700; }
+.lic-badge-btn--overlimit { border-color: rgba(248,113,113,.35); background: rgba(248,113,113,.06); }
+.lic-badge-btn--overlimit:hover { background: rgba(248,113,113,.12); }
 
 .lic-badge {
   display: inline-flex; align-items: center;

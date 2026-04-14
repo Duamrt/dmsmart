@@ -99,9 +99,22 @@ const LicenseManager = (() => {
   function init() {
     _renderBadge();
     _renderLockedNavIcons();
+    _checkOverLimitOnLoad();
     if (typeof SUPA !== 'undefined') {
       SUPA.auth.onAuthStateChange(() => setTimeout(() => { _renderBadge(); _renderLockedNavIcons(); }, 600));
     }
+  }
+
+  function _checkOverLimitOnLoad() {
+    const SESS_KEY = 'dmsmart_overlimit_warned';
+    if (sessionStorage.getItem(SESS_KEY)) return;
+    const plan = getPlan();
+    if (plan.instLimit === Infinity) return;
+    const count = getInstallCount();
+    if (count <= plan.instLimit) return;
+    sessionStorage.setItem(SESS_KEY, '1');
+    // aguarda o modal estar no DOM
+    setTimeout(() => openUpgradePrompt(), 1200);
   }
 
   function _renderBadge() {
@@ -111,10 +124,11 @@ const LicenseManager = (() => {
     const plan = PLANS[key];
     const count = getInstallCount();
     const lim = plan.instLimit === Infinity ? '∞' : plan.instLimit;
+    const overLimit = plan.instLimit !== Infinity && count > plan.instLimit;
     el.innerHTML = `
-      <button class="lic-badge-btn" type="button" data-nav="planos" title="Ver planos">
+      <button class="lic-badge-btn${overLimit ? ' lic-badge-btn--overlimit' : ''}" type="button" data-nav="planos" title="${overLimit ? 'Limite excedido — clique para ver planos' : 'Ver planos'}">
         <span class="lic-badge lic-badge--${key}">${plan.name}</span>
-        <span class="lic-inst-count">${count}/${lim}</span>
+        <span class="lic-inst-count${overLimit ? ' lic-inst-count--overlimit' : ''}">${overLimit ? '⚠ ' : ''}${count}/${lim}</span>
       </button>
     `;
     el.querySelector('[data-nav]').addEventListener('click', () => {
