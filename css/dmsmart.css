@@ -238,7 +238,15 @@ body.wizard-open {
 
 /* Versão do topo — sem margin extra, fica logo abaixo do logo */
 .sidebar-install--top {
-  margin: 0 0 4px;
+  margin: 0;
+}
+
+/* Bloco de contexto de instalação: ativa + nova — ficam agrupados no topo */
+.sidebar-install-ctx {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 4px;
 }
 
 .sidebar-install-label {
@@ -370,7 +378,7 @@ body.wizard-open {
 .app-shell.sidebar-collapsed .sidebar-brand .logo-dot,
 .app-shell.sidebar-collapsed .sidebar-nav-item span,
 .app-shell.sidebar-collapsed .sidebar-group-label,
-.app-shell.sidebar-collapsed .sidebar-install--top,
+.app-shell.sidebar-collapsed .sidebar-install-ctx,
 .app-shell.sidebar-collapsed .sidebar-profile-area,
 .app-shell.sidebar-collapsed .sidebar-new-install span,
 .app-shell.sidebar-collapsed .sidebar-toggle span {
