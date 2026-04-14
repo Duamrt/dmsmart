@@ -73,7 +73,12 @@ async function initApp() {
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('[dmsmart] SW registrado:', reg.scope))
+        .then(reg => {
+          console.log('[dmsmart] SW registrado:', reg.scope);
+          if (typeof PushManager !== 'undefined') {
+            PushManager.init(reg, active.id);
+          }
+        })
         .catch(err => console.warn('[dmsmart] SW falhou:', err));
     }
 

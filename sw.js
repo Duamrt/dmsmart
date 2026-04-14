@@ -2,7 +2,7 @@
 // Cache-first para o shell da aplicação
 // Ao fazer deploy: incrementar CACHE_NAME para invalidar cache antigo
 
-const CACHE_NAME = 'dmsmart-v04131800';
+const CACHE_NAME = 'dmsmart-v04132000';
 
 const SHELL_ASSETS = [
   '/',
@@ -32,6 +32,7 @@ const SHELL_ASSETS = [
   '/js/integrator-panel.js',
   '/js/energy-dashboard.js',
   '/css/energy.css',
+  '/js/push-manager.js',
   '/js/app.js',
   '/icons/icon-192.png',
   '/icons/icon-512.png'
@@ -56,6 +57,35 @@ self.addEventListener('activate', (e) => {
           .map(k => caches.delete(k))
       ))
       .then(() => self.clients.claim())
+  );
+});
+
+// Push: exibe notificação recebida do servidor
+self.addEventListener('push', (e) => {
+  let data = {};
+  try { data = e.data ? e.data.json() : {}; } catch (_) {}
+  const title = data.title || 'dmsmart';
+  const options = {
+    body: data.body || '',
+    icon: data.icon || '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    data: { url: data.url || '/' },
+    tag: data.tag || 'dmsmart-alert',
+    renotify: true
+  };
+  e.waitUntil(self.registration.showNotification(title, options));
+});
+
+// NotificationClick: foca janela existente ou abre nova
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const url = e.notification.data?.url || '/';
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      const existing = list.find(c => c.url.startsWith(self.location.origin));
+      if (existing) return existing.focus();
+      return clients.openWindow(url);
+    })
   );
 });
 
