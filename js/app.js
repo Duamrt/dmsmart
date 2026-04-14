@@ -14,6 +14,7 @@ async function initApp() {
   try {
     initSidebar();
     initNav();
+    initGlobalShortcuts();
 
     initInstallationSelector();
     if (typeof ControlModal !== 'undefined') ControlModal.init();
@@ -784,6 +785,51 @@ function _fmtDate(iso) {
   try {
     return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
   } catch { return ''; }
+}
+
+// ── Atalhos globais de teclado ──────────────────────────────────────────────
+function initGlobalShortcuts() {
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+
+    // Ordem de prioridade: modal mais ao topo primeiro
+    const visible = (id) => {
+      const el = document.getElementById(id);
+      return el && !el.classList.contains('hidden');
+    };
+
+    // Modal de energia
+    if (visible('enrg-modal')) {
+      document.getElementById('enrg-modal').classList.add('hidden');
+      return;
+    }
+    // Modal de upgrade de licença
+    if (visible('license-upgrade-modal')) {
+      document.getElementById('license-upgrade-modal').classList.add('hidden');
+      return;
+    }
+    // Modal de auth (login)
+    if (visible('auth-modal')) {
+      document.getElementById('auth-modal').classList.add('hidden');
+      return;
+    }
+    // Modal de gerenciar instalações
+    if (visible('manage-modal')) {
+      ManageModal.close();
+      return;
+    }
+    // Wizard (tela cheia)
+    if (typeof Wizard !== 'undefined') {
+      const wiz = document.getElementById('wiz');
+      if (wiz && !wiz.classList.contains('hidden')) {
+        Wizard.close();
+        return;
+      }
+    }
+    // FP picker (entity picker inline)
+    const picker = document.querySelector('.fp-picker');
+    if (picker) { picker.remove(); return; }
+  });
 }
 
 function renderEmptyDashboard() {
