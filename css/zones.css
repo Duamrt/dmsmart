@@ -16,6 +16,123 @@
 }
 
 /* =========================================
+   Onboarding pós-wizard
+   ========================================= */
+
+.onb-wrap {
+  grid-column: 1 / -1;
+  background: var(--bg-elev, rgba(255,255,255,.04));
+  border: 1px solid var(--border, rgba(255,255,255,.08));
+  border-radius: var(--r-lg, 16px);
+  padding: 28px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.onb-header { display: flex; flex-direction: column; gap: 4px; }
+.onb-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text, #f1f5f9);
+}
+.onb-sub {
+  font-size: 13px;
+  color: var(--text-2, #9ca3af);
+}
+
+.onb-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.onb-step {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,.06));
+  position: relative;
+}
+.onb-step:last-child { border-bottom: none; }
+
+.onb-step-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+  background: var(--bg-tertiary, rgba(255,255,255,.06));
+  color: var(--text-2, #9ca3af);
+  border: 1.5px solid var(--border, rgba(255,255,255,.1));
+}
+.onb-step-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.onb-step--done .onb-step-icon {
+  background: rgba(34,197,94,.15);
+  border-color: rgba(34,197,94,.4);
+  color: #4ade80;
+}
+
+.onb-step--active .onb-step-icon {
+  background: rgba(31,111,235,.18);
+  border-color: rgba(31,111,235,.5);
+  color: #60a5fa;
+}
+
+.onb-step--pending {
+  opacity: 0.45;
+}
+
+.onb-step-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.onb-step-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text, #f1f5f9);
+}
+.onb-step--pending .onb-step-title {
+  color: var(--text-2, #9ca3af);
+}
+.onb-step-sub {
+  font-size: 12px;
+  color: var(--text-2, #9ca3af);
+}
+
+.onb-cta {
+  background: var(--primary, #1f6feb);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: opacity .15s;
+  flex-shrink: 0;
+}
+.onb-cta:hover { opacity: .85; }
+
+@media (max-width: 480px) {
+  .onb-wrap { padding: 20px 16px; }
+  .onb-cta { padding: 7px 12px; font-size: 12px; }
+}
+
+/* =========================================
    Zone Card
    ========================================= */
 

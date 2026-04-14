@@ -24,10 +24,56 @@ const UIRenderer = {
     }
     this._zoneUnsubs = [];
     this.container.innerHTML = '';
-    for (const zone of ZoneRegistry.all()) {
-      this.renderZoneCard(zone);
+    const zones = ZoneRegistry.all();
+    if (zones.length === 0) {
+      this._renderOnboarding();
+    } else {
+      for (const zone of zones) {
+        this.renderZoneCard(zone);
+      }
     }
     this._renderNewZoneCard();
+  },
+
+  _renderOnboarding() {
+    const wrap = document.createElement('div');
+    wrap.className = 'onb-wrap';
+    wrap.innerHTML = `
+      <div class="onb-header">
+        <div class="onb-title">Bem-vindo ao dmsmart</div>
+        <div class="onb-sub">Siga os passos abaixo para começar a controlar seu ambiente</div>
+      </div>
+      <div class="onb-steps">
+        <div class="onb-step onb-step--done">
+          <div class="onb-step-icon">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,8 6,12 14,4"/></svg>
+          </div>
+          <div class="onb-step-body">
+            <div class="onb-step-title">Home Assistant conectado</div>
+            <div class="onb-step-sub">Sua instalação está pronta</div>
+          </div>
+        </div>
+        <div class="onb-step onb-step--active">
+          <div class="onb-step-icon">2</div>
+          <div class="onb-step-body">
+            <div class="onb-step-title">Criar uma zona</div>
+            <div class="onb-step-sub">Ex: Sala de estar, Quarto, Cozinha, Jardim</div>
+          </div>
+          <button class="onb-cta" id="onb-btn-create-zone">+ Criar zona</button>
+        </div>
+        <div class="onb-step onb-step--pending">
+          <div class="onb-step-icon">3</div>
+          <div class="onb-step-body">
+            <div class="onb-step-title">Adicionar dispositivos</div>
+            <div class="onb-step-sub">Lâmpadas, interruptores, sensores e mais</div>
+          </div>
+        </div>
+      </div>
+    `;
+    this.container.appendChild(wrap);
+    wrap.querySelector('#onb-btn-create-zone')?.addEventListener('click', () => {
+      if (typeof ZoneEditor !== 'undefined') ZoneEditor.open();
+    });
   },
 
   _renderNewZoneCard() {
