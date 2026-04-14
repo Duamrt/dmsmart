@@ -134,20 +134,33 @@
   pointer-events: none;
 }
 
-/* Markers */
+/* ── Tokens de cor por domínio (componentes RGB para alpha dinâmico) */
+.fp-marker                             { --fp-r:148; --fp-g:163; --fp-b:184; }
+.fp-marker[data-domain="light"]        { --fp-r:251; --fp-g:191; --fp-b:36;  }
+.fp-marker[data-domain="switch"]       { --fp-r:96;  --fp-g:165; --fp-b:250; }
+.fp-marker[data-domain="climate"]      { --fp-r:52;  --fp-g:211; --fp-b:153; }
+.fp-marker[data-domain="cover"]        { --fp-r:167; --fp-g:139; --fp-b:250; }
+.fp-marker[data-domain="media_player"] { --fp-r:244; --fp-g:114; --fp-b:182; }
+.fp-marker[data-domain="fan"]          { --fp-r:45;  --fp-g:212; --fp-b:191; }
+.fp-marker[data-domain="camera"]       { --fp-r:251; --fp-g:146; --fp-b:60;  }
+
+/* Markers — estilo glass */
 .fp-marker {
   position: absolute;
   transform: translate(-50%, -50%);
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.2);
+  border: 1.5px solid rgba(255,255,255,0.14);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform .15s, box-shadow .15s, background .3s, border-color .3s;
-  box-shadow: 0 2px 8px rgba(0,0,0,.5);
+  transition: transform .18s, box-shadow .18s, background .25s, border-color .25s;
+  background: rgba(10, 12, 18, 0.58);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 4px 14px rgba(0,0,0,.55);
   z-index: 10;
   overflow: visible;
 }
@@ -158,13 +171,14 @@
 .fp-marker svg {
   width: 14px;
   height: 14px;
-  stroke: #fff;
+  stroke: rgba(255,255,255,0.9);
   fill: none;
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
   pointer-events: none;
   flex-shrink: 0;
+  transition: stroke .25s, opacity .25s;
 }
 
 /* Label visível só no hover (evita sobreposição entre marcadores próximos) */
@@ -196,23 +210,27 @@
 
 /* Marker states */
 .fp-marker[data-state="on"] {
-  background: var(--success);
-  border-color: rgba(255,255,255,0.35);
-  box-shadow: 0 0 0 4px rgba(34,197,94,.2), 0 2px 10px rgba(0,0,0,.45);
+  background: rgba(var(--fp-r), var(--fp-g), var(--fp-b), 0.18);
+  border-color: rgba(var(--fp-r), var(--fp-g), var(--fp-b), 0.85);
+  box-shadow: 0 0 0 3px rgba(var(--fp-r), var(--fp-g), var(--fp-b), 0.2), 0 4px 14px rgba(0,0,0,.5);
   animation: fp-glow 2.4s ease-in-out infinite;
 }
 .fp-marker[data-state="off"] {
-  background: var(--bg-elev-3);
-  border-color: var(--border);
+  background: rgba(10, 12, 18, 0.48);
+  border-color: rgba(255,255,255,0.1);
+}
+.fp-marker[data-state="off"] svg {
+  stroke: rgba(255,255,255,0.35);
+  opacity: 0.7;
 }
 .fp-marker[data-state="unavailable"] {
-  background: var(--danger);
-  border-color: rgba(255,255,255,0.3);
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.6);
 }
 
 @keyframes fp-glow {
-  0%, 100% { box-shadow: 0 0 0 4px rgba(34,197,94,.2), 0 2px 10px rgba(0,0,0,.45); }
-  50%       { box-shadow: 0 0 0 7px rgba(34,197,94,.1), 0 2px 14px rgba(0,0,0,.4); }
+  0%, 100% { box-shadow: 0 0 0 3px rgba(var(--fp-r), var(--fp-g), var(--fp-b), 0.2), 0 4px 14px rgba(0,0,0,.5); }
+  50%       { box-shadow: 0 0 0 6px rgba(var(--fp-r), var(--fp-g), var(--fp-b), 0.1), 0 4px 18px rgba(0,0,0,.4); }
 }
 
 /* Tooltip on hover (complementary to always-visible label) */
@@ -390,6 +408,17 @@
 
 /* Expand button — só visível no modo compacto (dashboard) */
 .btn-fp-expand { display: none; }
+
+/* No modo compacto, Expandir é a ação principal — destaque visual */
+.floorplan-section.fp-compact .btn-fp-expand {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+.floorplan-section.fp-compact .btn-fp-expand:hover {
+  background: var(--primary);
+  color: #fff;
+}
 
 /* ── Compact mode (dashboard) ──────────────────────────────── */
 .floorplan-section.fp-compact {

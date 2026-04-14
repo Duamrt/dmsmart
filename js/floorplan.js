@@ -228,8 +228,9 @@ const FloorPlan = (() => {
 
   function _markerHtml(m) {
     const shortLabel = _esc(m.label || m.entityId).slice(0, 20);
+    const domain = m.entityId ? m.entityId.split('.')[0] : '';
     return `
-      <div class="fp-marker" data-state="${_stateAttr(m.entityId)}" data-marker-id="${m.id}"
+      <div class="fp-marker" data-state="${_stateAttr(m.entityId)}" data-marker-id="${m.id}" data-domain="${_esc(domain)}"
            style="left:${(m.x * 100).toFixed(3)}%;top:${(m.y * 100).toFixed(3)}%">
         ${_domainIcon(m.entityId)}
         <div class="fp-marker-label">${shortLabel}</div>
