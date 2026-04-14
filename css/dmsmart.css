@@ -1148,6 +1148,19 @@ body.wizard-open {
 .app-main[data-view="alertas"] .energy-section        { display: none; }
 .app-main[data-view="alertas"] .reports-section       { display: none; }
 
+/* Página de planos */
+.license-section { display: none; }
+.app-main[data-view="planos"] .license-section        { display: block; }
+.app-main[data-view="planos"] #dashboard-hero         { display: none; }
+.app-main[data-view="planos"] .zones-grid             { display: none; }
+.app-main[data-view="planos"] #zones-filter-bar       { display: none; }
+.app-main[data-view="planos"] #scenes-section         { display: none !important; }
+.app-main[data-view="planos"] .floorplan-section      { display: none !important; }
+.app-main[data-view="planos"] .integrator-section     { display: none; }
+.app-main[data-view="planos"] .energy-section         { display: none; }
+.app-main[data-view="planos"] .reports-section        { display: none; }
+.app-main[data-view="planos"] .alerts-section         { display: none; }
+
 /* =========================================
    Filter pills
    ========================================= */

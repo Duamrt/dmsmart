@@ -2,7 +2,7 @@
 // Cache-first para o shell da aplicação
 // Ao fazer deploy: incrementar CACHE_NAME para invalidar cache antigo
 
-const CACHE_NAME = 'dmsmart-v04141610';
+const CACHE_NAME = 'dmsmart-v04141700';
 
 const SHELL_ASSETS = [
   '/',
@@ -33,6 +33,8 @@ const SHELL_ASSETS = [
   '/js/energy-dashboard.js',
   '/js/reports.js',
   '/js/alerts.js',
+  '/js/license-manager.js',
+  '/css/license.css',
   '/css/energy.css',
   '/css/reports.css',
   '/css/alerts.css',

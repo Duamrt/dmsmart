@@ -1,0 +1,142 @@
+/* license.css — Planos e licenciamento dmsmart */
+
+/* ── Badge no sidebar ─────────────────────────────────────────────────────── */
+#license-plan-badge { padding: 4px 8px; }
+.lic-badge-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06);
+  border-radius: 8px; padding: 6px 10px; cursor: pointer; width: 100%;
+  transition: background .15s;
+}
+.lic-badge-btn:hover { background: rgba(255,255,255,.08); }
+.lic-inst-count { font-size: 11px; color: var(--text-muted, #6b7280); margin-left: auto; }
+
+.lic-badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 20px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px;
+}
+.lic-badge--basico       { background: rgba(107,114,128,.18); color: #9ca3af; }
+.lic-badge--profissional { background: rgba(31,111,235,.18);  color: #60a5fa; }
+.lic-badge--integrador   { background: rgba(245,158,11,.18);  color: #fbbf24; }
+.lic-badge--lg           { padding: 4px 12px; font-size: 13px; }
+
+/* ── Lock icon no nav ─────────────────────────────────────────────────────── */
+.lic-lock-icon {
+  display: inline-flex; align-items: center; margin-left: auto;
+  opacity: .45;
+}
+.lic-lock-icon svg { width: 13px; height: 13px; stroke: currentColor; fill: none; }
+.lic-nav-locked { opacity: .6; }
+
+/* ── Feature locked overlay ───────────────────────────────────────────────── */
+.lic-locked-wrap {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 64px 24px; text-align: center; gap: 12px;
+  min-height: 300px;
+}
+.lic-locked-icon svg {
+  width: 48px; height: 48px; stroke: #374151; fill: none; margin-bottom: 8px;
+}
+.lic-locked-title { font-size: 20px; font-weight: 700; color: var(--text-primary, #f1f5f9); }
+.lic-locked-sub   { font-size: 14px; color: var(--text-secondary, #9ca3af); max-width: 320px; }
+.lic-locked-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+
+/* ── Botões genéricos ─────────────────────────────────────────────────────── */
+.lic-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600;
+  cursor: pointer; border: none; text-decoration: none; transition: opacity .15s;
+}
+.lic-btn:hover { opacity: .85; }
+.lic-btn--primary { background: #1f6feb; color: #fff; }
+.lic-btn--wa      { background: #25d366; color: #fff; }
+.lic-btn--wa svg  { width: 16px; height: 16px; }
+.lic-btn--ghost   { background: rgba(255,255,255,.06); color: var(--text-secondary, #9ca3af); }
+.lic-btn--current { background: rgba(31,111,235,.1); color: #60a5fa; cursor: default; opacity: 1; width: 100%; justify-content: center; }
+
+/* ── Upgrade modal ────────────────────────────────────────────────────────── */
+#license-upgrade-modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,.75);
+  z-index: 9998; display: flex; align-items: center; justify-content: center;
+}
+#license-upgrade-modal.hidden { display: none; }
+.lic-upgrade-card {
+  background: var(--surface-1, #13151a);
+  border: 1px solid var(--border, #2a2d35);
+  border-radius: 16px; padding: 36px 28px; max-width: 380px; width: 90%; text-align: center;
+}
+.lic-upgrade-icon { font-size: 44px; margin-bottom: 12px; }
+.lic-upgrade-body h3 { font-size: 22px; font-weight: 700; margin: 0 0 12px; color: var(--text-primary, #f1f5f9); }
+.lic-upgrade-body p  { font-size: 14px; color: var(--text-secondary, #9ca3af); margin: 0 0 6px; }
+.lic-upgrade-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+.lic-upgrade-actions .lic-btn { width: 100%; justify-content: center; }
+
+/* ── Página de planos ─────────────────────────────────────────────────────── */
+.lic-wrap { padding: 24px 24px 40px; max-width: 960px; }
+
+.lic-header {
+  background: rgba(255,255,255,.04); border-radius: 12px;
+  padding: 20px 24px; margin-bottom: 32px;
+  display: flex; align-items: center;
+}
+.lic-header-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .5px;
+  color: var(--text-muted, #6b7280); margin-bottom: 8px;
+}
+.lic-header-row  { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.lic-header-usage { font-size: 14px; color: var(--text-secondary, #9ca3af); }
+
+/* Grid dos planos */
+.lic-plans-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;
+}
+@media (max-width: 720px) {
+  .lic-plans-grid { grid-template-columns: 1fr; max-width: 380px; }
+  .lic-wrap { padding: 16px 16px 32px; }
+}
+
+.lic-plan-card {
+  position: relative;
+  background: var(--surface-2, #1a1d23);
+  border: 1px solid var(--border, #2a2d35);
+  border-radius: 14px; padding: 24px 20px 20px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+.lic-plan-card--highlight { border-color: #1f6feb; background: rgba(31,111,235,.05); }
+.lic-plan-card--current   { border-color: #22c55e; background: rgba(34,197,94,.04); }
+
+.lic-current-tag, .lic-popular-tag {
+  position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+  padding: 3px 14px; border-radius: 20px; font-size: 11px; font-weight: 700;
+  white-space: nowrap; letter-spacing: .3px;
+}
+.lic-current-tag { background: #22c55e; color: #fff; }
+.lic-popular-tag { background: #1f6feb; color: #fff; }
+
+.lic-plan-top { display: flex; flex-direction: column; gap: 4px; }
+.lic-plan-name    { font-size: 20px; font-weight: 800; color: var(--text-primary, #f1f5f9); }
+.lic-plan-tagline { font-size: 12px; color: var(--text-muted, #6b7280); }
+.lic-plan-price-row { display: flex; align-items: baseline; gap: 4px; margin-top: 8px; }
+.lic-plan-price     { font-size: 26px; font-weight: 800; color: var(--text-primary, #f1f5f9); }
+.lic-plan-price-sub { font-size: 12px; color: var(--text-muted, #6b7280); }
+
+.lic-plan-features {
+  list-style: none; padding: 0; margin: 0; flex: 1;
+  display: flex; flex-direction: column; gap: 9px;
+}
+.lic-plan-features li {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--text-secondary, #9ca3af);
+}
+.lic-plan-features svg { width: 14px; height: 14px; stroke: #22c55e; fill: none; flex-shrink: 0; }
+.lic-feat--off { opacity: .4; }
+.lic-feat--off svg { stroke: #6b7280; }
+
+.lic-plan-card .lic-btn { width: 100%; justify-content: center; margin-top: auto; }
+
+.lic-plans-footer {
+  font-size: 12px; color: var(--text-muted, #6b7280); text-align: center;
+}
+.lic-plans-footer a { color: #60a5fa; text-decoration: none; }
+.lic-plans-footer a:hover { text-decoration: underline; }

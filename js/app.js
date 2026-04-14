@@ -42,6 +42,10 @@ async function initApp() {
     if (typeof ReportsPanel !== 'undefined') {
       ReportsPanel.init(document.getElementById('reports-section'));
     }
+    // Licenciamento
+    if (typeof LicenseManager !== 'undefined') {
+      LicenseManager.init();
+    }
     await ConfigLoader.load();
     const seedConfig = ConfigLoader.get();
 
@@ -131,6 +135,10 @@ function initSidebar() {
 
   document.querySelectorAll('[data-action="new-installation"]').forEach(el => {
     el.addEventListener('click', () => {
+      if (typeof LicenseManager !== 'undefined' && !LicenseManager.canAddInstallation()) {
+        LicenseManager.openUpgradePrompt();
+        return;
+      }
       shell.classList.remove('sidebar-open');
       Wizard.init(document.getElementById('wiz'));
       Wizard.open({ skipWelcome: true });
@@ -190,7 +198,8 @@ function switchView(view) {
     integrador:  ['Painel',       'Todas as instalações gerenciadas'],
     energia:     ['Energia',      'Consumo, geração solar e custos'],
     relatorios:  ['Relatórios',   'Histórico de uso por dispositivo e ambiente'],
-    alertas:     ['Alertas',      'Configure notificações proativas']
+    alertas:     ['Alertas',      'Configure notificações proativas'],
+    planos:      ['Planos',       'Licenciamento e funcionalidades por plano']
   };
   const [title, sub] = titles[view] || titles.dashboard;
   const titleEl = document.getElementById('header-title');
@@ -219,20 +228,44 @@ function switchView(view) {
   }
 
   // Carrega painel integrador quando a view for selecionada
-  if (view === 'integrador' && typeof IntegratorPanel !== 'undefined') {
-    IntegratorPanel.load();
-  }
-  // Carrega painel de energia quando a view for selecionada
-  if (view === 'energia' && typeof EnergyDashboard !== 'undefined') {
-    EnergyDashboard.load();
+  if (view === 'integrador') {
+    const el = document.getElementById('integrator-section');
+    if (typeof LicenseManager !== 'undefined' && !LicenseManager.canAccess('integrador')) {
+      if (el) LicenseManager.renderLockedView(el, 'integrador');
+    } else if (typeof IntegratorPanel !== 'undefined') {
+      IntegratorPanel.load();
+    }
   }
   // Carrega painel de relatórios quando a view for selecionada
-  if (view === 'relatorios' && typeof ReportsPanel !== 'undefined') {
-    ReportsPanel.load();
+  if (view === 'relatorios') {
+    const el = document.getElementById('reports-section');
+    if (typeof LicenseManager !== 'undefined' && !LicenseManager.canAccess('relatorios')) {
+      if (el) LicenseManager.renderLockedView(el, 'relatorios');
+    } else if (typeof ReportsPanel !== 'undefined') {
+      ReportsPanel.load();
+    }
   }
   // Carrega painel de alertas quando a view for selecionada
-  if (view === 'alertas' && typeof AlertsManager !== 'undefined') {
-    AlertsManager.load();
+  if (view === 'alertas') {
+    const el = document.getElementById('alerts-section');
+    if (typeof LicenseManager !== 'undefined' && !LicenseManager.canAccess('alertas')) {
+      if (el) LicenseManager.renderLockedView(el, 'alertas');
+    } else if (typeof AlertsManager !== 'undefined') {
+      AlertsManager.load();
+    }
+  }
+  // Carrega painel de energia quando a view for selecionada
+  if (view === 'energia') {
+    const el = document.getElementById('energy-section');
+    if (typeof LicenseManager !== 'undefined' && !LicenseManager.canAccess('energia')) {
+      if (el) LicenseManager.renderLockedView(el, 'energia');
+    } else if (typeof EnergyDashboard !== 'undefined') {
+      EnergyDashboard.load();
+    }
+  }
+  // Página de planos
+  if (view === 'planos' && typeof LicenseManager !== 'undefined') {
+    LicenseManager.renderPlansPage(document.getElementById('license-section'));
   }
 }
 
