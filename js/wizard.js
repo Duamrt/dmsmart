@@ -44,6 +44,12 @@ const Wizard = {
   },
 
   open({ skipWelcome = false } = {}) {
+    if (skipWelcome) {
+      // Adicionando nova instalação de dentro do app: sempre começa do zero
+      this.clearProgress();
+      this._doOpen(true);
+      return;
+    }
     const saved = this._loadProgress();
     if (saved && saved.step && !['role-select', 'resume', 'testing', 'welcome'].includes(saved.step)) {
       this._resumeToStep = saved.step;
@@ -52,12 +58,12 @@ const Wizard = {
       this._show();
       return;
     }
-    this._doOpen(skipWelcome);
+    this._doOpen(false);
   },
 
   _doOpen(skipWelcome = false) {
     this.draft = {
-      role: '',
+      role: skipWelcome ? 'installer' : '',
       name: '',
       haUrl: 'http://localhost:8123',
       token: '',

@@ -1088,6 +1088,7 @@ document.addEventListener('dmsmart:installation-created', async (e) => {
   await connectToHA(active);
   if (typeof ScenesPanel !== 'undefined') ScenesPanel.load();
 
+  switchView('dashboard');
   _showToast(`✓ ${active.name} adicionada`);
 
   console.log(`[dmsmart] Instalação adicionada: ${active.name}`);
