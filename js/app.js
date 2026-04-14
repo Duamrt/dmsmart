@@ -46,6 +46,10 @@ async function initApp() {
     if (typeof LicenseManager !== 'undefined') {
       LicenseManager.init();
     }
+    // Checkout Stripe — trata retorno ?checkout=success|cancel
+    if (typeof LicenseCheckout !== 'undefined') {
+      LicenseCheckout.handleReturn();
+    }
     await ConfigLoader.load();
     const seedConfig = ConfigLoader.get();
 
