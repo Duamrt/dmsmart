@@ -4,13 +4,41 @@
 
 const IntegratorPanel = {
   _el: null,
+  _tab: 'clientes', // 'clientes' | 'marca'
 
   init(el) {
     this._el = el;
   },
 
+  _renderTabs() {
+    return `
+      <div class="intp-tabs">
+        <button class="intp-tab${this._tab === 'clientes' ? ' active' : ''}" data-tab="clientes" type="button">Clientes</button>
+        <button class="intp-tab${this._tab === 'marca' ? ' active' : ''}" data-tab="marca" type="button">Minha Marca</button>
+      </div>`;
+  },
+
+  _bindTabs(el) {
+    el.querySelectorAll('.intp-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this._tab = btn.dataset.tab;
+        this.load();
+      });
+    });
+  },
+
   async load() {
     if (!this._el) return;
+
+    if (this._tab === 'marca') {
+      this._el.innerHTML = this._renderTabs() + '<div id="wl-settings-panel"></div>';
+      this._bindTabs(this._el);
+      if (typeof WhiteLabel !== 'undefined') {
+        WhiteLabel.renderSettings(this._el.querySelector('#wl-settings-panel'));
+      }
+      return;
+    }
+
     this._el.innerHTML = '<div class="intp-loading">Carregando clientes…</div>';
 
     const user = AuthStore.getUser();
@@ -44,18 +72,19 @@ const IntegratorPanel = {
     const all = [...allMap.values()];
 
     if (all.length === 0) {
-      this._el.innerHTML = `
+      this._el.innerHTML = this._renderTabs() + `
         <div class="intp-empty">
           <svg viewBox="0 0 24 24"><path d="M3 12 12 4l9 8"/><path d="M5 10v10h14V10"/></svg>
           <p>Nenhum cliente encontrado.</p>
           <p class="intp-empty-hint">Crie instalações e vincule-as ao seu perfil de integrador.</p>
         </div>`;
+      this._bindTabs(this._el);
       return;
     }
 
     const activeId = ActiveInstallation.getId();
 
-    this._el.innerHTML = `
+    this._el.innerHTML = this._renderTabs() + `
       <div class="intp-header">
         <span class="intp-count">${all.length} instalação${all.length !== 1 ? 'ões' : ''}</span>
       </div>
@@ -67,7 +96,8 @@ const IntegratorPanel = {
         </button>
       </div>`;
 
-    // Eventos dos botões
+    // Tabs e eventos dos botões
+    this._bindTabs(this._el);
     this._el.querySelectorAll('[data-manage]').forEach(btn => {
       btn.addEventListener('click', () => this._manage(btn.getAttribute('data-manage')));
     });

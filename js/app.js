@@ -50,6 +50,10 @@ async function initApp() {
     if (typeof LicenseCheckout !== 'undefined') {
       LicenseCheckout.handleReturn();
     }
+    // White-label — aplica marca do integrador se ?b=slug ou usuário integrador
+    if (typeof WhiteLabel !== 'undefined') {
+      WhiteLabel.init();
+    }
     await ConfigLoader.load();
     const seedConfig = ConfigLoader.get();
 

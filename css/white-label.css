@@ -1,0 +1,142 @@
+/* white-label.css — Configuração de marca do integrador */
+
+/* ── Logo no sidebar ─────────────────────────────────────────────────────── */
+.wl-logo-img {
+  max-height: 32px; max-width: 140px;
+  object-fit: contain; display: none;
+}
+#wl-logo-text { display: flex; align-items: center; gap: 2px; }
+
+/* ── Wrap geral ──────────────────────────────────────────────────────────── */
+.wl-wrap {
+  max-width: 560px; padding: 8px 0 40px;
+  display: flex; flex-direction: column; gap: 24px;
+}
+
+.wl-section {
+  background: var(--surface-2, #1a1d23);
+  border: 1px solid var(--border, #2a2d35);
+  border-radius: 14px; padding: 24px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+.wl-title {
+  font-size: 15px; font-weight: 700;
+  color: var(--text-primary, #f1f5f9); margin: 0 0 4px;
+}
+
+.wl-desc {
+  font-size: 13px; color: var(--text-muted, #6b7280); margin: -8px 0 4px;
+}
+
+/* ── Labels e inputs ─────────────────────────────────────────────────────── */
+.wl-label {
+  font-size: 12px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .4px; color: var(--text-secondary, #9ca3af);
+  display: flex; align-items: center; gap: 8px;
+}
+.wl-label-hint {
+  font-size: 11px; text-transform: none; letter-spacing: 0;
+  font-weight: 400; color: var(--text-muted, #6b7280);
+}
+
+.wl-input {
+  background: var(--surface-1, #13151a);
+  border: 1px solid var(--border, #2a2d35);
+  border-radius: 8px; padding: 10px 14px;
+  font-size: 14px; color: var(--text-primary, #f1f5f9);
+  width: 100%; box-sizing: border-box; outline: none;
+  transition: border-color .15s;
+}
+.wl-input:focus { border-color: var(--wl-accent, #1f6feb); }
+.wl-input--hex { width: 120px; font-family: monospace; flex-shrink: 0; }
+
+/* ── Logo upload ─────────────────────────────────────────────────────────── */
+.wl-logo-row {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+
+.wl-logo-preview {
+  width: 120px; height: 56px;
+  background: var(--surface-1, #13151a);
+  border: 1px dashed var(--border, #2a2d35);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.wl-logo-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.wl-logo-empty { font-size: 11px; color: var(--text-muted, #6b7280); }
+
+.wl-logo-btns { display: flex; flex-direction: column; gap: 8px; }
+
+.wl-upload-btn {
+  display: inline-flex; align-items: center;
+  padding: 8px 16px; border-radius: 8px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  background: rgba(255,255,255,.06); color: var(--text-secondary, #9ca3af);
+  border: 1px solid var(--border, #2a2d35); transition: background .15s;
+}
+.wl-upload-btn:hover { background: rgba(255,255,255,.1); }
+.wl-file-hidden { display: none; }
+
+.wl-remove-btn {
+  font-size: 12px; color: #f87171; background: none; border: none;
+  cursor: pointer; padding: 0; text-align: left;
+}
+.wl-remove-btn:hover { text-decoration: underline; }
+
+/* ── Color row ───────────────────────────────────────────────────────────── */
+.wl-color-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+.wl-color-pick {
+  width: 44px; height: 44px; border-radius: 8px; border: none;
+  cursor: pointer; padding: 2px; background: none;
+}
+.wl-color-swatch {
+  width: 44px; height: 44px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.1); flex-shrink: 0;
+}
+
+/* ── Share box ───────────────────────────────────────────────────────────── */
+.wl-share-box {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface-1, #13151a);
+  border: 1px solid var(--border, #2a2d35);
+  border-radius: 8px; padding: 10px 14px; flex-wrap: wrap;
+}
+.wl-share-url {
+  font-size: 13px; color: #60a5fa; font-family: monospace;
+  word-break: break-all; flex: 1;
+}
+.wl-copy-btn {
+  font-size: 12px; font-weight: 600; padding: 6px 14px;
+  border-radius: 6px; border: none; cursor: pointer;
+  background: rgba(31,111,235,.18); color: #60a5fa;
+  flex-shrink: 0; transition: background .15s;
+}
+.wl-copy-btn:hover { background: rgba(31,111,235,.3); }
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.wl-footer { display: flex; }
+.wl-save-btn {
+  padding: 12px 28px; border-radius: 10px; font-size: 14px; font-weight: 700;
+  border: none; cursor: pointer; background: #1f6feb; color: #fff;
+  transition: opacity .15s;
+}
+.wl-save-btn:hover { opacity: .85; }
+.wl-save-btn:disabled { opacity: .5; cursor: default; }
+
+/* ── Tabs no painel integrador ───────────────────────────────────────────── */
+.intp-tabs {
+  display: flex; gap: 4px;
+  border-bottom: 1px solid var(--border, #2a2d35);
+  margin-bottom: 20px;
+}
+.intp-tab {
+  padding: 8px 16px; font-size: 13px; font-weight: 600;
+  color: var(--text-muted, #6b7280); background: none; border: none;
+  cursor: pointer; border-bottom: 2px solid transparent;
+  margin-bottom: -1px; transition: color .15s, border-color .15s;
+}
+.intp-tab:hover { color: var(--text-secondary, #9ca3af); }
+.intp-tab.active { color: var(--text-primary, #f1f5f9); border-color: var(--wl-accent, #1f6feb); }
