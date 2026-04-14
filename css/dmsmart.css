@@ -1067,9 +1067,23 @@ body.wizard-open {
 }
 
 .sidebar-nav-item--soon {
-  opacity: 0.45;
+  opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
+  justify-content: space-between;
+}
+.sidebar-nav-item--soon::after {
+  content: 'Em breve';
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-muted, #8b8fa8);
+  background: var(--bg-tertiary, rgba(255,255,255,0.06));
+  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .sidebar-foot-config {
