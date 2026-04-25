@@ -286,26 +286,38 @@ class DMAssistant {
 
   _aguardarResultado(cmdId) {
     return new Promise((resolve, reject) => {
-      let tentativas = 0;
-      const poll = async () => {
-        tentativas++;
-        const { data } = await this.sb
-          .from('dm_commands')
-          .select('status, resultado, result')
-          .eq('id', cmdId)
-          .single();
+      let resolvido = false;
+      let channel = null;
 
-        if (data?.status === 'executado') {
-          resolve(data.resultado || data.result || '...');
-        } else if (data?.status === 'erro') {
-          reject(new Error(data.resultado || 'Erro no worker'));
-        } else if (tentativas >= 45) {
-          reject(new Error('Timeout — o worker nao respondeu em 90s'));
-        } else {
-          setTimeout(poll, 2000);
-        }
+      const finalizar = (ok, val) => {
+        if (resolvido) return;
+        resolvido = true;
+        if (channel) { this.sb.removeChannel(channel); channel = null; }
+        ok ? resolve(val) : reject(new Error(val));
       };
-      setTimeout(poll, 1500);
+
+      // Timeout de segurança
+      const timer = setTimeout(() => finalizar(false, 'Timeout — worker não respondeu'), 30000);
+
+      // Realtime: notificação instantânea quando status muda
+      channel = this.sb
+        .channel(`dm_cmd_${cmdId}`)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'dm_commands', filter: `id=eq.${cmdId}` }, payload => {
+          const s = payload.new?.status;
+          if (s === 'executado') { clearTimeout(timer); finalizar(true, payload.new.resultado || payload.new.result || '...'); }
+          else if (s === 'erro')  { clearTimeout(timer); finalizar(false, payload.new.resultado || 'Erro no worker'); }
+        })
+        .subscribe();
+
+      // Fallback poll a cada 800ms (caso Realtime falhe)
+      const poll = async () => {
+        if (resolvido) return;
+        const { data } = await this.sb.from('dm_commands').select('status,resultado,result').eq('id', cmdId).single();
+        if (data?.status === 'executado') { clearTimeout(timer); finalizar(true, data.resultado || data.result || '...'); }
+        else if (data?.status === 'erro') { clearTimeout(timer); finalizar(false, data.resultado || 'Erro no worker'); }
+        else if (!resolvido) setTimeout(poll, 800);
+      };
+      setTimeout(poll, 800);
     });
   }
 
