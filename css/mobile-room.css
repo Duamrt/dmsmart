@@ -1,0 +1,141 @@
+/* mobile-room.css — estilos específicos da tela de Cômodo aberto */
+
+.m-room-title {
+  font-size: 22px; font-weight: 700; letter-spacing: -.5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.m-room-sub {
+  font-size: 11px; color: var(--text-2); margin-top: 2px;
+}
+
+/* Room tabs (horizontal pills) */
+.m-room-tabs {
+  display: flex; gap: 6px; padding: 0 20px 12px;
+  overflow-x: auto; scrollbar-width: none;
+  flex-shrink: 0;
+}
+.m-room-tabs::-webkit-scrollbar { display: none; }
+.m-room-pill {
+  padding: 7px 14px; border-radius: 12px;
+  font-size: 12px; font-weight: 600;
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all .15s;
+}
+.m-room-pill.active {
+  background: rgba(255,255,255,.10);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+/* Climate strip */
+.m-climate {
+  margin: 0 20px 14px;
+  background: linear-gradient(135deg, rgba(42,115,255,.18), rgba(0,212,255,.05));
+  border: 1px solid var(--border-strong);
+  backdrop-filter: blur(20px);
+  border-radius: 22px;
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+  flex-shrink: 0;
+}
+.m-climate-icon {
+  width: 48px; height: 48px; border-radius: 16px;
+  background: linear-gradient(135deg, var(--primary), var(--cyan));
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 20px rgba(42,115,255,.4);
+  flex-shrink: 0;
+}
+.m-climate-icon svg { width: 24px; height: 24px; stroke: #fff; }
+.m-climate-info { flex: 1; min-width: 0; }
+.m-climate-label { font-size: 11px; color: var(--text-2); letter-spacing: .5px; }
+.m-climate-val {
+  font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 700;
+  line-height: 1; margin-top: 2px;
+}
+.m-climate-sub { font-size: 11px; color: var(--text-2); margin-top: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-climate-bars { display: flex; gap: 2px; align-items: flex-end; height: 36px; flex-shrink: 0; }
+.m-climate-bars span { width: 4px; background: rgba(255,255,255,.18); border-radius: 2px; }
+.m-climate-bars span:nth-child(1){height:30%}
+.m-climate-bars span:nth-child(2){height:55%}
+.m-climate-bars span:nth-child(3){height:75%}
+.m-climate-bars span:nth-child(4){height:100%; background: var(--primary);}
+.m-climate-bars span:nth-child(5){height:80%; background: rgba(42,115,255,.5);}
+.m-climate-bars span:nth-child(6){height:60%}
+.m-climate-bars span:nth-child(7){height:40%}
+
+/* Device grid 2 columns */
+.m-dev-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  padding-bottom: 30px;
+}
+.m-dev-tile {
+  background: rgba(255,255,255,.04);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 14px;
+  height: 150px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  position: relative; overflow: hidden;
+  transition: all .25s;
+  cursor: pointer;
+  text-align: left;
+}
+.m-dev-tile:active { transform: scale(.97); }
+.m-dev-tile[data-on="true"] {
+  background: linear-gradient(155deg, rgba(255,107,53,.10), rgba(217,70,239,.08), rgba(255,255,255,.04));
+  border-color: rgba(255,107,53,.25);
+}
+.m-dev-tile.featured { grid-column: span 2; height: auto; padding: 16px;
+  flex-direction: row; align-items: center; gap: 14px; }
+.m-dev-tile.featured .m-dev-render { width: 70px; height: 70px; }
+
+.m-dev-render {
+  width: 56px; height: 56px; position: relative; align-self: flex-start;
+}
+.m-dev-render::before {
+  content: ''; position: absolute; inset: -8px;
+  background: radial-gradient(circle, rgba(255,138,90,.30), transparent 65%);
+  filter: blur(10px); pointer-events: none;
+}
+.m-dev-tile[data-on="false"] .m-dev-render::before {
+  background: radial-gradient(circle, rgba(255,255,255,.04), transparent 70%);
+}
+.m-dev-render svg { width: 100%; height: 100%; position: relative; z-index: 1; }
+
+.m-dev-meta-row {
+  display: flex; justify-content: space-between; align-items: flex-end; gap: 8px;
+}
+.m-dev-meta-info { min-width: 0; flex: 1; }
+.m-dev-meta-info .m-dev-tile-name {
+  font-size: 13px; font-weight: 700;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.m-dev-meta-info .m-dev-tile-sub {
+  font-size: 10px; color: var(--text-2); margin-top: 1px;
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.m-dev-tile-toggle {
+  width: 38px; height: 22px; border-radius: 11px;
+  background: rgba(255,255,255,.10);
+  position: relative; flex-shrink: 0;
+  border: 1px solid var(--border);
+  cursor: pointer;
+}
+.m-dev-tile-toggle::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #d4d8e0; transition: all .2s;
+}
+.m-dev-tile-toggle[aria-pressed="true"] {
+  background: linear-gradient(135deg, var(--orange), var(--pink));
+  border-color: transparent;
+}
+.m-dev-tile-toggle[aria-pressed="true"]::after { left: 18px; background: #fff; }

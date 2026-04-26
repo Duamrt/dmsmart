@@ -292,7 +292,10 @@
     btn.addEventListener('click', () => {
       const action = btn.getAttribute('data-action');
       if (action === 'energia') alert('Energia mobile — em construção (Fase B4)');
-      else if (action === 'comodos') alert('Lista de cômodos — em construção (Fase B2)');
+      else if (action === 'comodos') {
+        const z = ZoneRegistry.all()[0];
+        window.location.href = z ? `mobile-room.html?zone=${encodeURIComponent(z.id)}` : 'mobile-room.html';
+      }
       else if (action === 'cameras') alert('Câmeras — em construção');
       else if (action === 'home') {} // já está
       else if (action === 'cenas') alert('Cenas mobile — em construção');
