@@ -82,18 +82,18 @@
   }
 
   if (previewMode) {
-    // Estados mock pra preview visual
+    // Estados mock pra preview visual (formato compatível com StateStore: array de entities)
     setHaStatus('online');
-    StateStore.init({
-      'light.spot_principal': { s: 'on',  lc: Date.now()/1000 },
-      'light.abajur':         { s: 'on',  lc: Date.now()/1000 },
-      'climate.ar_sala':      { s: 'cool',lc: Date.now()/1000 },
-      'media_player.tv':      { s: 'off', lc: Date.now()/1000 },
-      'cover.cortina':        { s: 'closed', lc: Date.now()/1000 },
-      'light.suite_teto':     { s: 'on',  lc: Date.now()/1000 },
-      'climate.ar_suite':     { s: 'auto',lc: Date.now()/1000 },
-      'light.cozinha':        { s: 'off', lc: Date.now()/1000 },
-    });
+    StateStore.init([
+      { entity_id: 'light.spot_principal', state: 'on'    },
+      { entity_id: 'light.abajur',         state: 'on'    },
+      { entity_id: 'climate.ar_sala',      state: 'cool'  },
+      { entity_id: 'media_player.tv',      state: 'off'   },
+      { entity_id: 'cover.cortina',        state: 'closed'},
+      { entity_id: 'light.suite_teto',     state: 'on'    },
+      { entity_id: 'climate.ar_suite',     state: 'auto'  },
+      { entity_id: 'light.cozinha',        state: 'off'   },
+    ]);
   } else if (!haUrl || !haToken) {
     setHaStatus('offline');
     document.getElementById('m-hero-meta').insertAdjacentHTML('beforeend',
@@ -115,12 +115,7 @@
       const allStates = await HAClient.send({ type: 'get_states' });
       if (Array.isArray(allStates)) {
         const watched = new Set(ZoneRegistry.allEntityIds());
-        const filtered = {};
-        for (const st of allStates) {
-          if (watched.has(st.entity_id)) {
-            filtered[st.entity_id] = { s: st.state, lc: Math.floor(Date.parse(st.last_changed) / 1000) };
-          }
-        }
+        const filtered = allStates.filter(s => watched.has(s.entity_id));
         StateStore.init(filtered);
       }
     } catch (e) {
@@ -131,7 +126,7 @@
     HAClient.onStateChanged((entityId, newState) => {
       const watched = new Set(ZoneRegistry.allEntityIds());
       if (watched.has(entityId)) {
-        StateStore.update(entityId, { s: newState.state, lc: Math.floor(Date.now() / 1000) });
+        StateStore.update(entityId, { entity_id: entityId, state: newState.state, attributes: newState.attributes });
         renderHeroMeta();
         renderActiveRoom();
       }
@@ -150,10 +145,10 @@
     for (const d of allDevs) {
       const st = StateStore.get(d.entity);
       if (!st) continue;
-      if (st.s === 'on') on++;
+      if (st.state === 'on') on++;
       // Temperatura: sensor com device_class temperature ou nome contendo temp
       if (d.entity.startsWith('sensor.') && /temp/i.test(d.entity)) {
-        const v = parseFloat(st.s);
+        const v = parseFloat(st.state);
         if (!isNaN(v)) temps.push(v);
       }
     }
@@ -203,7 +198,7 @@
 
     listEl.innerHTML = zone.devices.map(dev => {
       const st = StateStore.get(dev.entity);
-      const isOn = st?.s === 'on';
+      const isOn = st?.state === 'on';
       const domain = dev.entity.split('.')[0];
       const icon = iconForDomain(domain);
       const meta = formatMeta(dev, st);
@@ -236,11 +231,11 @@
   function formatMeta(dev, st) {
     if (!st) return '<span style="opacity:.5">desconectado</span>';
     const domain = dev.entity.split('.')[0];
-    if (domain === 'light' || domain === 'switch') return st.s === 'on' ? 'ligado' : 'desligado';
-    if (domain === 'climate') return st.s === 'off' ? 'desligado' : escapeHtml(st.s);
-    if (domain === 'sensor') return `<b>${escapeHtml(st.s)}</b>${dev.unit || ''}`;
-    if (domain === 'cover') return st.s === 'open' ? 'aberta' : st.s === 'closed' ? 'fechada' : escapeHtml(st.s);
-    return escapeHtml(st.s);
+    if (domain === 'light' || domain === 'switch') return st.state === 'on' ? 'ligado' : 'desligado';
+    if (domain === 'climate') return st.state === 'off' ? 'desligado' : escapeHtml(st.state);
+    if (domain === 'sensor') return `<b>${escapeHtml(st.state)}</b>${dev.unit || ''}`;
+    if (domain === 'cover') return st.state === 'open' ? 'aberta' : st.state === 'closed' ? 'fechada' : escapeHtml(st.state);
+    return escapeHtml(st.state);
   }
 
   function escapeHtml(s) {

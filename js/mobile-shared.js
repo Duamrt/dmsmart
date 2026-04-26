@@ -39,24 +39,24 @@
     ],
   };
 
-  const PREVIEW_STATES = {
-    'light.spot_principal': { s: 'on',     lc: Date.now()/1000 },
-    'light.abajur':         { s: 'on',     lc: Date.now()/1000 },
-    'climate.ar_sala':      { s: 'cool',   lc: Date.now()/1000 },
-    'media_player.tv':      { s: 'off',    lc: Date.now()/1000 },
-    'media_player.jbl':     { s: 'off',    lc: Date.now()/1000 },
-    'cover.cortina':        { s: 'closed', lc: Date.now()/1000 },
-    'switch.tomada':        { s: 'on',     lc: Date.now()/1000 },
-    'light.suite_teto':     { s: 'on',     lc: Date.now()/1000 },
-    'climate.ar_suite':     { s: 'auto',   lc: Date.now()/1000 },
-    'cover.persiana_suite': { s: 'closed', lc: Date.now()/1000 },
-    'light.cozinha':        { s: 'off',    lc: Date.now()/1000 },
-    'switch.geladeira':     { s: 'on',     lc: Date.now()/1000 },
-    'light.bwc_suite':      { s: 'off',    lc: Date.now()/1000 },
-    'cover.portao':         { s: 'closed', lc: Date.now()/1000 },
-    'camera.garagem':       { s: 'recording', lc: Date.now()/1000 },
-    'light.garagem':        { s: 'off',    lc: Date.now()/1000 },
-  };
+  const PREVIEW_STATES = [
+    { entity_id: 'light.spot_principal', state: 'on'    },
+    { entity_id: 'light.abajur',         state: 'on'    },
+    { entity_id: 'climate.ar_sala',      state: 'cool'  },
+    { entity_id: 'media_player.tv',      state: 'off'   },
+    { entity_id: 'media_player.jbl',     state: 'off'   },
+    { entity_id: 'cover.cortina',        state: 'closed'},
+    { entity_id: 'switch.tomada',        state: 'on'    },
+    { entity_id: 'light.suite_teto',     state: 'on'    },
+    { entity_id: 'climate.ar_suite',     state: 'auto' },
+    { entity_id: 'cover.persiana_suite', state: 'closed'},
+    { entity_id: 'light.cozinha',        state: 'off'   },
+    { entity_id: 'switch.geladeira',     state: 'on'    },
+    { entity_id: 'light.bwc_suite',      state: 'off'   },
+    { entity_id: 'cover.portao',         state: 'closed'},
+    { entity_id: 'camera.garagem',       state: 'recording' },
+    { entity_id: 'light.garagem',        state: 'off'   },
+  ];
 
   const MobileBoot = {
     previewMode: false,
@@ -93,18 +93,13 @@
           const all = await HAClient.send({ type: 'get_states' });
           if (Array.isArray(all)) {
             const watched = new Set(ZoneRegistry.allEntityIds());
-            const filtered = {};
-            for (const st of all) {
-              if (watched.has(st.entity_id)) {
-                filtered[st.entity_id] = { s: st.state, lc: Math.floor(Date.parse(st.last_changed) / 1000) };
-              }
-            }
+            const filtered = all.filter(s => watched.has(s.entity_id));
             StateStore.init(filtered);
           }
           HAClient.onStateChanged?.((entityId, newState) => {
             const watched = new Set(ZoneRegistry.allEntityIds());
             if (watched.has(entityId)) {
-              StateStore.update(entityId, { s: newState.state, lc: Math.floor(Date.now() / 1000) });
+              StateStore.update(entityId, { entity_id: entityId, state: newState.state, attributes: newState.attributes });
             }
           });
         } catch (e) {
@@ -129,12 +124,12 @@
     formatMeta(dev, st) {
       if (!st) return '<span style="opacity:.5">desconectado</span>';
       const domain = dev.entity.split('.')[0];
-      if (domain === 'light' || domain === 'switch') return st.s === 'on' ? 'ligado' : 'desligado';
-      if (domain === 'climate') return st.s === 'off' ? 'desligado' : MobileBoot.escapeHtml(st.s);
-      if (domain === 'cover') return st.s === 'open' ? 'aberta' : st.s === 'closed' ? 'fechada' : MobileBoot.escapeHtml(st.s);
-      if (domain === 'camera') return st.s === 'recording' ? '● gravando' : 'standby';
-      if (domain === 'media_player') return st.s === 'playing' ? '▶ tocando' : st.s === 'idle' ? 'parado' : 'desligado';
-      return MobileBoot.escapeHtml(st.s);
+      if (domain === 'light' || domain === 'switch') return st.state === 'on' ? 'ligado' : 'desligado';
+      if (domain === 'climate') return st.state === 'off' ? 'desligado' : MobileBoot.escapeHtml(st.state);
+      if (domain === 'cover') return st.state === 'open' ? 'aberta' : st.state === 'closed' ? 'fechada' : MobileBoot.escapeHtml(st.state);
+      if (domain === 'camera') return st.state === 'recording' ? '● gravando' : 'standby';
+      if (domain === 'media_player') return st.state === 'playing' ? '▶ tocando' : st.state === 'idle' ? 'parado' : 'desligado';
+      return MobileBoot.escapeHtml(st.state);
     },
 
     escapeHtml(s) {
@@ -146,8 +141,8 @@
     async toggle(entityId) {
       if (this.previewMode) {
         const st = StateStore.get(entityId);
-        const next = st?.s === 'on' ? 'off' : 'on';
-        StateStore.update(entityId, { s: next, lc: Date.now()/1000 });
+        const next = st?.state === 'on' ? 'off' : 'on';
+        StateStore.update(entityId, { entity_id: entityId, state: next, attributes: st?.attributes || {} });
         return;
       }
       const domain = entityId.split('.')[0];

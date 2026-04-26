@@ -44,7 +44,7 @@
     climateEl.hidden = false;
     const target = climateDev.target_temp || 22;
     climateValEl.innerHTML = `${target}<span style="font-size:14px;font-weight:500">°C</span>`;
-    const mode = st.s === 'off' ? 'desligado' : st.s;
+    const mode = st.state === 'off' ? 'desligado' : st.state;
     climateSubEl.textContent = `${MobileBoot.escapeHtml(climateDev.name || 'AC')} · ${mode}`;
   }
 
@@ -104,7 +104,7 @@
 
   function renderGrid(zone) {
     const devs = zone.devices || [];
-    const onCount = devs.filter(d => StateStore.get(d.entity)?.s === 'on').length;
+    const onCount = devs.filter(d => StateStore.get(d.entity)?.state === 'on').length;
     titleEl.textContent = zone.name;
     subEl.textContent = `${devs.length} dispositivo${devs.length === 1 ? '' : 's'} · ${onCount} ligado${onCount === 1 ? '' : 's'}`;
 
@@ -115,7 +115,7 @@
 
     gridEl.innerHTML = devs.map(d => {
       const st = StateStore.get(d.entity);
-      const isOn = st?.s === 'on';
+      const isOn = st?.state === 'on';
       const domain = d.entity.split('.')[0];
       const togglable = ['light','switch','climate','media_player','cover'].includes(domain);
       const stateText = MobileBoot.formatMeta(d, st);
