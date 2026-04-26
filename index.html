@@ -21,6 +21,19 @@
   <link rel="stylesheet" href="css/alerts.css">
   <link rel="stylesheet" href="css/license.css">
   <link rel="stylesheet" href="css/white-label.css">
+  <script>
+    // Mobile detection — redireciona pra mobile.html em viewport pequeno ou PWA standalone
+    (function () {
+      var ua = navigator.userAgent || '';
+      var isMobile = /Android|iPhone|iPod|iPad/i.test(ua);
+      var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      var isSmall = window.innerWidth <= 768;
+      if ((isMobile || isStandalone) && isSmall) {
+        // Mantém path/hash se houver
+        window.location.replace('mobile.html' + window.location.search + window.location.hash);
+      }
+    })();
+  </script>
 </head>
 <body>
   <div class="app-shell" id="app-shell">
