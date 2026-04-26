@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0a0b10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="dmsmart — automação residencial">
+<title>dmsmart</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/mobile.css">
+</head>
+<body>
+<div class="bg-halos" aria-hidden="true">
+  <div class="halo halo-1"></div>
+  <div class="halo halo-2"></div>
+  <div class="halo halo-3"></div>
+</div>
+
+<div class="app">
+  <!-- Header -->
+  <header class="m-header">
+    <div class="m-user">
+      <div class="m-avatar" id="m-avatar">DR</div>
+      <div>
+        <div class="m-greeting" id="m-greeting">Bem-vindo,</div>
+        <div class="m-user-name" id="m-user-name">—</div>
+      </div>
+    </div>
+    <div class="m-actions">
+      <button class="m-icon-btn" id="m-btn-filter" title="Filtros">
+        <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M3 6h18M6 12h12M9 18h6"/></svg>
+      </button>
+      <button class="m-icon-btn" id="m-btn-notif" title="Notificações">
+        <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span class="notif-dot" id="m-notif-dot" hidden></span>
+      </button>
+    </div>
+  </header>
+
+  <main class="m-main">
+    <!-- Hero card: hub principal / instalação ativa -->
+    <section class="m-hero" id="m-hero">
+      <div class="m-hero-info">
+        <div class="m-hero-label">HUB PRINCIPAL</div>
+        <div class="m-hero-name" id="m-hero-name">—</div>
+        <div class="m-hero-meta" id="m-hero-meta">
+          <span class="meta-item"><span class="meta-icon">🌡️</span><b id="m-hero-temp">—</b></span>
+          <span class="meta-item"><span class="meta-icon">⚡</span><b id="m-hero-power">—</b></span>
+          <span class="meta-item"><span class="meta-icon">💧</span><b id="m-hero-humid">—</b></span>
+          <span class="meta-item"><span class="meta-dot" id="m-hero-status-dot"></span><b id="m-hero-status">—</b></span>
+        </div>
+      </div>
+      <div class="m-hero-3d" id="m-hero-3d">
+        <svg viewBox="0 0 80 80" fill="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="hubGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#ff8a5a"/>
+              <stop offset="100%" stop-color="#d946ef"/>
+            </linearGradient>
+          </defs>
+          <rect x="18" y="18" width="44" height="44" rx="10" fill="url(#hubGrad)" opacity=".95"/>
+          <rect x="22" y="22" width="36" height="36" rx="6" fill="rgba(0,0,0,.25)"/>
+          <circle cx="40" cy="36" r="6" fill="#fff" opacity=".9"/>
+          <rect x="28" y="48" width="24" height="3" rx="1.5" fill="#fff" opacity=".6"/>
+          <rect x="32" y="54" width="16" height="2" rx="1" fill="#fff" opacity=".4"/>
+        </svg>
+      </div>
+    </section>
+
+    <!-- Quick actions 2x2 -->
+    <section class="m-qa-grid">
+      <button class="m-qa-card featured" data-action="home">
+        <div class="m-qa-icon-wrap">
+          <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m3 12 9-9 9 9M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/></svg>
+        </div>
+        <div>
+          <div class="m-qa-name">Minha Casa</div>
+          <div class="m-qa-meta" id="m-qa-zonas">— zonas</div>
+        </div>
+      </button>
+      <button class="m-qa-card" data-action="energia">
+        <div class="m-qa-icon-wrap">
+          <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 14l4-4 4 4 5-5"/></svg>
+        </div>
+        <div>
+          <div class="m-qa-name">Energia</div>
+          <div class="m-qa-meta" id="m-qa-energia">—</div>
+        </div>
+      </button>
+      <button class="m-qa-card" data-action="comodos">
+        <div class="m-qa-icon-wrap">
+          <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>
+        </div>
+        <div>
+          <div class="m-qa-name">Cômodos</div>
+          <div class="m-qa-meta" id="m-qa-comodos-meta">—</div>
+        </div>
+      </button>
+      <button class="m-qa-card" data-action="cameras">
+        <div class="m-qa-icon-wrap">
+          <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" stroke-linejoin="round" d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/></svg>
+        </div>
+        <div>
+          <div class="m-qa-name">Câmeras</div>
+          <div class="m-qa-meta" id="m-qa-cameras">—</div>
+        </div>
+      </button>
+    </section>
+
+    <!-- Cenas -->
+    <div class="m-sec-head">
+      <div class="m-sec-title">Cenas</div>
+      <a class="m-sec-link" data-action="cenas">Ver todas</a>
+    </div>
+    <section class="m-scenarios" id="m-scenarios">
+      <div class="m-scenarios-empty">Nenhuma cena ainda.</div>
+    </section>
+
+    <!-- Cômodo ativo -->
+    <div class="m-sec-head">
+      <div class="m-sec-title" id="m-active-room-title">Sala — agora</div>
+      <a class="m-sec-link" data-action="trocar-comodo">Trocar</a>
+    </div>
+    <section class="m-dev-list" id="m-dev-list">
+      <div class="m-dev-empty">Nenhum dispositivo nesta zona.</div>
+    </section>
+  </main>
+
+  <!-- Bottom tab bar -->
+  <nav class="m-tabbar" aria-label="Navegação principal">
+    <button class="m-tab active" data-route="home" title="Casa">
+      <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m3 12 9-9 9 9M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/></svg>
+    </button>
+    <button class="m-tab" data-route="agenda" title="Agenda">
+      <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg>
+    </button>
+    <button class="m-fab" data-route="add" title="Adicionar">
+      <svg fill="none" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+    <button class="m-tab" data-route="energia" title="Energia">
+      <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 14l4-4 4 4 5-5"/></svg>
+    </button>
+    <button class="m-tab" data-route="setup" title="Setup">
+      <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </nav>
+</div>
+
+<!-- Supabase + auth + installation store + ha client (reusa o que já existe) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/version.js"></script>
+<script src="js/config-loader.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth-store.js"></script>
+<script src="js/installation-store.js"></script>
+<script src="js/active-installation.js"></script>
+<script src="js/zone-registry.js"></script>
+<script src="js/state-store.js"></script>
+<script src="js/ha-client.js"></script>
+<script src="js/mobile-app.js"></script>
+</body>
+</html>

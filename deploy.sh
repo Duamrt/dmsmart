@@ -9,7 +9,7 @@ VERSION="v$(date +%m%d%H%M)"
 # Atualiza CACHE name no sw.js — força browsers a baixarem assets novos
 sed -i "s/const CACHE = 'dmsmart-v[^']*';/const CACHE = 'dmsmart-${VERSION}';/" sw.js
 
-git add sw.js js/ css/ manifest.json index.html 2>/dev/null
+git add sw.js js/ css/ manifest.json index.html mobile.html 2>/dev/null
 # Adiciona arquivos modificados específicos da sessão (sem .claude/, assets/, etc)
 git status --porcelain | grep -E '^.M' | awk '{print $2}' | xargs -r git add 2>/dev/null
 
