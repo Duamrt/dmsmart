@@ -1,6 +1,6 @@
 // DM Smart — Service Worker
 // Cache-first pra assets estáticos, network-first pra HTML, fallback pra index.html offline
-const CACHE = 'dmsmart-v04261637';
+const CACHE = 'dmsmart-v04261639';
 const ASSETS = [
   '/',
   '/index.html',
@@ -41,24 +41,34 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
 
-  // HTML: network-first com fallback pra index.html (SPA navigation)
+  // HTML: SEMPRE network-first com bypass de cache HTTP (-no-store).
+  // Se a rede falhar, retorna o cache do MESMO req (sem fallback pra outra página).
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
     e.respondWith(
-      fetch(req).catch(() =>
-        caches.match(req).then(r => r || caches.match('/index.html'))
-      )
+      fetch(req, { cache: 'no-store' })
+        .then(r => {
+          if (r.ok) {
+            const clone = r.clone();
+            caches.open(CACHE).then(c => c.put(req, clone));
+          }
+          return r;
+        })
+        .catch(() => caches.match(req))
     );
     return;
   }
 
-  // Assets: cache-first
+  // Assets (CSS/JS/img): cache-first com revalidação em background
   e.respondWith(
-    caches.match(req).then(cached => cached || fetch(req).then(r => {
-      if (r.ok && new URL(req.url).origin === self.location.origin) {
-        const clone = r.clone();
-        caches.open(CACHE).then(c => c.put(req, clone));
-      }
-      return r;
-    }).catch(() => cached))
+    caches.match(req).then(cached => {
+      const networkFetch = fetch(req).then(r => {
+        if (r.ok && new URL(req.url).origin === self.location.origin) {
+          const clone = r.clone();
+          caches.open(CACHE).then(c => c.put(req, clone));
+        }
+        return r;
+      }).catch(() => cached);
+      return cached || networkFetch;
+    })
   );
 });
