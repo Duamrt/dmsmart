@@ -177,12 +177,11 @@
       MobileBoot.toggle(entity);
       return;
     }
-    // Click no tile → abrir controle (Fase B3)
+    // Click no tile → abrir controle de dispositivo
     const tile = e.target.closest('.m-dev-tile');
     if (tile) {
       const entity = tile.getAttribute('data-entity');
-      // Fase B3: window.location.href = `mobile-device.html?entity=${entity}`;
-      console.log('[mobile-room] tile clicked:', entity);
+      window.location.href = `mobile-device.html?entity=${encodeURIComponent(entity)}`;
     }
   });
 

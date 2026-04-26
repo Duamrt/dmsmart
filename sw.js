@@ -1,6 +1,6 @@
 // DM Smart — Service Worker
 // Cache-first pra assets estáticos, network-first pra HTML, fallback pra index.html offline
-const CACHE = 'dmsmart-v04261601';
+const CACHE = 'dmsmart-v04261605';
 const ASSETS = [
   '/',
   '/index.html',

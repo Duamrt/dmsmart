@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0a0b10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>dmsmart — Controle</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/mobile.css">
+<link rel="stylesheet" href="css/mobile-device.css">
+</head>
+<body>
+<div class="bg-halos" aria-hidden="true">
+  <div class="halo halo-1"></div>
+  <div class="halo halo-2"></div>
+  <div class="halo halo-3"></div>
+</div>
+
+<div class="app">
+  <header class="m-header">
+    <button class="m-icon-btn" id="m-back" title="Voltar">
+      <svg fill="none" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <div style="flex:1; min-width:0; text-align:center">
+      <div class="m-dev-h-title" id="m-dev-h-title">—</div>
+      <div class="m-dev-h-sub" id="m-dev-h-sub">—</div>
+    </div>
+    <button class="m-icon-btn" id="m-dev-h-edit" title="Mais opções">
+      <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+    </button>
+  </header>
+
+  <main class="m-dev-main" id="m-dev-main">
+    <!-- Hero render do dispositivo -->
+    <section class="m-dev-hero">
+      <div class="m-dev-hero-render" id="m-dev-hero-render"></div>
+      <h2 id="m-dev-hero-name">—</h2>
+      <div class="m-dev-hero-meta" id="m-dev-hero-meta">—</div>
+    </section>
+
+    <!-- Container do controle específico (color wheel pra light, gauge pra climate, etc) -->
+    <section id="m-dev-control"></section>
+
+    <!-- Modes / cenas locais -->
+    <section id="m-dev-modes" hidden>
+      <div class="m-modes-title">CENAS DE ILUMINAÇÃO</div>
+      <div class="m-modes-row">
+        <button class="m-mode active" data-mode="padrao">
+          <div class="m-mode-icon"><svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 2v6M12 16v6M2 12h6M16 12h6"/></svg></div>
+          <div class="m-mode-name">Padrão</div>
+        </button>
+        <button class="m-mode" data-mode="romantico">
+          <div class="m-mode-icon"><svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z"/></svg></div>
+          <div class="m-mode-name">Romântico</div>
+        </button>
+        <button class="m-mode" data-mode="cinema">
+          <div class="m-mode-icon"><svg fill="none" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2"/></svg></div>
+          <div class="m-mode-name">Cinema</div>
+        </button>
+        <button class="m-mode" data-mode="noite">
+          <div class="m-mode-icon"><svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
+          <div class="m-mode-name">Noite</div>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <button class="m-power-fab" id="m-power-fab" aria-pressed="false" title="Liga/desliga">
+    <svg fill="none" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg>
+  </button>
+</div>
+
+<div class="m-version-badge" id="m-version-badge">v—</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/version.js"></script>
+<script>document.getElementById('m-version-badge').textContent = window.DMSMART_VERSION || 'v?';</script>
+<script src="js/config-loader.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth-store.js"></script>
+<script src="js/installation-store.js"></script>
+<script src="js/active-installation.js"></script>
+<script src="js/zone-registry.js"></script>
+<script src="js/state-store.js"></script>
+<script src="js/ha-client.js"></script>
+<script src="js/mobile-shared.js"></script>
+<script src="js/mobile-device.js"></script>
+</body>
+</html>
