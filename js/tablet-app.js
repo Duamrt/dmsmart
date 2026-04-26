@@ -147,7 +147,7 @@
     btn.addEventListener('click', () => {
       const view = btn.getAttribute('data-view');
       // Setup é exceção — abre tela de configuração (desktop)
-      if (view === 'setup') { window.location.href = 'index.html'; return; }
+      if (view === 'setup') { window.location.href = 'index.html?force=desktop'; return; }
       // Outras views: só destaca o item ativo (visualmente). Tudo já tá no dashboard.
       document.querySelectorAll('[data-view]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');

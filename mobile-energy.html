@@ -131,7 +131,10 @@
 <div class="m-version-badge" id="m-version-badge">v—</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/version.js"></script>
-<script>document.getElementById('m-version-badge').textContent = window.DMSMART_VERSION || 'v?';</script>
+<script>
+document.getElementById('m-version-badge').textContent = window.DMSMART_VERSION || 'v?';
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+</script>
 <script src="js/config-loader.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/auth-store.js"></script>

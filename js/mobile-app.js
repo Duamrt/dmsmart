@@ -275,7 +275,7 @@
         // TODO Fase B4: mobile-energy.html
         window.location.href = 'mobile-energy.html';
       } else if (route === 'setup') {
-        window.location.href = 'index.html';
+        window.location.href = 'index.html?force=desktop';
       } else if (route === 'agenda' || route === 'add') {
         alert('Em construção');
       }

@@ -90,7 +90,7 @@
   document.querySelectorAll('[data-route]').forEach(btn => {
     btn.addEventListener('click', () => {
       const r = btn.getAttribute('data-route');
-      if (r === 'setup') window.location.href = 'index.html';
+      if (r === 'setup') window.location.href = 'index.html?force=desktop';
       else if (r === 'add') alert('Em construção');
     });
   });

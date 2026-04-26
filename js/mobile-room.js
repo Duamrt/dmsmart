@@ -195,7 +195,7 @@
     btn.addEventListener('click', () => {
       const r = btn.getAttribute('data-route');
       if (r === 'energia') window.location.href = 'mobile-energy.html';
-      else if (r === 'setup') window.location.href = 'index.html';
+      else if (r === 'setup') window.location.href = 'index.html?force=desktop';
       else if (r === 'add') alert('Em construção');
     });
   });
