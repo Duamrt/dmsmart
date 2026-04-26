@@ -4,7 +4,8 @@
 
 const _recentlyToggled = new Set();
 
-const _esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+// _esc é declarado em app.js (escopo global) — usado nas funções de render abaixo
+// pra escapar zone.name e prevenir XSS em template literals
 
 const UIRenderer = {
   container: null,
