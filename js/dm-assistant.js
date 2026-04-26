@@ -1,5 +1,5 @@
-// dm-assistant.js v3.1 — worker-first (Claude roda no Python, sem CORS)
-const DM_VERSION = 'v3.1.0';
+// dm-assistant.js v3.2 — markdown rendering no painel HUD
+const DM_VERSION = 'v3.2.0';
 console.log(`%c[DM] ${DM_VERSION} carregado`, 'color:#38bdf8;font-weight:bold;font-size:14px');
 
 const DM_CONFIG = {
@@ -327,11 +327,63 @@ class DMAssistant {
     const feed = document.getElementById('dm-feed');
     if (!feed) return;
     document.getElementById('feed-empty')?.remove();
-    const div       = document.createElement('div');
-    div.className   = `dm-msg dm-msg--${role}`;
-    div.textContent = texto;
+    const div     = document.createElement('div');
+    div.className = `dm-msg dm-msg--${role}`;
+    if (role === 'dm') {
+      div.innerHTML = this._md(texto);
+    } else {
+      div.textContent = texto;
+    }
     feed.appendChild(div);
-    feed.scrollTop  = feed.scrollHeight;
+    feed.scrollTop = feed.scrollHeight;
+  }
+
+  // markdown leve → HTML (escapa primeiro, depois aplica formatação)
+  _md(s) {
+    if (!s) return '';
+    const esc = String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    const lines = esc.split(/\r?\n/);
+    const out = [];
+    let inUl = false, inOl = false;
+    const closeLists = () => {
+      if (inUl) { out.push('</ul>'); inUl = false; }
+      if (inOl) { out.push('</ol>'); inOl = false; }
+    };
+    const inline = (t) => t
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/(^|\s)\*([^*\n]+)\*/g, '$1<em>$2</em>')
+      .replace(/(^|\s)_([^_\n]+)_/g, '$1<em>$2</em>')
+      .replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+    for (const raw of lines) {
+      const l = raw.trimEnd();
+      let m;
+      if (!l.trim()) { closeLists(); continue; }
+      if ((m = l.match(/^###\s+(.*)$/))) { closeLists(); out.push(`<h3>${inline(m[1])}</h3>`); continue; }
+      if ((m = l.match(/^##\s+(.*)$/)))  { closeLists(); out.push(`<h2>${inline(m[1])}</h2>`); continue; }
+      if ((m = l.match(/^#\s+(.*)$/)))   { closeLists(); out.push(`<h1>${inline(m[1])}</h1>`); continue; }
+      if ((m = l.match(/^\s*[-*]\s+(.*)$/))) {
+        if (inOl) { out.push('</ol>'); inOl = false; }
+        if (!inUl) { out.push('<ul>'); inUl = true; }
+        out.push(`<li>${inline(m[1])}</li>`);
+        continue;
+      }
+      if ((m = l.match(/^\s*\d+\.\s+(.*)$/))) {
+        if (inUl) { out.push('</ul>'); inUl = false; }
+        if (!inOl) { out.push('<ol>'); inOl = true; }
+        out.push(`<li>${inline(m[1])}</li>`);
+        continue;
+      }
+      closeLists();
+      out.push(`<p>${inline(l)}</p>`);
+    }
+    closeLists();
+    return out.join('');
   }
 
   _setStatus(estado, texto) {
