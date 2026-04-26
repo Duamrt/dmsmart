@@ -50,17 +50,30 @@
 
   function deviceRender(domain, isOn) {
     // Renders SVG estilizados por domínio
-    if (domain === 'light') return `
-      <svg viewBox="0 0 56 56" fill="none">
-        <defs><radialGradient id="lampG-${Math.random().toString(36).slice(2,7)}" cx=".5" cy=".4" r=".6">
-          <stop offset="0%" stop-color="#fff" stop-opacity=".95"/>
-          <stop offset="40%" stop-color="${isOn ? '#ffd770' : '#3a3f4a'}"/>
-          <stop offset="100%" stop-color="${isOn ? '#ff6b35' : '#1a1d24'}" stop-opacity=".4"/>
-        </radialGradient></defs>
-        <ellipse cx="28" cy="22" rx="16" ry="18" fill="${isOn ? '#ffd770' : '#3a3f4a'}" opacity="${isOn ? .9 : .6}"/>
-        <path d="M18 36 L38 36 L37 46 L19 46 Z" fill="url(#lampBase)" stroke="rgba(255,255,255,.1)"/>
-        <rect x="25" y="46" width="6" height="6" fill="#1a1d24"/>
-      </svg>`;
+    if (domain === 'light') {
+      const uid = 'lp' + Math.random().toString(36).slice(2,7);
+      const bulbColor = isOn ? '#ffd770' : '#2a2f38';
+      const haloColor = isOn ? '#ff6b35' : '#1a1d24';
+      return `
+        <svg viewBox="0 0 56 56" fill="none">
+          <defs>
+            <radialGradient id="${uid}-bulb" cx=".5" cy=".4" r=".6">
+              <stop offset="0%" stop-color="#fff" stop-opacity="${isOn ? .95 : .15}"/>
+              <stop offset="45%" stop-color="${bulbColor}"/>
+              <stop offset="100%" stop-color="${haloColor}" stop-opacity="${isOn ? .5 : .8}"/>
+            </radialGradient>
+            <linearGradient id="${uid}-base" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#4a4f5a"/>
+              <stop offset="100%" stop-color="#1a1d24"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="28" cy="20" rx="14" ry="16" fill="url(#${uid}-bulb)"/>
+          ${isOn ? `<ellipse cx="24" cy="14" rx="5" ry="7" fill="rgba(255,255,255,.55)"/>` : ''}
+          <path d="M19 35 L37 35 L35 45 L21 45 Z" fill="url(#${uid}-base)" stroke="rgba(255,255,255,.08)"/>
+          <line x1="21" y1="38" x2="35" y2="38" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+          <rect x="25" y="45" width="6" height="6" rx="1" fill="#0a0b10" stroke="rgba(255,255,255,.08)"/>
+        </svg>`;
+    }
     if (domain === 'climate') return `
       <svg viewBox="0 0 56 56" fill="none">
         <rect x="6" y="14" width="44" height="20" rx="4" fill="#e6eaf2" opacity=".9"/>
