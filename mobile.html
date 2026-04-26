@@ -153,8 +153,10 @@
 </div>
 
 <!-- Supabase + auth + installation store + ha client (reusa o que já existe) -->
+<div class="m-version-badge" id="m-version-badge">v—</div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/version.js"></script>
+<script>document.getElementById('m-version-badge').textContent = window.DMSMART_VERSION || 'v?';</script>
 <script src="js/config-loader.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/auth-store.js"></script>

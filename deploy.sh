@@ -8,6 +8,8 @@ VERSION="v$(date +%m%d%H%M)"
 
 # Atualiza CACHE name no sw.js — força browsers a baixarem assets novos
 sed -i "s/const CACHE = 'dmsmart-v[^']*';/const CACHE = 'dmsmart-${VERSION}';/" sw.js
+# Atualiza versão exposta no badge / console
+sed -i "s/window.DMSMART_VERSION = 'v[^']*';/window.DMSMART_VERSION = '${VERSION}';/" js/version.js
 
 git add sw.js js/ css/ manifest.json index.html mobile.html 2>/dev/null
 # Adiciona arquivos modificados específicos da sessão (sem .claude/, assets/, etc)

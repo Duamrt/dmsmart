@@ -32,6 +32,17 @@ body {
 
 button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
 
+/* Version badge — bottom-right */
+.m-version-badge {
+  position: fixed; bottom: calc(96px + env(safe-area-inset-bottom, 0)); right: 10px;
+  font: 10px/1 'JetBrains Mono', monospace;
+  padding: 4px 8px; border-radius: 6px;
+  background: rgba(0,0,0,.6); color: #9aa0b0;
+  border: 1px solid rgba(255,255,255,.08);
+  z-index: 100; pointer-events: none; user-select: none;
+  letter-spacing: .5px;
+}
+
 /* =========================================
    Background halos
    ========================================= */
