@@ -22,18 +22,15 @@
   <link rel="stylesheet" href="css/license.css">
   <link rel="stylesheet" href="css/white-label.css">
   <script>
-    // Auto-detecção de viewport — redireciona pra surface adequada
-    // ?force=desktop|mobile|tablet pula a detecção (debug)
+    // Auto-detecção de viewport — sempre redireciona pra surface nova
+    // ?force=desktop pula a detecção (acessa o app antigo pra setup/wizard)
     (function () {
       var qs = new URLSearchParams(location.search);
       var force = qs.get('force');
-      if (force === 'desktop') return; // fica no app desktop antigo
+      if (force === 'desktop') return; // fica no app desktop antigo (acesso config legado)
       var w = window.innerWidth;
-      var dest = null;
-      if (force === 'mobile' || w <= 768) dest = 'mobile.html';
-      else if (force === 'tablet' || w <= 1280) dest = 'tablet.html';
-      // > 1280px: desktop, fica aqui
-      if (dest) window.location.replace(dest + location.search + location.hash);
+      var dest = (force === 'mobile' || w <= 768) ? 'mobile.html' : 'tablet.html';
+      window.location.replace(dest + location.search + location.hash);
     })();
   </script>
 </head>

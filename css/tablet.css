@@ -149,6 +149,24 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   .t-gauges { grid-template-columns: 1fr; }
   .t-zones { grid-template-columns: 1fr; }
 }
+
+/* Widescreen / desktop — usa o espaço extra */
+@media (min-width: 1400px) {
+  .t-shell { grid-template-columns: 110px 1fr; }
+  .t-mid { grid-template-columns: 1fr 360px; gap: 18px; }
+  .t-zones { grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .t-main { padding: 28px 36px; gap: 18px; }
+  .t-title { font-size: 30px; }
+  .t-clock { font-size: 36px; }
+  .t-ring { width: 110px; height: 110px; }
+  .t-ring-val { font-size: 22px; }
+  .t-gauge-name { font-size: 19px; }
+}
+@media (min-width: 1800px) {
+  .t-zones { grid-template-columns: repeat(5, 1fr); }
+  .t-mid { grid-template-columns: 1fr 420px; }
+  .t-main { padding: 36px 48px; }
+}
 .t-gauge::before {
   content: ''; position: absolute; top: -40px; right: -40px;
   width: 140px; height: 140px;
