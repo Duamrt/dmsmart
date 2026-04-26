@@ -6,31 +6,54 @@
   'use strict';
 
   // ── Bootstrap auth + instalação ─────────────────────────────────────────────
-  await AuthStore.init();
+  let previewMode = false;
+  try { await AuthStore.init(); } catch (e) { console.warn('[mobile] auth init falhou', e); }
 
-  // Sem login → manda pro index pra fazer fluxo de auth/wizard
-  if (!AuthStore.isLoggedIn()) {
-    window.location.replace('index.html');
-    return;
+  let inst = null;
+  if (AuthStore.isLoggedIn()) {
+    inst = ActiveInstallation.ensure();
   }
 
-  // Sem instalação → manda pro index (wizard de setup)
-  const inst = ActiveInstallation.ensure();
+  // Sem login OU sem instalação → modo preview (dados mock pra validação visual)
   if (!inst) {
-    window.location.replace('index.html');
-    return;
+    previewMode = true;
+    inst = {
+      id: 'preview',
+      name: 'Casa Jupi',
+      haUrl: '',
+      zones: [
+        { id: 'sala', name: 'Sala', icon: 'sofa', order: 1, devices: [
+          { entity: 'light.spot_principal', name: 'Spot principal' },
+          { entity: 'light.abajur', name: 'Abajur' },
+          { entity: 'climate.ar_sala', name: 'Ar condicionado' },
+          { entity: 'media_player.tv', name: 'TV Samsung' },
+          { entity: 'cover.cortina', name: 'Cortina' },
+        ]},
+        { id: 'suite', name: 'Suíte', icon: 'bed', order: 2, devices: [
+          { entity: 'light.suite_teto', name: 'Luz teto' },
+          { entity: 'climate.ar_suite', name: 'Ar Suíte' },
+        ]},
+        { id: 'cozinha', name: 'Cozinha', icon: 'stove', order: 3, devices: [
+          { entity: 'light.cozinha', name: 'Luz cozinha' },
+        ]},
+      ],
+    };
+    console.log('[mobile] modo preview — sem login/instalação real');
   }
 
-  // Inicializa ZoneRegistry com config da instalação
+  // Inicializa ZoneRegistry com config (real ou mock)
   ZoneRegistry.init(inst);
 
   // ── Pinta header ────────────────────────────────────────────────────────────
-  const user = AuthStore.getUser();
-  const profile = AuthStore.getProfile();
-  const displayName = profile?.display_name || user?.email?.split('@')[0] || 'Usuário';
-  const initials = (displayName || 'U').slice(0, 2).toUpperCase();
+  const user = AuthStore.getUser?.();
+  const profile = AuthStore.getProfile?.();
+  const displayName = profile?.display_name || user?.email?.split('@')[0] || (previewMode ? 'Duam Rodrigues' : 'Usuário');
+  const initials = (displayName || 'U').replace(/[^A-Za-z]/g,'').slice(0, 2).toUpperCase() || 'DR';
   document.getElementById('m-avatar').textContent = initials;
   document.getElementById('m-user-name').textContent = displayName;
+  if (previewMode) {
+    document.getElementById('m-greeting').textContent = 'Preview · sem login';
+  }
 
   // ── Hero card: nome da instalação + meta ────────────────────────────────────
   document.getElementById('m-hero-name').textContent = inst.name || 'Casa';
@@ -58,7 +81,20 @@
     }
   }
 
-  if (!haUrl || !haToken) {
+  if (previewMode) {
+    // Estados mock pra preview visual
+    setHaStatus('online');
+    StateStore.init({
+      'light.spot_principal': { s: 'on',  lc: Date.now()/1000 },
+      'light.abajur':         { s: 'on',  lc: Date.now()/1000 },
+      'climate.ar_sala':      { s: 'cool',lc: Date.now()/1000 },
+      'media_player.tv':      { s: 'off', lc: Date.now()/1000 },
+      'cover.cortina':        { s: 'closed', lc: Date.now()/1000 },
+      'light.suite_teto':     { s: 'on',  lc: Date.now()/1000 },
+      'climate.ar_suite':     { s: 'auto',lc: Date.now()/1000 },
+      'light.cozinha':        { s: 'off', lc: Date.now()/1000 },
+    });
+  } else if (!haUrl || !haToken) {
     setHaStatus('offline');
     document.getElementById('m-hero-meta').insertAdjacentHTML('beforeend',
       '<span style="font-size:11px;color:var(--text-3)">configure HA no setup</span>');
