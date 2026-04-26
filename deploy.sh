@@ -11,7 +11,7 @@ sed -i "s/const CACHE = 'dmsmart-v[^']*';/const CACHE = 'dmsmart-${VERSION}';/" 
 # Atualiza versão exposta no badge / console
 sed -i "s/window.DMSMART_VERSION = 'v[^']*';/window.DMSMART_VERSION = '${VERSION}';/" js/version.js
 
-git add sw.js js/ css/ manifest.json index.html mobile.html 2>/dev/null
+git add sw.js js/ css/ manifest.json index.html mobile*.html 2>/dev/null
 # Adiciona arquivos modificados específicos da sessão (sem .claude/, assets/, etc)
 git status --porcelain | grep -E '^.M' | awk '{print $2}' | xargs -r git add 2>/dev/null
 

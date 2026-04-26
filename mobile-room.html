@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0a0b10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>dmsmart — Cômodo</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/mobile.css">
+<link rel="stylesheet" href="css/mobile-room.css">
+</head>
+<body>
+<div class="bg-halos" aria-hidden="true">
+  <div class="halo halo-1"></div>
+  <div class="halo halo-2"></div>
+  <div class="halo halo-3"></div>
+</div>
+
+<div class="app">
+  <!-- Header com voltar -->
+  <header class="m-header">
+    <button class="m-icon-btn" id="m-back" title="Voltar">
+      <svg fill="none" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <div style="flex:1; min-width:0">
+      <div class="m-room-title" id="m-room-title">—</div>
+      <div class="m-room-sub" id="m-room-sub">—</div>
+    </div>
+    <button class="m-icon-btn" id="m-room-edit" title="Editar">
+      <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+    </button>
+  </header>
+
+  <!-- Room tabs -->
+  <div class="m-room-tabs" id="m-room-tabs"></div>
+
+  <!-- Climate hero strip (mostra se zona tem entidade climate) -->
+  <div class="m-climate" id="m-climate" hidden>
+    <div class="m-climate-icon">
+      <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9V2M5 8l-3 3M19 8l3 3M5 16h14a3 3 0 0 0 0-6H5a3 3 0 0 0 0 6zM8 22l2-3M16 22l-2-3M12 22v-3"/></svg>
+    </div>
+    <div class="m-climate-info">
+      <div class="m-climate-label">CLIMA AGORA</div>
+      <div class="m-climate-val" id="m-climate-val">—</div>
+      <div class="m-climate-sub" id="m-climate-sub">—</div>
+    </div>
+    <div class="m-climate-bars" aria-hidden="true">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+
+  <main class="m-main">
+    <div class="m-dev-grid" id="m-dev-grid">
+      <div class="m-dev-empty">Carregando...</div>
+    </div>
+  </main>
+
+  <!-- Bottom tab bar -->
+  <nav class="m-tabbar" aria-label="Navegação principal">
+    <a class="m-tab" href="mobile.html" title="Casa">
+      <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m3 12 9-9 9 9M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/></svg>
+    </a>
+    <button class="m-tab active" data-route="comodos" title="Cômodos">
+      <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>
+    </button>
+    <button class="m-fab" data-route="add" title="Adicionar">
+      <svg fill="none" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+    <button class="m-tab" data-route="energia" title="Energia">
+      <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 14l4-4 4 4 5-5"/></svg>
+    </button>
+    <button class="m-tab" data-route="setup" title="Setup">
+      <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+  </nav>
+</div>
+
+<div class="m-version-badge" id="m-version-badge">v—</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/version.js"></script>
+<script>document.getElementById('m-version-badge').textContent = window.DMSMART_VERSION || 'v?';</script>
+<script src="js/config-loader.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth-store.js"></script>
+<script src="js/installation-store.js"></script>
+<script src="js/active-installation.js"></script>
+<script src="js/zone-registry.js"></script>
+<script src="js/state-store.js"></script>
+<script src="js/ha-client.js"></script>
+<script src="js/mobile-shared.js"></script>
+<script src="js/mobile-room.js"></script>
+</body>
+</html>
