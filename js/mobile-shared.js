@@ -60,6 +60,8 @@
 
   const MobileBoot = {
     previewMode: false,
+    loggedNoInstall: false,   // logado, mas sem instalação no localStorage nem no cloud
+    needsHaToken: false,      // logado, instalação tem haUrl, mas falta token neste device
     inst: null,
 
     async init() {
@@ -67,18 +69,21 @@
 
       let inst = null;
       if (AuthStore.isLoggedIn?.()) {
+        // Puxa do cloud antes — device novo / cache limpo precisa disso
+        try { await InstallationStore.pullFromCloud?.(); } catch (e) { console.warn('[mobile] pull cloud', e); }
         inst = ActiveInstallation.ensure();
+        if (!inst) this.loggedNoInstall = true;
       }
 
       if (!inst) {
-        this.previewMode = true;
+        this.previewMode = !AuthStore.isLoggedIn?.();
         inst = JSON.parse(JSON.stringify(PREVIEW_INSTALL));
       }
       this.inst = inst;
 
       ZoneRegistry.init(inst);
 
-      if (this.previewMode) {
+      if (this.previewMode || this.loggedNoInstall) {
         StateStore.init(JSON.parse(JSON.stringify(PREVIEW_STATES)));
         return;
       }
@@ -86,8 +91,20 @@
       // Modo real: conecta no HA
       const haUrl = inst.haUrl || inst.ha_url;
       const haToken = ActiveInstallation.getToken?.();
+      if (haUrl && !haToken) {
+        this.needsHaToken = true;
+        StateStore.init([]);
+        return;
+      }
       if (haUrl && haToken) {
         HAClient.setConfig({ url: haUrl, token: haToken });
+        // Registra listener ANTES de connect — assim _afterAuth replay popula StateStore
+        HAClient.onStateChanged?.((entityId, newState) => {
+          const watched = new Set(ZoneRegistry.allEntityIds());
+          if (watched.has(entityId)) {
+            StateStore.update(entityId, { entity_id: entityId, state: newState.state, attributes: newState.attributes });
+          }
+        });
         try {
           await HAClient.connect();
           const all = await HAClient.send({ type: 'get_states' });
@@ -96,16 +113,30 @@
             const filtered = all.filter(s => watched.has(s.entity_id));
             StateStore.init(filtered);
           }
-          HAClient.onStateChanged?.((entityId, newState) => {
-            const watched = new Set(ZoneRegistry.allEntityIds());
-            if (watched.has(entityId)) {
-              StateStore.update(entityId, { entity_id: entityId, state: newState.state, attributes: newState.attributes });
-            }
-          });
         } catch (e) {
           console.warn('[mobile] HA falhou, modo offline', e);
         }
       }
+    },
+
+    // Overlay simples pra avisar usuário logado sem instalação ou sem token HA
+    showSetupBanner() {
+      if (document.getElementById('mb-setup-banner')) return;
+      let msg, cta;
+      if (this.loggedNoInstall) {
+        msg = 'Você está logado mas ainda não tem nenhuma instalação configurada.';
+        cta = 'Configurar agora';
+      } else if (this.needsHaToken) {
+        msg = 'Esta instalação ainda não tem token Home Assistant neste dispositivo.';
+        cta = 'Configurar token';
+      } else {
+        return;
+      }
+      const el = document.createElement('div');
+      el.id = 'mb-setup-banner';
+      el.style.cssText = 'position:fixed;left:12px;right:12px;bottom:84px;z-index:9999;background:rgba(20,22,32,.96);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(12px);border-radius:14px;padding:14px 16px;color:#fff;font:500 13px Inter,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.4);display:flex;align-items:center;gap:12px';
+      el.innerHTML = `<div style="flex:1;line-height:1.4">${msg}</div><a href="index.html?force=desktop" style="background:#0057FF;color:#fff;text-decoration:none;padding:8px 14px;border-radius:10px;font-weight:600;white-space:nowrap">${cta}</a>`;
+      document.body.appendChild(el);
     },
 
     iconForDomain(domain) {

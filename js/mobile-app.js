@@ -5,44 +5,10 @@
 (async function () {
   'use strict';
 
-  // ── Bootstrap auth + instalação ─────────────────────────────────────────────
-  let previewMode = false;
-  try { await AuthStore.init(); } catch (e) { console.warn('[mobile] auth init falhou', e); }
-
-  let inst = null;
-  if (AuthStore.isLoggedIn()) {
-    inst = ActiveInstallation.ensure();
-  }
-
-  // Sem login OU sem instalação → modo preview (dados mock pra validação visual)
-  if (!inst) {
-    previewMode = true;
-    inst = {
-      id: 'preview',
-      name: 'Casa Jupi',
-      haUrl: '',
-      zones: [
-        { id: 'sala', name: 'Sala', icon: 'sofa', order: 1, devices: [
-          { entity: 'light.spot_principal', name: 'Spot principal' },
-          { entity: 'light.abajur', name: 'Abajur' },
-          { entity: 'climate.ar_sala', name: 'Ar condicionado' },
-          { entity: 'media_player.tv', name: 'TV Samsung' },
-          { entity: 'cover.cortina', name: 'Cortina' },
-        ]},
-        { id: 'suite', name: 'Suíte', icon: 'bed', order: 2, devices: [
-          { entity: 'light.suite_teto', name: 'Luz teto' },
-          { entity: 'climate.ar_suite', name: 'Ar Suíte' },
-        ]},
-        { id: 'cozinha', name: 'Cozinha', icon: 'stove', order: 3, devices: [
-          { entity: 'light.cozinha', name: 'Luz cozinha' },
-        ]},
-      ],
-    };
-    console.log('[mobile] modo preview — sem login/instalação real');
-  }
-
-  // Inicializa ZoneRegistry com config (real ou mock)
-  ZoneRegistry.init(inst);
+  // ── Bootstrap unificado via MobileBoot (mobile-shared.js) ───────────────────
+  await MobileBoot.init();
+  const previewMode = MobileBoot.previewMode;
+  const inst = MobileBoot.inst;
 
   // ── Pinta header ────────────────────────────────────────────────────────────
   const user = AuthStore.getUser?.();
@@ -62,9 +28,7 @@
   document.getElementById('m-qa-zonas').textContent = `${zones.length} zona${zones.length === 1 ? '' : 's'}`;
   document.getElementById('m-qa-comodos-meta').textContent = `${zones.length} zona${zones.length === 1 ? '' : 's'}`;
 
-  // ── Conexão HA ──────────────────────────────────────────────────────────────
-  const haUrl = inst.haUrl || inst.ha_url;
-  const haToken = ActiveInstallation.getToken();
+  // ── Conexão HA — feito pelo MobileBoot.init. Aqui só pinta status. ──────────
   const statusDot = document.getElementById('m-hero-status-dot');
   const statusTxt = document.getElementById('m-hero-status');
 
@@ -82,55 +46,13 @@
   }
 
   if (previewMode) {
-    // Estados mock pra preview visual (formato compatível com StateStore: array de entities)
     setHaStatus('online');
-    StateStore.init([
-      { entity_id: 'light.spot_principal', state: 'on'    },
-      { entity_id: 'light.abajur',         state: 'on'    },
-      { entity_id: 'climate.ar_sala',      state: 'cool'  },
-      { entity_id: 'media_player.tv',      state: 'off'   },
-      { entity_id: 'cover.cortina',        state: 'closed'},
-      { entity_id: 'light.suite_teto',     state: 'on'    },
-      { entity_id: 'climate.ar_suite',     state: 'auto'  },
-      { entity_id: 'light.cozinha',        state: 'off'   },
-    ]);
-  } else if (!haUrl || !haToken) {
-    setHaStatus('offline');
-    document.getElementById('m-hero-meta').insertAdjacentHTML('beforeend',
-      '<span style="font-size:11px;color:var(--text-3)">configure HA no setup</span>');
+  } else if (MobileBoot.loggedNoInstall || MobileBoot.needsHaToken) {
+    statusDot.className = 'meta-dot warn';
+    statusTxt.textContent = MobileBoot.loggedNoInstall ? 'sem instalação' : 'configurar token';
+    MobileBoot.showSetupBanner?.();
   } else {
-    setHaStatus('connecting');
-    HAClient.setConfig({ url: haUrl, token: haToken });
     HAClient.onStatusChange(setHaStatus);
-
-    try {
-      await HAClient.connect();
-    } catch (e) {
-      console.error('[mobile] HA connect falhou', e);
-      setHaStatus('offline');
-    }
-
-    // Carrega estados iniciais e popula StateStore
-    try {
-      const allStates = await HAClient.send({ type: 'get_states' });
-      if (Array.isArray(allStates)) {
-        const watched = new Set(ZoneRegistry.allEntityIds());
-        const filtered = allStates.filter(s => watched.has(s.entity_id));
-        StateStore.init(filtered);
-      }
-    } catch (e) {
-      console.warn('[mobile] não foi possível carregar estados HA:', e?.message);
-    }
-
-    // Listener pra atualizações de estado
-    HAClient.onStateChanged((entityId, newState) => {
-      const watched = new Set(ZoneRegistry.allEntityIds());
-      if (watched.has(entityId)) {
-        StateStore.update(entityId, { entity_id: entityId, state: newState.state, attributes: newState.attributes });
-        renderHeroMeta();
-        renderActiveRoom();
-      }
-    });
   }
 
   // ── Hero meta: contar dispositivos ligados, temperatura média se tiver ──────

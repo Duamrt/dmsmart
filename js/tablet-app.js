@@ -24,6 +24,14 @@
   if (MobileBoot.previewMode) {
     connDot.className = 't-dot t-dot-warn';
     connText.textContent = 'Modo preview · sem login';
+  } else if (MobileBoot.loggedNoInstall) {
+    connDot.className = 't-dot t-dot-warn';
+    connText.textContent = 'sem instalação';
+    MobileBoot.showSetupBanner?.();
+  } else if (MobileBoot.needsHaToken) {
+    connDot.className = 't-dot t-dot-warn';
+    connText.textContent = 'sem token HA';
+    MobileBoot.showSetupBanner?.();
   } else if (typeof HAClient !== 'undefined' && HAClient.onStatusChange) {
     HAClient.onStatusChange((s) => {
       connDot.className = 't-dot ' + (s === 'online' ? 't-dot-on' : (s === 'connecting' || s === 'reconnecting') ? 't-dot-warn' : 't-dot-off');
