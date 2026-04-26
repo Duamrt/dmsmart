@@ -167,6 +167,9 @@ const HAClient = {
     });
   },
 
+  // Alias público — usado pelas telas mobile/tablet
+  send(payload) { return this._send(payload); },
+
   _rejectPending() {
     for (const [, p] of this._pending) p.reject(new Error('ws closed'));
     this._pending.clear();
