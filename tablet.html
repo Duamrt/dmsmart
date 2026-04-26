@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0b10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>dmsmart — Tablet</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tablet.css">
+</head>
+<body>
+<div class="bg-halos" aria-hidden="true">
+  <div class="halo halo-1"></div>
+  <div class="halo halo-2"></div>
+  <div class="halo halo-3"></div>
+</div>
+
+<div class="t-shell">
+  <!-- Sidebar slim -->
+  <aside class="t-sidebar" aria-label="Navegação">
+    <div class="t-brand">DM<span class="t-brand-dot"></span></div>
+    <button class="t-sb-item active" data-view="casa" title="Casa">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m3 12 9-9 9 9M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/></svg>
+      <span>Casa</span>
+    </button>
+    <button class="t-sb-item" data-view="zonas" title="Zonas">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>
+      <span>Zonas</span>
+    </button>
+    <button class="t-sb-item" data-view="energia" title="Energia">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+      <span>Energia</span>
+    </button>
+    <button class="t-sb-item" data-view="cenas" title="Cenas">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
+      <span>Cenas</span>
+    </button>
+    <button class="t-sb-item" data-view="logs" title="Logs">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18"/></svg>
+      <span>Logs</span>
+    </button>
+    <button class="t-sb-item" data-view="alertas" title="Alertas">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4M12 17h.01M21.7 18 13.7 4a2 2 0 0 0-3.4 0l-8 14a2 2 0 0 0 1.7 3h16a2 2 0 0 0 1.7-3z"/></svg>
+      <span>Alertas</span>
+    </button>
+    <div class="t-sb-spacer"></div>
+    <button class="t-sb-item" data-view="setup" title="Setup">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></svg>
+      <span>Setup</span>
+    </button>
+  </aside>
+
+  <!-- Main -->
+  <main class="t-main">
+    <!-- Topbar -->
+    <div class="t-topbar">
+      <div>
+        <div class="t-greet">Bem-vindo,</div>
+        <div class="t-title" id="t-title">—</div>
+      </div>
+      <div class="t-tb-right">
+        <div class="t-status"><span class="t-dot t-dot-on" id="t-conn-dot"></span><span id="t-conn-text">conectando…</span></div>
+        <div>
+          <div class="t-clock" id="t-clock">--:--</div>
+          <div class="t-date" id="t-date">— · — —</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero gauges -->
+    <div class="t-gauges">
+      <div class="t-gauge t-gauge-1">
+        <div class="t-ring"><svg viewBox="0 0 100 100">
+          <defs><linearGradient id="tg1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2a73ff"/><stop offset="100%" stop-color="#00d4ff"/></linearGradient></defs>
+          <circle class="t-ring-bg" cx="50" cy="50" r="42"/>
+          <circle class="t-ring-fg" cx="50" cy="50" r="42" stroke="url(#tg1)" stroke-dasharray="263.9" stroke-dashoffset="100"/>
+        </svg><div class="t-ring-val"><span id="t-gauge-temp">26.7</span><small>°C</small></div></div>
+        <div class="t-gauge-info">
+          <div class="t-gauge-label">EXTERNA</div>
+          <div class="t-gauge-name">Temperatura</div>
+          <div class="t-gauge-sub" id="t-gauge-temp-sub">Sensação 28° · 65% UR</div>
+        </div>
+      </div>
+      <div class="t-gauge t-gauge-2">
+        <div class="t-ring"><svg viewBox="0 0 100 100">
+          <defs><linearGradient id="tg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2dd47b"/><stop offset="100%" stop-color="#00d4ff"/></linearGradient></defs>
+          <circle class="t-ring-bg" cx="50" cy="50" r="42"/>
+          <circle class="t-ring-fg" cx="50" cy="50" r="42" stroke="url(#tg2)" stroke-dasharray="263.9" stroke-dashoffset="80"/>
+        </svg><div class="t-ring-val"><span id="t-gauge-power">847</span><small>W</small></div></div>
+        <div class="t-gauge-info">
+          <div class="t-gauge-label">AGORA</div>
+          <div class="t-gauge-name">Consumo</div>
+          <div class="t-gauge-sub" id="t-gauge-power-sub">R$ 12,87 hoje · ↓12%</div>
+        </div>
+      </div>
+      <div class="t-gauge t-gauge-3">
+        <div class="t-ring"><svg viewBox="0 0 100 100">
+          <defs><linearGradient id="tg3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF6B35"/><stop offset="100%" stop-color="#d946ef"/></linearGradient></defs>
+          <circle class="t-ring-bg" cx="50" cy="50" r="42"/>
+          <circle class="t-ring-fg" cx="50" cy="50" r="42" stroke="url(#tg3)" stroke-dasharray="263.9" stroke-dashoffset="160"/>
+        </svg><div class="t-ring-val"><span id="t-gauge-on">0</span><small id="t-gauge-on-of">/0</small></div></div>
+        <div class="t-gauge-info">
+          <div class="t-gauge-label">LIGADOS</div>
+          <div class="t-gauge-name">Dispositivos</div>
+          <div class="t-gauge-sub" id="t-gauge-on-sub">—</div>
+        </div>
+      </div>
+      <div class="t-gauge t-gauge-4">
+        <div class="t-ring"><svg viewBox="0 0 100 100">
+          <defs><linearGradient id="tg4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#d946ef"/><stop offset="100%" stop-color="#2a73ff"/></linearGradient></defs>
+          <circle class="t-ring-bg" cx="50" cy="50" r="42"/>
+          <circle class="t-ring-fg" cx="50" cy="50" r="42" stroke="url(#tg4)" stroke-dasharray="263.9" stroke-dashoffset="40"/>
+        </svg><div class="t-ring-val"><span>85</span><small>%</small></div></div>
+        <div class="t-gauge-info">
+          <div class="t-gauge-label">STATUS</div>
+          <div class="t-gauge-name">Segurança</div>
+          <div class="t-gauge-sub" id="t-gauge-sec-sub">3 câmeras · portões OK</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mid grid: zonas + side panel -->
+    <div class="t-mid">
+      <div class="t-zones" id="t-zones"></div>
+
+      <aside class="t-side">
+        <div class="t-side-title">Consumo agora</div>
+        <div class="t-side-big">
+          <span class="t-side-v" id="t-side-now">847</span>
+          <span class="t-side-u">W</span>
+        </div>
+        <svg class="t-side-spark" viewBox="0 0 280 60" fill="none" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="tspG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#d946ef" stop-opacity=".4"/><stop offset="100%" stop-color="#d946ef" stop-opacity="0"/></linearGradient>
+            <linearGradient id="tspS" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#2a73ff"/><stop offset="50%" stop-color="#d946ef"/><stop offset="100%" stop-color="#FF6B35"/></linearGradient>
+          </defs>
+          <path d="M0,42 C30,40 60,32 90,38 C120,42 150,18 180,22 C210,26 240,12 270,18 L280,16 L280,60 L0,60 Z" fill="url(#tspG)"/>
+          <path d="M0,42 C30,40 60,32 90,38 C120,42 150,18 180,22 C210,26 240,12 270,18 L280,16" stroke="url(#tspS)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+        </svg>
+        <div>
+          <div class="t-side-row"><span class="t-l">Hoje</span><span class="t-v">14.2 kWh</span></div>
+          <div class="t-side-row"><span class="t-l">Custo hoje</span><span class="t-v" style="color:var(--orange)">R$ 12,87</span></div>
+          <div class="t-side-row"><span class="t-l">Mês até agora</span><span class="t-v">387 kWh</span></div>
+          <div class="t-side-row"><span class="t-l">Projeção mês</span><span class="t-v" style="color:var(--green)">412 kWh</span></div>
+        </div>
+        <div class="t-side-title" style="margin-top:8px">Top consumidores</div>
+        <div>
+          <div class="t-side-row"><span class="t-l">AC Sala</span><span class="t-v">340W</span></div>
+          <div class="t-side-row"><span class="t-l">AC Suíte</span><span class="t-v">280W</span></div>
+          <div class="t-side-row"><span class="t-l">Geladeira</span><span class="t-v">125W</span></div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Events timeline -->
+    <div class="t-events" id="t-events"></div>
+  </main>
+</div>
+
+<div class="m-version-badge" id="t-version-badge">v—</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/version.js"></script>
+<script>document.getElementById('t-version-badge').textContent = window.DMSMART_VERSION || 'v?';</script>
+<script src="js/config-loader.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth-store.js"></script>
+<script src="js/installation-store.js"></script>
+<script src="js/active-installation.js"></script>
+<script src="js/zone-registry.js"></script>
+<script src="js/state-store.js"></script>
+<script src="js/ha-client.js"></script>
+<script src="js/mobile-shared.js"></script>
+<script src="js/tablet-app.js"></script>
+</body>
+</html>
