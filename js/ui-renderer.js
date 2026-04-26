@@ -4,6 +4,8 @@
 
 const _recentlyToggled = new Set();
 
+const _esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+
 const UIRenderer = {
   container: null,
   _zoneUnsubs: [],
@@ -170,7 +172,7 @@ const UIRenderer = {
         </div>
       </div>
       <div class="zone-body">
-        <div class="zone-name">${zone.name}</div>
+        <div class="zone-name">${_esc(zone.name)}</div>
         <div class="zone-sub">${sub}</div>
       </div>
       <div class="zone-devices">${deviceBadges}${tempBadge}</div>
@@ -267,7 +269,7 @@ const UIRenderer = {
         ${genBadge}
       </div>
       <div class="zone-body">
-        <div class="zone-name">${zone.name}</div>
+        <div class="zone-name">${_esc(zone.name)}</div>
         <div class="zone-sub">${statusText}</div>
       </div>
       <div class="solar-metrics">${metricsHTML}</div>

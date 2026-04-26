@@ -74,7 +74,6 @@ const HAClient = {
         try { msg = JSON.parse(ev.data); } catch { return; }
 
         if (msg.type === 'auth_required') {
-          console.log('[ha-client] auth_required recebido. Token len=' + (this._token ? this._token.length : 0) + ' head=' + (this._token || '').slice(0, 20) + ' tail=' + (this._token || '').slice(-10));
           ws.send(JSON.stringify({ type: 'auth', access_token: this._token }));
           return;
         }

@@ -4,8 +4,9 @@
 
 const AlertsManager = (() => {
   const STORAGE_KEY = 'dmsmart_alerts_cfg';
-  const COOLDOWN_KEY = 'dmsmart_alerts_cooldown';
   const COOLDOWN_DEFAULT_MIN = 30;
+  // Cooldown por instalação — sem isso, alerta de uma instalação silencia outra
+  const _cdKey = () => 'dmsmart_alerts_cooldown_' + (_installId || 'default');
 
   let _el = null;          // section do painel de config
   let _unsubState = null;  // unsub do HAClient.onStateChanged
@@ -56,7 +57,7 @@ const AlertsManager = (() => {
 
   // ── Cooldown I/O ────────────────────────────────────────────────────────
   function _getCooldowns() {
-    try { return JSON.parse(localStorage.getItem(COOLDOWN_KEY) || '{}'); } catch { return {}; }
+    try { return JSON.parse(localStorage.getItem(_cdKey()) || '{}'); } catch { return {}; }
   }
 
   function _isInCooldown(key, cooldownMin) {
@@ -69,7 +70,7 @@ const AlertsManager = (() => {
   function _setCooldown(key) {
     const cd = _getCooldowns();
     cd[key] = Date.now();
-    localStorage.setItem(COOLDOWN_KEY, JSON.stringify(cd));
+    localStorage.setItem(_cdKey(), JSON.stringify(cd));
   }
 
   // ── Inicialização do monitor ────────────────────────────────────────────

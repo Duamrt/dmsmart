@@ -852,7 +852,12 @@ async function connectToHA(installation) {
     return;
   }
 
-  HAClient.onStateChanged((entityId, newState) => {
+  // Limpa listeners anteriores (caso connectToHA seja chamado novamente
+  // ao trocar de instalação ou criar instalação nova) — evita listener accumulation
+  if (typeof window._haStateUnsub === 'function') { try { window._haStateUnsub(); } catch {} }
+  if (typeof window._haRegistryUnsub === 'function') { try { window._haRegistryUnsub(); } catch {} }
+
+  window._haStateUnsub = HAClient.onStateChanged((entityId, newState) => {
     // Dinâmico: quando zonas são adicionadas depois do boot, novas entidades
     // passam a ser observadas automaticamente.
     const watched = new Set(ZoneRegistry.allEntityIds());
@@ -862,7 +867,7 @@ async function connectToHA(installation) {
 
   // Quando o usuário cria/edita zonas, seeda o StateStore a partir do cache
   // de get_states do HAClient, pros novos devices aparecerem com estado real.
-  ZoneRegistry.onChange(() => {
+  window._haRegistryUnsub = ZoneRegistry.onChange(() => {
     if (typeof HAClient === 'undefined' || !HAClient.getAllStates) return;
     const allStates = HAClient.getAllStates();
     if (!Array.isArray(allStates) || allStates.length === 0) return;
@@ -934,8 +939,9 @@ function initHero(installation) {
   const greet = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
 
   eyebrow.textContent = greet;
-  // Usa o primeiro nome do usuário logado; fallback para nome da instalação
-  let displayName = _formatInstallName(installation.name) || 'Instalação';
+  // Mostra nome do usuário logado. Fallback genérico — NUNCA mostra nome da
+  // instalação como saudação (parecia "Bom dia, Casa Jupi" — não faz sentido)
+  let displayName = '';
   if (typeof AuthStore !== 'undefined' && AuthStore.isLoggedIn()) {
     const user = AuthStore.getUser();
     const meta = user?.user_metadata;
@@ -946,7 +952,9 @@ function initHero(installation) {
       : rawName.split(' ')[0];
     if (firstName) displayName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
   }
+  // Sem usuário ou sem nome → omite o título (fica só "Bom dia")
   title.textContent = displayName;
+  title.style.display = displayName ? '' : 'none';
 
   const updateSubtitle = () => {
     const zones = ZoneRegistry.all();
@@ -981,9 +989,13 @@ function initHero(installation) {
   };
 
   recompute();
-  StateStore.subscribeAll(recompute);
+  // Limpa subs anteriores antes de re-subscrever (evita listener accumulation
+  // quando initHero é chamado de novo após criar instalação)
+  if (typeof window._heroStateUnsub === 'function') { try { window._heroStateUnsub(); } catch {} }
+  if (typeof window._heroRegistryUnsub === 'function') { try { window._heroRegistryUnsub(); } catch {} }
+  window._heroStateUnsub = StateStore.subscribeAll(recompute);
   if (typeof ZoneRegistry.onChange === 'function') {
-    ZoneRegistry.onChange(() => { updateSubtitle(); recompute(); });
+    window._heroRegistryUnsub = ZoneRegistry.onChange(() => { updateSubtitle(); recompute(); });
   }
 }
 
