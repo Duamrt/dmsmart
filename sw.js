@@ -1,6 +1,6 @@
 // DM Smart — Service Worker
 // Cache-first pra assets estáticos, network-first pra HTML, fallback pra index.html offline
-const CACHE = 'dmsmart-v04261639';
+const CACHE = 'dmsmart-v04261643';
 const ASSETS = [
   '/',
   '/index.html',
@@ -40,6 +40,14 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
+
+  // DM Assistente (/dm.html e suas chamadas) — passa direto, sem cache.
+  // Evita conflito entre SW do DM Smart e o app DM Assistente.
+  const url = new URL(req.url);
+  if (url.pathname === '/dm.html' || url.pathname.startsWith('/dm-')) {
+    e.respondWith(fetch(req, { cache: 'no-store' }));
+    return;
+  }
 
   // HTML: SEMPRE network-first com bypass de cache HTTP (-no-store).
   // Se a rede falhar, retorna o cache do MESMO req (sem fallback pra outra página).
