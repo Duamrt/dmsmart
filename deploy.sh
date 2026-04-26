@@ -18,10 +18,10 @@ git status --porcelain | grep -E '^.M' | awk '{print $2}' | xargs -r git add 2>/
 git commit -m "${VERSION} ${MSG}" || { echo "Nada pra commitar"; exit 0; }
 git push origin dev
 
-# Sync master = dev (Gitflow: dev é a fonte da verdade, master serve GH Pages)
-git checkout master
+# Sync main = dev (Gitflow: dev é a fonte da verdade, main serve GH Pages)
+git checkout main
 git reset --hard dev
-git push --force-with-lease origin master
+git push --force-with-lease origin main
 git checkout dev
 
 echo "✓ ${VERSION} no ar · https://app.dmstack.com.br"
