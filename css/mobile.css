@@ -32,6 +32,60 @@ body {
 
 button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
 
+/* Login modal */
+.m-auth-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(10,11,16,.85);
+  backdrop-filter: blur(20px);
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.m-auth-overlay.open { display: flex; }
+.m-auth-card {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(30px);
+  border-radius: 24px;
+  padding: 24px; width: 100%; max-width: 360px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.m-auth-card h2 { font-size: 20px; font-weight: 700; letter-spacing: -.3px; }
+.m-auth-card label { font-size: 11px; color: var(--text-2, #9aa0b0); letter-spacing: .5px; font-weight: 600; }
+.m-auth-card input {
+  width: 100%; padding: 12px 14px; border-radius: 12px;
+  background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08);
+  color: var(--text, #F5F7FA); font: inherit; font-size: 14px;
+  margin-top: 4px;
+}
+.m-auth-card input:focus { outline: none; border-color: var(--primary, #2a73ff); }
+.m-auth-err { font-size: 12px; color: #f87171; min-height: 16px; }
+.m-auth-actions { display: flex; gap: 8px; }
+.m-auth-btn {
+  flex: 1; padding: 12px; border-radius: 12px;
+  font-weight: 600; font-size: 14px; border: none; cursor: pointer;
+}
+.m-auth-btn.primary {
+  background: linear-gradient(135deg, var(--primary, #2a73ff), var(--cyan, #00d4ff));
+  color: #fff;
+}
+.m-auth-btn.primary:disabled { opacity: .6; cursor: not-allowed; }
+.m-auth-btn.ghost {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+  color: var(--text, #F5F7FA);
+}
+
+.m-login-pill {
+  position: fixed; top: calc(env(safe-area-inset-top, 0) + 14px); left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #FF6B35, #d946ef);
+  color: #fff; font-weight: 600; font-size: 12px;
+  padding: 8px 14px; border-radius: 12px;
+  border: none; cursor: pointer;
+  box-shadow: 0 6px 20px rgba(255,107,53,.4);
+  z-index: 200;
+}
+
 /* Version badge — bottom-right */
 .m-version-badge {
   position: fixed; bottom: calc(96px + env(safe-area-inset-bottom, 0)); right: 10px;
