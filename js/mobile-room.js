@@ -194,7 +194,7 @@
   document.querySelectorAll('[data-route]').forEach(btn => {
     btn.addEventListener('click', () => {
       const r = btn.getAttribute('data-route');
-      if (r === 'energia') alert('Energia mobile — em construção (Fase B4)');
+      if (r === 'energia') window.location.href = 'mobile-energy.html';
       else if (r === 'setup') window.location.href = 'index.html';
       else if (r === 'add') alert('Em construção');
     });

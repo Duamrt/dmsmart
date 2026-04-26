@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#0a0b10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>dmsmart — Energia</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/mobile.css">
+<link rel="stylesheet" href="css/mobile-energy.css">
+</head>
+<body>
+<div class="bg-halos" aria-hidden="true">
+  <div class="halo halo-1"></div>
+  <div class="halo halo-2"></div>
+  <div class="halo halo-3"></div>
+</div>
+
+<div class="app">
+  <header class="m-header">
+    <button class="m-icon-btn" id="m-back" title="Voltar">
+      <svg fill="none" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <div style="flex:1; min-width:0">
+      <div class="m-en-title">Energia</div>
+      <div class="m-en-sub" id="m-en-sub">—</div>
+    </div>
+    <div style="width:36px"></div>
+  </header>
+
+  <main class="m-en-main">
+    <!-- Big number consumo agora -->
+    <section class="m-en-big">
+      <div class="m-en-big-label">CONSUMO AGORA</div>
+      <div class="m-en-big-row">
+        <span class="m-en-big-val" id="m-en-now">847</span>
+        <span class="m-en-big-unit">W</span>
+      </div>
+      <div class="m-en-big-trend" id="m-en-trend">
+        <svg fill="none" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m6 14 6-6 6 6"/></svg>
+        12% menor que ontem · R$ 2,38 hoje
+      </div>
+    </section>
+
+    <!-- Wave chart -->
+    <section class="m-en-chart">
+      <div class="m-en-chart-head">
+        <div class="m-en-chart-title">Últimas <span id="m-en-period-label">24h</span></div>
+        <div class="m-en-chart-pills">
+          <button class="m-en-pill" data-period="7d">7d</button>
+          <button class="m-en-pill active" data-period="24h">24h</button>
+          <button class="m-en-pill" data-period="1h">1h</button>
+        </div>
+      </div>
+      <svg class="m-en-svg" viewBox="0 0 320 110" fill="none" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="waveG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#d946ef" stop-opacity=".4"/>
+            <stop offset="100%" stop-color="#d946ef" stop-opacity="0"/>
+          </linearGradient>
+          <linearGradient id="waveS" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#2a73ff"/>
+            <stop offset="50%" stop-color="#d946ef"/>
+            <stop offset="100%" stop-color="#FF6B35"/>
+          </linearGradient>
+        </defs>
+        <line x1="0" y1="30" x2="320" y2="30" stroke="rgba(255,255,255,.04)"/>
+        <line x1="0" y1="60" x2="320" y2="60" stroke="rgba(255,255,255,.04)"/>
+        <line x1="0" y1="90" x2="320" y2="90" stroke="rgba(255,255,255,.04)"/>
+        <path id="m-en-area" d="M0,80 C20,82 40,75 60,70 C80,66 100,72 120,60 C140,50 160,42 180,48 C200,52 220,30 240,26 C260,22 280,40 300,46 L320,40 L320,110 L0,110 Z" fill="url(#waveG)"/>
+        <path id="m-en-line" d="M0,80 C20,82 40,75 60,70 C80,66 100,72 120,60 C140,50 160,42 180,48 C200,52 220,30 240,26 C260,22 280,40 300,46 L320,40" stroke="url(#waveS)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <circle cx="240" cy="26" r="4" fill="#fff"/>
+        <circle cx="240" cy="26" r="8" fill="rgba(217,70,239,.3)"/>
+      </svg>
+      <div class="m-en-axis" id="m-en-axis">
+        <span>00h</span><span>06h</span><span>12h</span><span>18h</span><span>agora</span>
+      </div>
+    </section>
+
+    <!-- KPI strip -->
+    <section class="m-en-kpi">
+      <div class="m-en-kpi-card">
+        <div class="m-en-kpi-label">HOJE</div>
+        <div class="m-en-kpi-val">14.2<small> kWh</small></div>
+        <div class="m-en-kpi-sub">↓ 12%</div>
+      </div>
+      <div class="m-en-kpi-card">
+        <div class="m-en-kpi-label">CUSTO</div>
+        <div class="m-en-kpi-val orange">R$ 12,87</div>
+        <div class="m-en-kpi-sub">hoje</div>
+      </div>
+      <div class="m-en-kpi-card">
+        <div class="m-en-kpi-label">MÊS</div>
+        <div class="m-en-kpi-val">387<small> kWh</small></div>
+        <div class="m-en-kpi-sub">proj. 412</div>
+      </div>
+    </section>
+
+    <!-- Top consumidores -->
+    <section class="m-en-cons-card">
+      <div class="m-en-cons-title">Top consumidores <small>agora</small></div>
+      <div id="m-en-cons-list"></div>
+    </section>
+  </main>
+
+  <nav class="m-tabbar" aria-label="Navegação principal">
+    <a class="m-tab" href="mobile.html" title="Casa">
+      <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m3 12 9-9 9 9M5 10v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V10"/></svg>
+    </a>
+    <a class="m-tab" href="mobile-room.html" title="Cômodos">
+      <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>
+    </a>
+    <button class="m-fab" data-route="add" title="Adicionar">
+      <svg fill="none" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+    <button class="m-tab active" title="Energia">
+      <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 14l4-4 4 4 5-5"/></svg>
+    </button>
+    <button class="m-tab" data-route="setup" title="Setup">
+      <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+  </nav>
+</div>
+
+<div class="m-version-badge" id="m-version-badge">v—</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/version.js"></script>
+<script>document.getElementById('m-version-badge').textContent = window.DMSMART_VERSION || 'v?';</script>
+<script src="js/config-loader.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth-store.js"></script>
+<script src="js/installation-store.js"></script>
+<script src="js/active-installation.js"></script>
+<script src="js/zone-registry.js"></script>
+<script src="js/state-store.js"></script>
+<script src="js/ha-client.js"></script>
+<script src="js/mobile-shared.js"></script>
+<script src="js/mobile-energy.js"></script>
+</body>
+</html>

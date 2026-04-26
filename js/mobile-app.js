@@ -273,7 +273,7 @@
       if (route === 'home') return;
       if (route === 'energia') {
         // TODO Fase B4: mobile-energy.html
-        alert('Energia mobile — em construção (Fase B4)');
+        window.location.href = 'mobile-energy.html';
       } else if (route === 'setup') {
         window.location.href = 'index.html';
       } else if (route === 'agenda' || route === 'add') {
@@ -286,7 +286,7 @@
   document.querySelectorAll('[data-action]').forEach(btn => {
     btn.addEventListener('click', () => {
       const action = btn.getAttribute('data-action');
-      if (action === 'energia') alert('Energia mobile — em construção (Fase B4)');
+      if (action === 'energia') window.location.href = 'mobile-energy.html';
       else if (action === 'comodos') {
         const z = ZoneRegistry.all()[0];
         window.location.href = z ? `mobile-room.html?zone=${encodeURIComponent(z.id)}` : 'mobile-room.html';
