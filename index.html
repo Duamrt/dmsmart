@@ -22,16 +22,18 @@
   <link rel="stylesheet" href="css/license.css">
   <link rel="stylesheet" href="css/white-label.css">
   <script>
-    // Mobile detection — redireciona pra mobile.html em viewport pequeno ou PWA standalone
+    // Auto-detecção de viewport — redireciona pra surface adequada
+    // ?force=desktop|mobile|tablet pula a detecção (debug)
     (function () {
-      var ua = navigator.userAgent || '';
-      var isMobile = /Android|iPhone|iPod|iPad/i.test(ua);
-      var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-      var isSmall = window.innerWidth <= 768;
-      if ((isMobile || isStandalone) && isSmall) {
-        // Mantém path/hash se houver
-        window.location.replace('mobile.html' + window.location.search + window.location.hash);
-      }
+      var qs = new URLSearchParams(location.search);
+      var force = qs.get('force');
+      if (force === 'desktop') return; // fica no app desktop antigo
+      var w = window.innerWidth;
+      var dest = null;
+      if (force === 'mobile' || w <= 768) dest = 'mobile.html';
+      else if (force === 'tablet' || w <= 1280) dest = 'tablet.html';
+      // > 1280px: desktop, fica aqui
+      if (dest) window.location.replace(dest + location.search + location.hash);
     })();
   </script>
 </head>
