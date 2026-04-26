@@ -141,20 +141,27 @@
   }
 
   // ── Sidebar nav ─────────────────────────────────────────────────────────────
+  // Tablet é kiosk dashboard único — TODAS as views ficam visíveis na própria tela.
+  // Sidebar só destaca o item ativo, não navega pra fora (evita ir pras telas mobile).
   document.querySelectorAll('[data-view]').forEach(btn => {
     btn.addEventListener('click', () => {
       const view = btn.getAttribute('data-view');
-      // Tablet por enquanto é dashboard único; clicks em outras views podem ir
-      // pras telas mobile (que também funcionam em tablet)
-      if (view === 'casa') return;
-      if (view === 'zonas') {
-        const z = ZoneRegistry.all()[0];
-        window.location.href = z ? `mobile-room.html?zone=${encodeURIComponent(z.id)}` : 'mobile-room.html';
-      } else if (view === 'energia') {
-        window.location.href = 'mobile-energy.html';
-      } else if (view === 'setup') {
-        window.location.href = 'index.html';
-      }
+      // Setup é exceção — abre tela de configuração (desktop)
+      if (view === 'setup') { window.location.href = 'index.html'; return; }
+      // Outras views: só destaca o item ativo (visualmente). Tudo já tá no dashboard.
+      document.querySelectorAll('[data-view]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      // Scroll suave pra seção correspondente
+      const sectionMap = {
+        casa: '.t-gauges',
+        zonas: '.t-zones',
+        energia: '.t-side',
+        cenas: '.t-events',
+        logs: '.t-events',
+        alertas: '.t-events',
+      };
+      const target = document.querySelector(sectionMap[view] || '.t-gauges');
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   });
 
