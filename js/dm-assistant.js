@@ -288,24 +288,39 @@ class DMAssistant {
     return new Promise((resolve, reject) => {
       let resolvido = false;
       let channel = null;
+      let timer = null;
 
       const finalizar = (ok, val) => {
         if (resolvido) return;
         resolvido = true;
         if (channel) { this.sb.removeChannel(channel); channel = null; }
+        if (timer) { clearTimeout(timer); timer = null; }
         ok ? resolve(val) : reject(new Error(val));
       };
 
-      // Timeout de segurança
-      const timer = setTimeout(() => finalizar(false, 'Timeout — worker não respondeu'), 30000);
+      // Timeout adaptativo: 15s pra worker pegar; estende pra 5min se ele virou "processando"
+      const TIMEOUT_PENDENTE = 15000;
+      const TIMEOUT_PROCESSANDO = 300000;
+      timer = setTimeout(() => finalizar(false, 'Worker não respondeu — está rodando?'), TIMEOUT_PENDENTE);
+
+      const onStatus = (s, resultado) => {
+        if (s === 'processando') {
+          // Worker pegou — estende timeout e mostra feedback
+          if (timer) clearTimeout(timer);
+          timer = setTimeout(() => finalizar(false, 'Comando demorou demais (>5min)'), TIMEOUT_PROCESSANDO);
+          this._setStatus('executando', '● executando...');
+        } else if (s === 'executado') {
+          finalizar(true, resultado || '...');
+        } else if (s === 'erro') {
+          finalizar(false, resultado || 'Erro no worker');
+        }
+      };
 
       // Realtime: notificação instantânea quando status muda
       channel = this.sb
         .channel(`dm_cmd_${cmdId}`)
         .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'dm_commands', filter: `id=eq.${cmdId}` }, payload => {
-          const s = payload.new?.status;
-          if (s === 'executado') { clearTimeout(timer); finalizar(true, payload.new.resultado || payload.new.result || '...'); }
-          else if (s === 'erro')  { clearTimeout(timer); finalizar(false, payload.new.resultado || 'Erro no worker'); }
+          onStatus(payload.new?.status, payload.new?.resultado || payload.new?.result);
         })
         .subscribe();
 
@@ -313,9 +328,8 @@ class DMAssistant {
       const poll = async () => {
         if (resolvido) return;
         const { data } = await this.sb.from('dm_commands').select('status,resultado,result').eq('id', cmdId).single();
-        if (data?.status === 'executado') { clearTimeout(timer); finalizar(true, data.resultado || data.result || '...'); }
-        else if (data?.status === 'erro') { clearTimeout(timer); finalizar(false, data.resultado || 'Erro no worker'); }
-        else if (!resolvido) setTimeout(poll, 800);
+        if (data) onStatus(data.status, data.resultado || data.result);
+        if (!resolvido) setTimeout(poll, 800);
       };
       setTimeout(poll, 800);
     });

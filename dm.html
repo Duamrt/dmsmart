@@ -768,8 +768,15 @@ function fecharPainel() {
   document.querySelectorAll('#hud-shortcuts .sc').forEach(el => {
     let timer = null;
     let triggeredLong = false;
+    let active = false;          // guard contra duplo dispatch (touch + mouse)
+    let suppressMouseUntil = 0;  // touch suprime mouse sintetizado por ~600ms
 
     const start = (e) => {
+      const now = Date.now();
+      // Se touch acabou de disparar, ignora mouse sintetizado
+      if (e.type === 'mousedown' && now < suppressMouseUntil) return;
+      if (active) return;
+      active = true;
       e.preventDefault();
       triggeredLong = false;
       el.classList.add('sc-pressing');
@@ -783,7 +790,12 @@ function fecharPainel() {
     };
 
     const end = (e) => {
+      const now = Date.now();
+      if (e.type === 'mouseup' && now < suppressMouseUntil) return;
+      if (!active) return;
+      active = false;
       e.preventDefault();
+      if (e.type === 'touchend') suppressMouseUntil = now + 600;
       el.classList.remove('sc-pressing');
       if (timer) { clearTimeout(timer); timer = null; }
       if (triggeredLong) return;
@@ -794,6 +806,7 @@ function fecharPainel() {
     };
 
     const cancel = () => {
+      active = false;
       el.classList.remove('sc-pressing');
       if (timer) { clearTimeout(timer); timer = null; }
       triggeredLong = false;
