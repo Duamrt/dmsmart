@@ -122,16 +122,43 @@
     }
     #hud-shortcuts.hidden { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(16px); }
 
-    .sc { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; text-decoration: none; transition: transform 0.2s; }
+    .sc { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; text-decoration: none; transition: transform 0.2s; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; position: relative; }
     .sc:hover { transform: translateY(-5px); }
     .sc-icon {
       width: 46px; height: 46px; border: 1px solid var(--border); border-radius: 12px;
       background: var(--glass); display: flex; align-items: center; justify-content: center;
       font-size: 0.68rem; font-weight: 600; color: var(--cyan); letter-spacing: 0.5px;
       backdrop-filter: blur(10px); transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+      position: relative;
     }
     .sc:hover .sc-icon { background: rgba(0,212,255,0.1); border-color: rgba(0,212,255,0.35); box-shadow: 0 0 16px rgba(0,212,255,0.15); }
     .sc-label { font-size: 0.48rem; letter-spacing: 1.5px; color: rgba(255,255,255,0.25); text-transform: uppercase; }
+
+    /* Dica visual: setinha indicando "segura pra abrir" */
+    .sc-icon::after {
+      content: "↗"; position: absolute; top: 2px; right: 4px;
+      font-size: 0.55rem; color: rgba(0,212,255,0.35); font-weight: 400;
+      transition: color 0.2s, transform 0.2s;
+    }
+    .sc:hover .sc-icon::after { color: rgba(0,212,255,0.7); }
+
+    /* Long-press: anel preenchendo em 500ms */
+    .sc-icon::before {
+      content: ""; position: absolute; inset: -3px; border-radius: 14px;
+      border: 1.5px solid transparent; pointer-events: none;
+      background: conic-gradient(var(--cyan) 0deg, transparent 0deg) border-box;
+      -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude;
+      opacity: 0; transition: opacity 0.1s;
+    }
+    .sc.sc-pressing .sc-icon::before {
+      opacity: 1;
+      animation: scLongPress 0.5s linear forwards;
+    }
+    @keyframes scLongPress {
+      0%   { background: conic-gradient(var(--cyan) 0deg, transparent 0deg) border-box; }
+      100% { background: conic-gradient(var(--cyan) 360deg, transparent 360deg) border-box; }
+    }
 
     /* ── ACTIVE VIEW (chat) ── */
     #view-active {
@@ -298,26 +325,26 @@
   </div>
 </div>
 
-<!-- Shortcuts -->
+<!-- Shortcuts: toque curto = resumo · toque longo = abrir app -->
 <div id="hud-shortcuts">
-  <a class="sc" href="https://rpmpro.com.br/v2/login.html" target="_blank">
+  <div class="sc" data-resumo="RPM Pro — resumo do dia" data-url="https://rpmpro.com.br/v2/login.html">
     <div class="sc-icon">RPM</div><div class="sc-label">RPM Pro</div>
-  </a>
-  <a class="sc" href="https://dmtechapp.com.br" target="_blank">
+  </div>
+  <div class="sc" data-resumo="DMTech — resumo do dia" data-url="https://dmtechapp.com.br">
     <div class="sc-icon">DMT</div><div class="sc-label">DMTech</div>
-  </a>
-  <a class="sc" href="https://sistema.edreng.com.br" target="_blank">
+  </div>
+  <div class="sc" data-resumo="EDR System — resumo do dia" data-url="https://sistema.edreng.com.br">
     <div class="sc-icon">EDR</div><div class="sc-label">EDR Sys</div>
-  </a>
-  <a class="sc" href="#" onclick="ativarChat('DM Pay — resumo do dia'); return false;">
+  </div>
+  <div class="sc" data-resumo="DM Pay — resumo do dia" data-url="https://duamrt.github.io/DM-PAY/dashboard.html">
     <div class="sc-icon">PAY</div><div class="sc-label">DM Pay</div>
-  </a>
-  <a class="sc" href="https://app.dmstack.com.br" target="_blank">
+  </div>
+  <div class="sc" data-resumo="DM Smart — resumo do dia" data-url="https://app.dmstack.com.br">
     <div class="sc-icon">IOT</div><div class="sc-label">DMSmart</div>
-  </a>
-  <a class="sc" href="#" onclick="ativarChat('abre obsidian'); return false;">
+  </div>
+  <div class="sc" data-resumo="Obsidian — resumo do dia" data-acao="abre obsidian">
     <div class="sc-icon" style="font-size:1.1rem;">⬡</div><div class="sc-label">Obsidian</div>
-  </a>
+  </div>
 </div>
 
 <!-- ACTIVE VIEW -->
@@ -734,6 +761,53 @@ function abrirPainel(titulo, html) {
 function fecharPainel() {
   document.getElementById('dm-painel').classList.remove('aberto');
 }
+
+// ── Atalhos: toque curto = resumo · toque longo (≥500ms) = abrir SaaS ──
+(function initShortcuts() {
+  const LONG_PRESS_MS = 500;
+  document.querySelectorAll('#hud-shortcuts .sc').forEach(el => {
+    let timer = null;
+    let triggeredLong = false;
+
+    const start = (e) => {
+      e.preventDefault();
+      triggeredLong = false;
+      el.classList.add('sc-pressing');
+      timer = setTimeout(() => {
+        triggeredLong = true;
+        el.classList.remove('sc-pressing');
+        const url = el.dataset.url;
+        if (url) window.open(url, '_blank');
+        if (navigator.vibrate) navigator.vibrate(20);
+      }, LONG_PRESS_MS);
+    };
+
+    const end = (e) => {
+      e.preventDefault();
+      el.classList.remove('sc-pressing');
+      if (timer) { clearTimeout(timer); timer = null; }
+      if (triggeredLong) return;
+      const resumo = el.dataset.resumo;
+      const acao   = el.dataset.acao;
+      if (acao)        ativarChat(acao);
+      else if (resumo) ativarChat(resumo);
+    };
+
+    const cancel = () => {
+      el.classList.remove('sc-pressing');
+      if (timer) { clearTimeout(timer); timer = null; }
+      triggeredLong = false;
+    };
+
+    el.addEventListener('mousedown',  start);
+    el.addEventListener('mouseup',    end);
+    el.addEventListener('mouseleave', cancel);
+    el.addEventListener('touchstart', start,  { passive: false });
+    el.addEventListener('touchend',   end,    { passive: false });
+    el.addEventListener('touchcancel', cancel);
+    el.addEventListener('contextmenu', (ev) => ev.preventDefault());
+  });
+})();
 </script>
 <script>
   if ('serviceWorker' in navigator) {
